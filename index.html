@@ -325,6 +325,17 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
    =================================================================== */
 const CFG = window.TEAPOT_CONFIG || {};
 const $  = id => document.getElementById(id);
+
+/* ถ้าโหลดไฟล์ตั้งค่าไม่เจอ ให้บอกชัด ๆ แทนที่จะปล่อยฟอร์มว่าง */
+if(!window.TEAPOT_CONFIG){
+  document.body.insertAdjacentHTML('afterbegin',
+    `<div style="background:#C0392B;color:#fff;padding:14px 16px;text-align:center;font-size:14px;line-height:1.55">
+       ไม่พบไฟล์ <b>teapot-config.js</b><br>
+       <span style="opacity:.85;font-size:13px">
+         ต้องวางไว้โฟลเดอร์เดียวกับหน้าเว็บ ชื่อไฟล์ต้องเป็น teapot-config.js พอดี ไม่มี .txt ต่อท้าย
+       </span>
+     </div>`);
+}
 const baht = n => (isFinite(n) ? n : 0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' ฿';
 const num  = v => { const n = parseFloat(String(v).replace(/,/g,'')); return isFinite(n) ? n : 0; };
 
@@ -393,6 +404,7 @@ function show(id){
    =================================================================== */
 const params = new URLSearchParams(location.search);
 const urlVenue = params.get('v') || '';
+const kiosk    = params.get('kiosk') === '1';   // แท็บเล็ตที่บูธ ไม่จำคนล่าสุด
 let me = LS.get('me', null);
 let chosenStatus = '';
 
@@ -473,14 +485,24 @@ async function submitRegister(){
    =================================================================== */
 function gotoRecipes(){
   const g = $('greet');
-  g.innerHTML = me
+  g.innerHTML = (me
     ? `สวัสดีครับ <b>${esc(me.name)}</b><br><small style="color:var(--muted)">เลือกสูตรที่สนใจ แล้วลองคิดต้นทุนของร้านคุณดู</small>`
-    : 'เลือกสูตรที่สนใจ แล้วลองคิดต้นทุนของร้านคุณดู';
-  if(LS.get('queue',[]).length){
-    g.insertAdjacentHTML('afterend', `<div class="offline" id="offl">มีข้อมูล ${LS.get('queue',[]).length} รายการรอส่ง จะส่งอัตโนมัติเมื่อสัญญาณกลับมา</div>`);
-  }
+    : 'เลือกสูตรที่สนใจ แล้วลองคิดต้นทุนของร้านคุณดู')
+    + `<button class="btn ghost sm" id="btn-newlead">ลงทะเบียนคนใหม่</button>`;
+  $('btn-newlead').onclick = newLead;
+
+  const old = $('offl'); if(old) old.remove();
+  const qn = LS.get('queue',[]).length;
+  if(qn) g.insertAdjacentHTML('afterend',
+    `<div class="offline" id="offl">มีข้อมูล ${qn} รายการรอส่ง จะส่งอัตโนมัติเมื่อสัญญาณกลับมา</div>`);
+
   const list = $('recipe-list'); list.innerHTML='';
-  (CFG.recipes||[]).forEach(r=>{
+  const rs = CFG.recipes || [];
+  if(!rs.length){
+    list.innerHTML = `<div class="offline">ยังไม่พบสูตรในไฟล์ <b>teapot-config.js</b><br>
+      ตรวจว่าไฟล์อยู่โฟลเดอร์เดียวกับหน้าเว็บ และชื่อไฟล์ไม่มี .txt ต่อท้าย</div>`;
+  }
+  rs.forEach(r=>{
     const el = document.createElement('div');
     el.className='rcard';
     el.innerHTML = `<div class="ic">${r.cup||''}</div>
@@ -490,6 +512,20 @@ function gotoRecipes(){
     list.appendChild(el);
   });
   show('s-recipes');
+}
+
+/* ล้างข้อมูลคนเดิม เริ่มลงทะเบียนคนใหม่ */
+function newLead(){
+  me = null; LS.set('me', null); lastSig = ''; chosenStatus = '';
+  ['f-name','f-phone','f-line','f-shop','f-brand'].forEach(id=> $(id).value = '');
+  $('f-shoptype').value = ''; $('f-cups').value = '';
+  if(!urlVenue) $('f-venue').value = '';
+  $('f-consent').checked = false;
+  $('f-status').querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
+  $('shop-fields').style.display = 'none';
+  $('reg-err').classList.remove('on');
+  $('f-name').classList.remove('err'); $('f-phone').classList.remove('err');
+  show('s-register');
 }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
@@ -796,8 +832,9 @@ initFirebase().then(ok=>{
   else console.info('ยังไม่ได้ใส่ค่า Firebase — ข้อมูลจะเก็บไว้ในเครื่องเท่านั้น');
 });
 
-/* ลงทะเบียนไว้แล้วให้ข้ามหน้าแรก */
-if(me && me.name) gotoRecipes();
+/* ลงทะเบียนไว้แล้วให้ข้ามหน้าแรก ยกเว้นโหมดแท็บเล็ตที่บูธ (?kiosk=1) */
+if(kiosk){ me = null; LS.set('me', null); }
+else if(me && me.name) gotoRecipes();
 </script>
 </body>
 </html>
