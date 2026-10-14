@@ -323,11 +323,14 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 /* ===================================================================
    TEAPOT คาราวานคู่ชง — app
    =================================================================== */
-const CFG = window.TEAPOT_CONFIG || {};
+/* config ประกาศด้วย const จะไม่ติดอยู่บน window ต้องรับทั้งสองทาง */
+const CFG = (typeof TEAPOT_CONFIG !== 'undefined' && TEAPOT_CONFIG)
+            ? TEAPOT_CONFIG
+            : (window.TEAPOT_CONFIG || {});
 const $  = id => document.getElementById(id);
 
 /* ถ้าโหลดไฟล์ตั้งค่าไม่เจอ ให้บอกชัด ๆ แทนที่จะปล่อยฟอร์มว่าง */
-if(!window.TEAPOT_CONFIG){
+if(!CFG.recipes && !CFG.brand){
   document.body.insertAdjacentHTML('afterbegin',
     `<div style="background:#C0392B;color:#fff;padding:14px 16px;text-align:center;font-size:14px;line-height:1.55">
        ไม่พบไฟล์ <b>teapot-config.js</b><br>
