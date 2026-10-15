@@ -80,6 +80,9 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 .rcard:active{transform:scale(.995)}
 .rcard .ic{flex:0 0 46px;height:46px;border-radius:12px;background:var(--blue-soft);color:var(--navy);
   display:grid;place-items:center;font-weight:700;font-size:13px}
+.rcard .thumb{flex:0 0 56px;width:56px;height:56px;border-radius:12px;object-fit:cover;background:var(--blue-soft)}
+.shot{width:100%;display:block;border-radius:12px;margin-bottom:14px;aspect-ratio:16/10;
+  object-fit:cover;background:var(--blue-soft)}
 .rcard .body{flex:1;min-width:0}
 .rcard .body b{display:block;font-size:16.5px}
 .rcard .body small{color:var(--muted);font-size:12.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -90,16 +93,24 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 .steps li{counter-increment:s;position:relative;padding:0 0 10px 34px;font-size:14.5px}
 .steps li::before{content:counter(s);position:absolute;left:0;top:1px;width:23px;height:23px;border-radius:50%;
   background:var(--navy);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center}
-.ing{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#fff}
-.ing .hd{display:flex;align-items:center;gap:8px;margin-bottom:9px}
-.ing .hd input{border:0;padding:0;font-weight:600;font-size:15px;background:transparent}
-.ing .hd input:focus{box-shadow:none}
-.ing .del{flex:0 0 auto;border:0;background:#F3F5F8;color:var(--muted);width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:16px;line-height:1}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.row .f label{margin:0 0 4px;font-size:11.5px;font-weight:500;color:var(--muted)}
-.row .f input{padding:9px 11px;font-size:15px}
-.ing .out{margin-top:9px;padding-top:9px;border-top:1px dashed var(--line);display:flex;justify-content:space-between;font-size:13.5px}
-.ing .out b{font-variant-numeric:tabular-nums}
+.ing{border:1px solid var(--line);border-radius:11px;padding:9px 10px;margin-bottom:8px;background:#fff}
+.ing .r1{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.ing .r1 input{flex:1;min-width:0;border:0;padding:2px 0;font-weight:600;font-size:14.5px;background:transparent}
+.ing .r1 input:focus{box-shadow:none}
+.ing .r1 b{flex:0 0 auto;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--navy)}
+.ing .del{flex:0 0 auto;border:0;background:#F3F5F8;color:var(--muted);width:24px;height:24px;
+  border-radius:7px;cursor:pointer;font-size:15px;line-height:1;padding:0}
+.ing .r2{display:grid;grid-template-columns:64px 70px 1fr 1fr;gap:6px}
+.ing .r2.p2{grid-template-columns:64px 1fr}
+.ing .r2 input,.ing .r2 select{padding:7px 8px;font-size:14.5px;border-radius:8px;width:100%}
+.ing .r2 select{padding-right:20px;background-position:right 6px center}
+.ing .r2 .pfx{position:relative}
+.ing .r2 .pfx input{padding-left:19px}
+.ing .r2 .pfx s{position:absolute;left:8px;top:50%;transform:translateY(-50%);
+  font-size:12px;color:var(--muted);text-decoration:none;pointer-events:none}
+.iglg{display:grid;grid-template-columns:64px 70px 1fr 1fr;gap:6px;font-size:10.5px;
+  color:var(--muted);padding:0 11px 6px}
+.iglg.p2{grid-template-columns:64px 1fr}
 .addbtn{width:100%;border:1.5px dashed var(--line);background:#fff;color:var(--navy);border-radius:12px;
   padding:12px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer}
 .sumline{display:flex;justify-content:space-between;padding:7px 0;font-size:14.5px}
@@ -125,7 +136,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 .stat b{font-size:24px;font-variant-numeric:tabular-nums}
 .tbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
 .tbl th{text-align:left;color:var(--muted);font-weight:600;font-size:11.5px;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
-.tbl td{padding:9px 8px;border-bottom:1px solid #EEF2F6;vertical-align:top}
+.tbl td{padding:9px 8px;border-bottom:1px solid #EEF2F6;vertical-align:top;white-space:nowrap}
 .tbl tr:last-child td{border-bottom:0}
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tag{display:inline-block;background:var(--blue-soft);color:var(--navy);border-radius:6px;padding:2px 7px;font-size:11px;white-space:nowrap}
@@ -133,13 +144,24 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 .filters select,.filters input{padding:9px 11px;font-size:14px}
 .bars{margin-top:6px}
 .bar{margin-bottom:9px}
-.bar .lb{display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px}
-.bar .track{height:7px;background:#EDF1F6;border-radius:99px;overflow:hidden}
-.bar .fill{height:100%;background:var(--blue);border-radius:99px}
+.bar .lb{display:flex;justify-content:space-between;gap:10px;font-size:13px;margin-bottom:4px}
+.bar .lb span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .lb b{flex:0 0 auto;font-variant-numeric:tabular-nums}
+.bar .lb b i{font-style:normal;font-weight:500;color:var(--muted)}
+.bar .track{height:8px;background:#E8EBF4;border-radius:99px;overflow:hidden}
+.bar .fill{height:100%;background:#3A46C8;border-radius:99px;min-width:3px}
+.bar .fill.hl{background:#B8761F}
+.tot{margin:10px 0 0;font-size:12.5px;color:var(--muted)}
 .pill{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:var(--ink);color:#fff;
   padding:11px 20px;border-radius:999px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:90;
   opacity:0;pointer-events:none;transition:.25s}
 .pill.on{opacity:1;transform:translateX(-50%) translateY(-4px)}
+.sheet{position:fixed;inset:0;z-index:120;background:rgba(10,16,40,.72);display:none;overflow-y:auto;padding:20px 16px}
+.sheet.on{display:block}
+.sheet-in{max-width:420px;margin:0 auto;background:#fff;border-radius:16px;padding:16px;text-align:center}
+.sheet-in img{width:100%;border-radius:10px;display:block}
+.sheet-in p{font-size:13px;color:var(--muted);margin:12px 0 0}
+.sheet-in .btn{text-decoration:none;display:block;box-sizing:border-box}
 .offline{background:#FFF4E0;border:1px solid #F0D9A8;color:#7A5A12;border-radius:10px;padding:10px 13px;font-size:13px;margin-top:12px}
 .foot{text-align:center;font-size:12px;color:var(--muted);margin-top:26px}
 .foot a{color:var(--muted)}
@@ -157,8 +179,8 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
   </div>
   <div class="wrap">
     <div class="card">
-      <h2>รับสูตรน้ำชง ฟรี</h2>
-      <p class="sub">กรอกชื่อกับเบอร์ก็เข้าดูสูตรได้เลย ช่องที่เหลือใส่หรือไม่ใส่ก็ได้</p>
+      <h2>ลงทะเบียนรับสูตรน้ำชง</h2>
+      <p class="sub">กรอกข้อมูลเพื่อรับสูตรน้ำชง พร้อมเครื่องมือคิดต้นทุนและกำไรต่อแก้วของร้านคุณ</p>
 
       <label>ชื่อ - นามสกุล</label>
       <input id="f-name" type="text" placeholder="เช่น สมชาย ใจดี" autocomplete="name">
@@ -203,7 +225,6 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 
       <div class="err-msg" id="reg-err"></div>
       <button class="btn" id="btn-submit">ดูสูตรน้ำชง</button>
-      <p class="note">ไม่มีค่าใช้จ่าย ไม่มีการผูกมัด</p>
     </div>
     <p class="foot"><a href="#" id="go-admin-1">หลังบ้าน</a></p>
   </div>
@@ -224,6 +245,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
   <div class="topbar"><button id="btn-back">‹ กลับ</button><div class="t" id="d-title"></div></div>
   <div class="wrap">
     <div class="card">
+      <img class="shot" id="d-img" alt="" style="display:none">
       <h2 id="d-name"></h2>
       <p class="sub" id="d-note"></p>
       <ol class="steps" id="d-steps"></ol>
@@ -231,7 +253,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 
     <div class="card">
       <h2>คิดต้นทุนต่อแก้ว</h2>
-      <p class="sub">ใส่ราคาที่ซื้อมาและขนาดบรรจุ ระบบหารเป็นต้นทุนต่อหน่วยให้เอง ปริมาณที่ใช้แก้ได้ตามสูตรของร้าน</p>
+      <p class="sub">ใส่ราคาที่ซื้อมาและปริมาณที่ได้ ระบบหารเป็นต้นทุนต่อหน่วยให้เอง ตัวเลขทางขวาคือต้นทุนของส่วนผสมนั้นต่อหนึ่งแก้ว</p>
       <div id="ing-list"></div>
       <button class="addbtn" id="btn-add-ing">+ เพิ่มส่วนผสม</button>
     </div>
@@ -267,6 +289,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
       </div>
     </div>
 
+    <button class="btn" id="btn-save-img">บันทึกผลเป็นรูป</button>
     <button class="btn ghost sm" id="btn-reset">คืนค่าปริมาณตามสูตรทีพอท</button>
     <p class="foot">ราคาวัตถุดิบที่กรอกจะถูกจำไว้ ใช้ต่อได้ทุกสูตรโดยไม่ต้องกรอกใหม่</p>
   </div>
@@ -328,6 +351,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
           <input id="a-f-to" type="date">
         </div>
         <div class="scroll"><table class="tbl" id="a-table"></table></div>
+        <p class="tot" id="a-more"></p>
         <button class="btn sm" id="btn-csv">ดาวน์โหลด CSV</button>
         <button class="btn ghost sm" id="btn-refresh">โหลดข้อมูลใหม่</button>
       </div>
@@ -335,6 +359,14 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
   </div>
 </section>
 
+<div class="sheet" id="sheet">
+  <div class="sheet-in">
+    <img id="shot-out" alt="ผลคำนวณต้นทุน">
+    <p>กดค้างที่รูปเพื่อบันทึกลงเครื่อง หรือกดปุ่มดาวน์โหลด</p>
+    <a class="btn" id="shot-dl" download>ดาวน์โหลดรูป</a>
+    <button class="btn ghost sm" id="shot-close">ปิด</button>
+  </div>
+</div>
 <div class="pill" id="pill"></div>
 <script src="teapot-config.js"></script>
 <script type="module">
@@ -536,6 +568,9 @@ async function submitRegister(){
   if(!validPhone(phone)){ $('f-phone').classList.add('err'); err.textContent='กรุณากรอกเบอร์โทรให้ครบ'; err.classList.add('on'); return; }
   if(!chosenStatus){ err.textContent='กรุณาเลือกว่าคุณคือใคร'; err.classList.add('on'); return; }
 
+  const venue = autoVenue || $('f-venue').value;
+  if(!venue){ err.textContent='กรุณาเลือกจุดที่เจอเรา'; err.classList.add('on'); $('f-venue').focus(); return; }
+
   const brandSweet = getBrand('f-brand-sweet','f-brand-sweet-other');
   const brandPlain = getBrand('f-brand-plain','f-brand-plain-other');
   if(/เจ้าของร้าน/.test(chosenStatus) && (!brandSweet || !brandPlain)){
@@ -549,7 +584,7 @@ async function submitRegister(){
   const lead = {
     name, phone,
     line:      $('f-line').value.trim(),
-    venue:     autoVenue || $('f-venue').value,
+    venue,
     status:    chosenStatus,
     shopName:  $('f-shop').value.trim(),
     shopType:  $('f-shoptype').value,
@@ -594,9 +629,11 @@ function gotoRecipes(){
   rs.forEach(r=>{
     const el = document.createElement('div');
     el.className='rcard';
-    el.innerHTML = `<div class="ic">${r.cup||''}</div>
-      <div class="body"><b>${esc(r.name)}</b><small>${esc(r.note||'')}</small></div>
-      <div class="go">›</div>`;
+    el.innerHTML = (r.image
+        ? `<img class="thumb" src="${esc(r.image)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ic',textContent:'${esc(r.cup||'')}'}))">`
+        : `<div class="ic">${r.cup||''}</div>`)
+      + `<div class="body"><b>${esc(r.name)}</b><small>${esc(r.note||'')}</small></div>
+         <div class="go">›</div>`;
     el.onclick = ()=>openRecipe(r.id);
     list.appendChild(el);
   });
@@ -648,6 +685,10 @@ function openRecipe(id, fresh){
   packs = (saved && saved.packs) ? saved.packs
         : JSON.parse(JSON.stringify(CFG.packaging || []));
 
+  const shot = $('d-img');
+  if(cur.image){ shot.src = cur.image; shot.style.display='block'; shot.onerror = ()=>{ shot.style.display='none'; }; }
+  else shot.style.display='none';
+
   $('d-title').textContent = cur.name;
   $('d-name').textContent  = cur.name + (cur.cup ? ' · แก้ว ' + cur.cup : '');
   $('d-note').textContent  = cur.note || '';
@@ -664,37 +705,39 @@ function openRecipe(id, fresh){
                     createdAt: new Date().toISOString() });
 }
 
+const UNITS = ['กรัม','มล.','ชิ้น'];
+function unitOpts(u){
+  const list = UNITS.includes(u) ? UNITS.slice() : [u||'กรัม', ...UNITS];
+  return list.map(x=>`<option${x===u?' selected':''}>${esc(x)}</option>`).join('');
+}
+
 function renderIngs(){
-  const box = $('ing-list'); box.innerHTML='';
-  ings.forEach((ing,i)=>{
-    const el = document.createElement('div'); el.className='ing';
-    el.innerHTML = `
-      <div class="hd">
-        <input value="${esc(ing.name)}" data-k="name" data-i="${i}" placeholder="ชื่อส่วนผสม">
-        <button class="del" data-del="${i}" title="ลบ">×</button>
-      </div>
-      <div class="row">
-        <div class="f"><label>ใช้ต่อแก้ว</label>
-          <input type="number" inputmode="decimal" value="${ing.qty}" data-k="qty" data-i="${i}"></div>
-        <div class="f"><label>หน่วย</label>
-          <input value="${esc(ing.unit||'')}" data-k="unit" data-i="${i}" placeholder="กรัม"></div>
-      </div>
-      <div class="row" style="margin-top:8px">
-        <div class="f"><label>ราคาที่ซื้อมา (฿)</label>
-          <input type="number" inputmode="decimal" value="${ing.packPrice}" data-k="packPrice" data-i="${i}"></div>
-        <div class="f"><label>ได้ปริมาณ (${esc(ing.unit||'หน่วย')})</label>
-          <input type="number" inputmode="decimal" value="${ing.packSize}" data-k="packSize" data-i="${i}"></div>
-      </div>
-      <div class="out"><span>ต้นทุนส่วนนี้</span><b data-out="${i}">0.00 ฿</b></div>`;
-    box.appendChild(el);
-  });
-  box.oninput = e=>{
+  const box = $('ing-list');
+  box.innerHTML =
+    `<div class="iglg"><span>ใช้/แก้ว</span><span>หน่วย</span><span>ราคาที่ซื้อ</span><span>ได้ปริมาณ</span></div>` +
+    ings.map((ing,i)=>`
+      <div class="ing">
+        <div class="r1">
+          <input value="${esc(ing.name)}" data-k="name" data-i="${i}" placeholder="ชื่อส่วนผสม">
+          <b data-out="${i}">0.00 ฿</b>
+          <button class="del" data-del="${i}" title="ลบ">×</button>
+        </div>
+        <div class="r2">
+          <input type="number" inputmode="decimal" value="${ing.qty}" data-k="qty" data-i="${i}">
+          <select data-k="unit" data-i="${i}">${unitOpts(ing.unit)}</select>
+          <span class="pfx"><s>฿</s><input type="number" inputmode="decimal" value="${ing.packPrice}" data-k="packPrice" data-i="${i}"></span>
+          <span class="pfx"><s>/</s><input type="number" inputmode="decimal" value="${ing.packSize}" data-k="packSize" data-i="${i}"></span>
+        </div>
+      </div>`).join('');
+
+  const onEdit = e=>{
     const t = e.target, i = t.dataset.i, k = t.dataset.k;
     if(i==null||!k) return;
     ings[i][k] = (k==='name'||k==='unit') ? t.value : num(t.value);
     if(k==='packPrice'||k==='packSize') rememberPrice(ings[i].name, ings[i].packPrice, ings[i].packSize, ings[i].unit);
     calc();
   };
+  box.oninput = onEdit; box.onchange = onEdit;
   box.onclick = e=>{
     const d = e.target.dataset.del;
     if(d!=null){ ings.splice(+d,1); renderIngs(); calc(); }
@@ -702,29 +745,29 @@ function renderIngs(){
 }
 
 function renderPacks(){
-  const box = $('pack-list'); box.innerHTML='';
-  packs.forEach((p,i)=>{
-    const el = document.createElement('div'); el.className='ing';
-    el.innerHTML = `
-      <div class="hd">
-        <input value="${esc(p.name)}" data-k="name" data-i="${i}" placeholder="ชื่อรายการ">
-        <button class="del" data-del="${i}">×</button>
-      </div>
-      <div class="row">
-        <div class="f"><label>จำนวนต่อแก้ว</label>
-          <input type="number" inputmode="decimal" value="${p.qty}" data-k="qty" data-i="${i}"></div>
-        <div class="f"><label>ราคาต่อชิ้น (฿)</label>
-          <input type="number" inputmode="decimal" value="${p.price}" data-k="price" data-i="${i}"></div>
-      </div>
-      <div class="out"><span>ต้นทุนส่วนนี้</span><b data-pout="${i}">0.00 ฿</b></div>`;
-    box.appendChild(el);
-  });
-  box.oninput = e=>{
+  const box = $('pack-list');
+  box.innerHTML =
+    `<div class="iglg p2"><span>จำนวน</span><span>ราคาต่อชิ้น</span></div>` +
+    packs.map((p,i)=>`
+      <div class="ing">
+        <div class="r1">
+          <input value="${esc(p.name)}" data-k="name" data-i="${i}" placeholder="ชื่อรายการ">
+          <b data-pout="${i}">0.00 ฿</b>
+          <button class="del" data-del="${i}" title="ลบ">×</button>
+        </div>
+        <div class="r2 p2">
+          <input type="number" inputmode="decimal" value="${p.qty}" data-k="qty" data-i="${i}">
+          <span class="pfx"><s>฿</s><input type="number" inputmode="decimal" value="${p.price}" data-k="price" data-i="${i}"></span>
+        </div>
+      </div>`).join('');
+
+  const onEdit = e=>{
     const t = e.target, i = t.dataset.i, k = t.dataset.k;
     if(i==null||!k) return;
     packs[i][k] = (k==='name') ? t.value : num(t.value);
     calc();
   };
+  box.oninput = onEdit; box.onchange = onEdit;
   box.onclick = e=>{
     const d = e.target.dataset.del;
     if(d!=null){ packs.splice(+d,1); renderPacks(); calc(); }
@@ -791,6 +834,109 @@ function saveCalc(total, sell){
   });
 }
 
+
+/* ===================================================================
+   วาดผลคำนวณเป็นรูป
+   =================================================================== */
+async function saveResultImage(){
+  if(!cur) return;
+  try{ await document.fonts.ready; }catch(e){}
+
+  const W=1080, pad=72;
+  const rows = ings.filter(i=>i.name && i.packSize>0)
+                   .map(i=>[i.name, (i.packPrice/i.packSize)*i.qty]);
+  const packCost = packs.reduce((s,p)=>s+p.qty*p.price, 0);
+  const matCost  = rows.reduce((s,r)=>s+r[1], 0);
+  const total    = matCost + packCost;
+  const sell     = num($('f-sell').value);
+  const profit   = sell>0 ? sell-total : null;
+  const margin   = sell>0 ? profit/sell*100 : null;
+  const perDay   = num($('f-cupsday').value), days = num($('f-days').value);
+
+  const listH   = rows.length*52 + 52;
+  const navyTop = 782 + rows.length*52;
+  const navyH   = sell>0 ? 360 : 150;
+  const hasProj = sell>0 && perDay>0 && days>0;
+  const projY   = navyTop + navyH + 60;
+  const footY   = hasProj ? projY + 118 : navyTop + navyH + 84;
+  const H       = footY + 46;
+
+  const c = document.createElement('canvas'); c.width=W; c.height=H;
+  const x = c.getContext('2d');
+  const F = (w,s)=>`${w} ${s}px 'IBM Plex Sans Thai', system-ui, sans-serif`;
+  const money = n => n.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const rr = (X,Y,w,h,r)=>{ x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+w,Y,X+w,Y+h,r);
+    x.arcTo(X+w,Y+h,X,Y+h,r); x.arcTo(X,Y+h,X,Y,r); x.arcTo(X,Y,X+w,Y,r); x.closePath(); };
+
+  x.fillStyle='#F6F7FC'; x.fillRect(0,0,W,H);
+
+  const g=x.createLinearGradient(0,0,W,430);
+  g.addColorStop(0,'#2A34A3'); g.addColorStop(.5,'#202985'); g.addColorStop(1,'#000C51');
+  x.fillStyle=g; x.fillRect(0,0,W,430);
+  const lg=$('h-logo');
+  if(lg && lg.complete && lg.naturalWidth){
+    const lw=620, lh=lw*lg.naturalHeight/lg.naturalWidth;
+    x.drawImage(lg,(W-lw)/2,(430-lh)/2,lw,lh);
+  }
+
+  let y=430+86;
+  x.textAlign='left'; x.fillStyle='#16182E'; x.font=F(700,52);
+  x.fillText(cur.name, pad, y);
+  x.fillStyle='#6B7189'; x.font=F(400,28);
+  x.fillText('ต้นทุนต่อแก้ว ' + (cur.cup||''), pad, y+44);
+
+  y += 110;
+  x.fillStyle='#fff'; rr(pad, y, W-pad*2, listH+24, 20); x.fill();
+  y += 46;
+  rows.forEach(([n,v])=>{
+    x.fillStyle='#16182E'; x.font=F(400,30); x.textAlign='left';
+    x.fillText(n.length>26 ? n.slice(0,26)+'…' : n, pad+34, y);
+    x.fillStyle='#6B7189'; x.textAlign='right'; x.fillText(money(v)+' ฿', W-pad-34, y);
+    y += 52;
+  });
+  x.strokeStyle='#DEE1F0'; x.lineWidth=2;
+  x.beginPath(); x.moveTo(pad+34,y-26); x.lineTo(W-pad-34,y-26); x.stroke();
+  x.fillStyle='#16182E'; x.font=F(400,30); x.textAlign='left';
+  x.fillText('ค่าบรรจุภัณฑ์', pad+34, y+14);
+  x.fillStyle='#6B7189'; x.textAlign='right'; x.fillText(money(packCost)+' ฿', W-pad-34, y+14);
+
+  y += 110;
+  x.fillStyle='#202985'; rr(pad, y, W-pad*2, sell>0?360:150, 20); x.fill();
+  x.fillStyle='rgba(255,255,255,.72)'; x.font=F(400,28); x.textAlign='left';
+  x.fillText('ต้นทุนรวมต่อแก้ว', pad+34, y+56);
+  x.fillStyle='#fff'; x.font=F(700,56); x.textAlign='right';
+  x.fillText(money(total)+' ฿', W-pad-34, y+66);
+
+  if(sell>0){
+    x.strokeStyle='rgba(255,255,255,.2)';
+    x.beginPath(); x.moveTo(pad+34,y+110); x.lineTo(W-pad-34,y+110); x.stroke();
+    const line=(label,val,yy,big)=>{
+      x.fillStyle='rgba(255,255,255,.72)'; x.font=F(400,28); x.textAlign='left';
+      x.fillText(label, pad+34, yy);
+      x.fillStyle = big ? '#FFCF57' : '#fff'; x.font=F(big?700:600, big?48:34); x.textAlign='right';
+      x.fillText(val, W-pad-34, yy+(big?8:2));
+    };
+    line('ราคาขาย', money(sell)+' ฿', y+165);
+    line('กำไรต่อแก้ว', money(profit)+' ฿', y+235, true);
+    line('คิดเป็น', margin.toFixed(1)+' %', y+300);
+    if(perDay>0 && days>0){
+      x.fillStyle='#16182E'; x.font=F(600,30); x.textAlign='center';
+      x.fillText('ขายวันละ '+perDay+' แก้ว เดือนละ '+days+' วัน', W/2, projY);
+      x.fillStyle='#202985'; x.font=F(700,38);
+      x.fillText('กำไรเดือนละ ' + money(profit*perDay*days) + ' ฿', W/2, projY+48);
+    }
+  }
+
+  x.fillStyle='#9AA1B8'; x.font=F(400,24); x.textAlign='center';
+  x.fillText('คำนวณจากราคาที่กรอกเอง · ทีพอท คาราวานคู่ชงทั่วไทย', W/2, footY);
+
+  const url = c.toDataURL('image/png');
+  $('shot-out').src = url;
+  $('shot-dl').href = url;
+  $('shot-dl').download = 'ต้นทุน-' + cur.name + '.png';
+  $('sheet').classList.add('on');
+}
+
 /* ===================================================================
    4. ADMIN
    =================================================================== */
@@ -839,13 +985,23 @@ function filtered(){
   });
 }
 
-function bars(el, counts){
+function bars(el, counts, opts){
+  const o = opts || {};
   const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
-  const max = Math.max(1, ...entries.map(e=>e[1]));
-  el.innerHTML = entries.length
-    ? entries.map(([k,v])=>`<div class="bar"><div class="lb"><span>${esc(k)}</span><b>${v}</b></div>
-        <div class="track"><div class="fill" style="width:${v/max*100}%"></div></div></div>`).join('')
-    : '<p class="sub" style="margin:0">ยังไม่มีข้อมูล</p>';
+  if(!entries.length){ el.innerHTML = '<p class="sub" style="margin:0">ยังไม่มีข้อมูล</p>'; return; }
+  const total = entries.reduce((s,e)=>s+e[1], 0);
+  const max   = Math.max(1, ...entries.map(e=>e[1]));
+  el.innerHTML = entries.map(([k,v])=>{
+    const pct = total ? v/total*100 : 0;
+    const hl  = o.highlight && o.highlight.test(k);
+    return `<div class="bar">
+      <div class="lb">
+        <span>${esc(k)}${hl ? ' <span class="tag">ของเรา</span>' : ''}</span>
+        <b>${pct.toFixed(1)}% <i>(${v})</i></b>
+      </div>
+      <div class="track"><div class="fill${hl?' hl':''}" style="width:${(v/max*100).toFixed(1)}%"></div></div>
+    </div>`;
+  }).join('') + `<p class="tot">ฐาน ${total} รายการ · แถบยาวเทียบกับอันดับหนึ่ง</p>`;
 }
 
 function renderAdmin(){
@@ -864,17 +1020,18 @@ function renderAdmin(){
   const bs = {}, bp = {};
   rows.forEach(l=>{ if(l.brandSweet) bs[l.brandSweet]=(bs[l.brandSweet]||0)+1;
                     if(l.brandPlain) bp[l.brandPlain]=(bp[l.brandPlain]||0)+1; });
-  bars($('a-brand-sweet'), bs);
-  bars($('a-brand-plain'), bp);
+  bars($('a-brand-sweet'), bs, {highlight:/ทีพอท/});
+  bars($('a-brand-plain'), bp, {highlight:/ทีพอท/});
 
   const cs = calcs.filter(c=>c.costPerCup>0);
   $('a-avgcost').textContent  = cs.length ? baht(cs.reduce((s,c)=>s+c.costPerCup,0)/cs.length) : '—';
   const ps = calcs.filter(c=>c.sellPrice>0);
   $('a-avgprice').textContent = ps.length ? baht(ps.reduce((s,c)=>s+c.sellPrice,0)/ps.length) : '—';
 
+  const shown = rows.slice(0, 50);
   $('a-table').innerHTML =
     `<thead><tr><th>วันที่</th><th>ชื่อ</th><th>เบอร์</th><th>จุด</th><th>สถานะ</th><th>ร้าน</th><th>ยอด/วัน</th><th>ข้นหวาน</th><th>ข้นจืด</th></tr></thead><tbody>` +
-    (rows.length ? rows.map(l=>`<tr>
+    (shown.length ? shown.map(l=>`<tr>
         <td>${esc((l.createdAt||'').slice(0,10))}</td>
         <td>${esc(l.name)}</td>
         <td>${esc(l.phone)}</td>
@@ -887,6 +1044,8 @@ function renderAdmin(){
       </tr>`).join('')
       : `<tr><td colspan="9" style="color:var(--muted);padding:18px 8px">ยังไม่มีข้อมูล</td></tr>`) +
     `</tbody>`;
+  $('a-more').textContent = rows.length > 50
+    ? `แสดง 50 รายการล่าสุดจากทั้งหมด ${rows.length} รายการ ดาวน์โหลด CSV เพื่อดูครบ` : '';
 }
 
 function downloadCSV(){
@@ -919,6 +1078,9 @@ $('btn-admin-home').onclick = newLead;
 
 $('btn-add-ing').onclick  = ()=>{ ings.push({name:'',qty:0,unit:'กรัม',packPrice:0,packSize:1000}); renderIngs(); calc(); };
 $('btn-add-pack').onclick = ()=>{ packs.push({name:'',qty:1,price:0}); renderPacks(); calc(); };
+$('btn-save-img').onclick = saveResultImage;
+$('shot-close').onclick   = ()=> $('sheet').classList.remove('on');
+$('sheet').onclick        = e=>{ if(e.target.id==='sheet') $('sheet').classList.remove('on'); };
 $('btn-reset').onclick    = ()=>{ if(cur){ LS.set('calc_'+cur.id,null); openRecipe(cur.id,true); toast('คืนค่าตามสูตรแล้ว'); } };
 ['f-sell','f-cupsday','f-days'].forEach(id=> $(id).oninput = calc);
 
