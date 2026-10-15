@@ -16,12 +16,12 @@ const TEAPOT_CONFIG = {
      Firebase Console > Project settings > Your apps > Web app > SDK setup
      ถ้ายังไม่ใส่ เว็บจะทำงานได้ปกติแต่เก็บข้อมูลไว้ในเครื่องอย่างเดียว   */
   firebase: {
-    apiKey: '',
-    authDomain: '',
-    projectId: '',
-    storageBucket: '',
-    messagingSenderId: '',
-    appId: ''
+    apiKey: "AIzaSyB6T-lQHXiIeafgPBwLqLQa0odllYNh87w",
+    authDomain: "teapot-caravan.firebaseapp.com",
+    projectId: "teapot-caravan",
+    storageBucket: "teapot-caravan.firebasestorage.app",
+    messagingSenderId: "426547707687",
+    appId: "1:426547707687:web:6c6ad1109cbc79ceaa3302"
   },
 
   /* ชื่อ collection ใน Firestore */
