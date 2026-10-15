@@ -274,14 +274,19 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 
 <!-- ==================== 4. หลังบ้าน ==================== -->
 <section id="s-admin" class="screen">
-  <div class="topbar"><button id="btn-admin-back">‹ กลับ</button><div class="t">หลังบ้าน</div><button id="btn-admin-home">หน้าแรก</button></div>
+  <div class="topbar"><button id="btn-admin-back">‹ กลับ</button><div class="t">หลังบ้าน</div><button id="btn-logout" style="display:none">ออก</button><button id="btn-admin-home">หน้าแรก</button></div>
   <div class="wrap">
 
     <div class="card" id="pin-gate">
-      <h2>ใส่รหัสผ่าน</h2>
-      <p class="sub">สำหรับทีมงานเท่านั้น</p>
-      <input id="f-pin" type="password" inputmode="numeric" placeholder="••••">
-      <div class="err-msg" id="pin-err">รหัสไม่ถูกต้อง</div>
+      <h2>เข้าสู่ระบบทีมงาน</h2>
+      <p class="sub" id="gate-sub">ใช้บัญชีที่สร้างไว้ใน Firebase</p>
+      <div id="email-field">
+        <label>อีเมล</label>
+        <input id="f-email" type="email" autocomplete="username" placeholder="admin@qookid.co">
+      </div>
+      <label>รหัสผ่าน</label>
+      <input id="f-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+      <div class="err-msg" id="pin-err"></div>
       <button class="btn" id="btn-pin">เข้าสู่ระบบ</button>
     </div>
 
@@ -370,17 +375,22 @@ function toast(msg){ const p = $('pill'); p.textContent = msg; p.classList.add('
    FIREBASE (optional) + offline queue
    =================================================================== */
 const COL = Object.assign({leads:'teapot_leads',calcs:'teapot_calcs',views:'teapot_views'}, CFG.collections||{});
-let db = null, FS = null;
+let db = null, FS = null, auth = null, AU = null;
 
 async function initFirebase(){
   const c = CFG.firebase || {};
   if(!c.apiKey || !c.projectId) return false;
   try{
-    const [{initializeApp},fs] = await Promise.all([
+    const [{initializeApp},fs,au] = await Promise.all([
       import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
-      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js')
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'),
+      import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js')
     ]);
-    db = fs.getFirestore(initializeApp(c)); FS = fs; return true;
+    const app = initializeApp(c);
+    db = fs.getFirestore(app); FS = fs;
+    auth = au.getAuth(app);    AU = au;
+    au.onAuthStateChanged(auth, u=>{ if(u && $('s-admin').classList.contains('on')) openAdmin(); });
+    return true;
   }catch(e){ console.warn('firebase init failed', e); return false; }
 }
 
@@ -795,7 +805,13 @@ async function loadAdmin(){
         return snap.docs.map(d=>Object.assign({_id:d.id}, d.data()));
       };
       [leads, calcs, views] = await Promise.all([grab(COL.leads), grab(COL.calcs), grab(COL.views)]);
-    }catch(e){ console.warn(e); toast('โหลดจาก Firebase ไม่สำเร็จ แสดงข้อมูลในเครื่องแทน'); leads = LS.get('local_leads',[]); }
+    }catch(e){
+      console.warn(e);
+      toast(e.code === 'permission-denied'
+        ? 'บัญชีนี้ไม่มีสิทธิ์อ่านข้อมูล ตรวจ UID ใน Firestore Rules'
+        : 'โหลดจาก Firebase ไม่สำเร็จ แสดงข้อมูลในเครื่องแทน');
+      leads = LS.get('local_leads',[]);
+    }
   }else{
     leads = LS.get('local_leads',[]); calcs = []; views = [];
   }
@@ -906,20 +922,53 @@ $('btn-add-pack').onclick = ()=>{ packs.push({name:'',qty:1,price:0}); renderPac
 $('btn-reset').onclick    = ()=>{ if(cur){ LS.set('calc_'+cur.id,null); openRecipe(cur.id,true); toast('คืนค่าตามสูตรแล้ว'); } };
 ['f-sell','f-cupsday','f-days'].forEach(id=> $(id).oninput = calc);
 
-$('btn-pin').onclick = ()=>{
-  if($('f-pin').value === String(CFG.adminPin||'')){
-    $('pin-gate').style.display='none'; $('admin-body').style.display='block'; $('pin-err').classList.remove('on');
-    loadAdmin();
-  }else{ $('pin-err').classList.add('on'); }
+function openAdmin(){
+  $('pin-gate').style.display='none';
+  $('admin-body').style.display='block';
+  $('pin-err').classList.remove('on');
+  $('btn-logout').style.display = auth ? 'block' : 'none';
+  loadAdmin();
+}
+
+$('btn-pin').onclick = async ()=>{
+  const err = $('pin-err');
+  if(!auth){                         // ยังไม่ได้ต่อ Firebase (ทดสอบในเครื่อง) ใช้ PIN สำรอง
+    if($('f-pass').value === String(CFG.adminPin||'')) openAdmin();
+    else { err.textContent = 'รหัสไม่ถูกต้อง'; err.classList.add('on'); }
+    return;
+  }
+  const btn = $('btn-pin'); btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ…';
+  try{
+    await AU.signInWithEmailAndPassword(auth, $('f-email').value.trim(), $('f-pass').value);
+    openAdmin();
+  }catch(e){
+    const m = {'auth/invalid-credential':'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+               'auth/invalid-email':'รูปแบบอีเมลไม่ถูกต้อง',
+               'auth/too-many-requests':'ลองผิดหลายครั้งเกินไป รอสักครู่แล้วลองใหม่',
+               'auth/network-request-failed':'ต่อเน็ตไม่ได้'}[e.code];
+    err.textContent = m || ('เข้าสู่ระบบไม่สำเร็จ ' + (e.code||''));
+    err.classList.add('on');
+  }
+  btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
 };
-$('f-pin').onkeydown = e=>{ if(e.key==='Enter') $('btn-pin').click(); };
+$('btn-logout').onclick = async ()=>{
+  if(auth) await AU.signOut(auth);
+  $('admin-body').style.display='none'; $('pin-gate').style.display='block';
+  $('btn-logout').style.display='none'; $('f-pass').value='';
+};
+$('f-pass').onkeydown = e=>{ if(e.key==='Enter') $('btn-pin').click(); };
+$('f-email').onkeydown = e=>{ if(e.key==='Enter') $('f-pass').focus(); };
 $('btn-csv').onclick = downloadCSV;
 $('btn-refresh').onclick = loadAdmin;
 ['a-f-venue','a-f-status','a-f-from','a-f-to'].forEach(id=> $(id).onchange = renderAdmin);
 
 initFirebase().then(ok=>{
-  if(ok) flushQueue();
-  else console.info('ยังไม่ได้ใส่ค่า Firebase — ข้อมูลจะเก็บไว้ในเครื่องเท่านั้น');
+  if(ok){ flushQueue(); }
+  else{
+    $('email-field').style.display = 'none';
+    $('gate-sub').textContent = 'ยังไม่ได้ต่อ Firebase — ใช้รหัสชั่วคราวดูข้อมูลในเครื่อง';
+    console.info('ยังไม่ได้ใส่ค่า Firebase — ข้อมูลจะเก็บไว้ในเครื่องเท่านั้น');
+  }
 });
 
 /* ลงทะเบียนไว้แล้วให้ข้ามหน้าแรก ยกเว้นโหมดแท็บเล็ตที่บูธ (?kiosk=1) */
