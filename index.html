@@ -354,6 +354,8 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <p class="tot" id="a-more"></p>
         <button class="btn sm" id="btn-csv">ดาวน์โหลด CSV</button>
         <button class="btn ghost sm" id="btn-refresh">โหลดข้อมูลใหม่</button>
+        <p class="tot" id="q-note"></p>
+        <button class="btn ghost sm" id="btn-clearq" style="display:none">ล้างรายการค้าง</button>
       </div>
     </div>
   </div>
@@ -439,13 +441,22 @@ async function send(col,data){
 async function flushQueue(){
   if(!db || !navigator.onLine) return;
   const q = LS.get('queue',[]); if(!q.length) return;
-  const left = [];
+  const left = [], rejected = LS.get('rejected',[]);
   for(const item of q){
     try{ await FS.addDoc(FS.collection(db,item.col), item.data); }
-    catch(e){ left.push(item); }
+    catch(e){
+      /* ฐานข้อมูลปฏิเสธถาวร ส่งซ้ำอีกกี่รอบก็ไม่ผ่าน เก็บแยกไว้แทนการวนส่ง */
+      if(e.code === 'permission-denied' || e.code === 'invalid-argument'){
+        rejected.push({ ...item, error:e.code, at:new Date().toISOString() });
+      }else{
+        left.push(item);     /* เน็ตหลุดหรือเซิร์ฟเวอร์ล่ม ค่อยลองใหม่รอบหน้า */
+      }
+    }
   }
-  LS.set('queue',left);
-  if(q.length && !left.length) toast('ส่งข้อมูลที่ค้างไว้เรียบร้อย');
+  LS.set('queue', left);
+  LS.set('rejected', rejected.slice(-50));
+  const sent = q.length - left.length;
+  if(sent > 0 && !left.length) toast('ส่งข้อมูลที่ค้างไว้เรียบร้อย');
 }
 window.addEventListener('online', flushQueue);
 
@@ -850,18 +861,22 @@ async function saveResultImage(){
   try{ await document.fonts.ready; }catch(e){}
 
   const W=1080, pad=72;
+  const fmtQty = r => (Math.round(r.qty*100)/100) + ' ' + (r.unit||'');
   const rows = ings.filter(i=>i.name && i.packSize>0)
-                   .map(i=>[i.name, (i.packPrice/i.packSize)*i.qty]);
-  const packCost = packs.reduce((s,p)=>s + (p.packSize>0 ? p.packPrice/p.packSize*p.qty : 0), 0);
-  const matCost  = rows.reduce((s,r)=>s+r[1], 0);
+                   .map(i=>({name:i.name, qty:fmtQty(i), cost:(i.packPrice/i.packSize)*i.qty}));
+  const prows = packs.filter(p=>p.name && p.packSize>0)
+                   .map(p=>({name:p.name, qty:fmtQty(p), cost:(p.packPrice/p.packSize)*p.qty}));
+  const packCost = prows.reduce((s,r)=>s+r.cost, 0);
+  const matCost  = rows.reduce((s,r)=>s+r.cost, 0);
   const total    = matCost + packCost;
   const sell     = num($('f-sell').value);
   const profit   = sell>0 ? sell-total : null;
   const margin   = sell>0 ? profit/sell*100 : null;
   const perDay   = num($('f-cupsday').value), days = num($('f-days').value);
 
-  const listH   = rows.length*52 + 52;
-  const navyTop = 782 + rows.length*52;
+  const nLine   = rows.length + prows.length;
+  const listH   = nLine*52 + 40;
+  const navyTop = 770 + nLine*52;
   const navyH   = sell>0 ? 360 : 150;
   const hasProj = sell>0 && perDay>0 && days>0;
   const projY   = navyTop + navyH + 60;
@@ -895,19 +910,23 @@ async function saveResultImage(){
   y += 110;
   x.fillStyle='#fff'; rr(pad, y, W-pad*2, listH+24, 20); x.fill();
   y += 46;
-  rows.forEach(([n,v])=>{
+  const drawLine = r=>{
     x.fillStyle='#16182E'; x.font=F(400,30); x.textAlign='left';
-    x.fillText(n.length>26 ? n.slice(0,26)+'…' : n, pad+34, y);
-    x.fillStyle='#6B7189'; x.textAlign='right'; x.fillText(money(v)+' ฿', W-pad-34, y);
+    x.fillText(r.name.length>22 ? r.name.slice(0,22)+'…' : r.name, pad+34, y);
+    x.fillStyle='#6B7189'; x.font=F(400,27); x.textAlign='right';
+    x.fillText(r.qty, W-pad-230, y);
+    x.fillStyle='#16182E'; x.font=F(500,30);
+    x.fillText(money(r.cost)+' ฿', W-pad-34, y);
     y += 52;
-  });
-  x.strokeStyle='#DEE1F0'; x.lineWidth=2;
-  x.beginPath(); x.moveTo(pad+34,y-26); x.lineTo(W-pad-34,y-26); x.stroke();
-  x.fillStyle='#16182E'; x.font=F(400,30); x.textAlign='left';
-  x.fillText('ค่าบรรจุภัณฑ์', pad+34, y+14);
-  x.fillStyle='#6B7189'; x.textAlign='right'; x.fillText(money(packCost)+' ฿', W-pad-34, y+14);
+  };
+  rows.forEach(drawLine);
+  if(prows.length){
+    x.strokeStyle='#DEE1F0'; x.lineWidth=2;
+    x.beginPath(); x.moveTo(pad+34,y-32); x.lineTo(W-pad-34,y-32); x.stroke();
+    prows.forEach(drawLine);
+  }
 
-  y += 110;
+  y = navyTop;
   x.fillStyle='#202985'; rr(pad, y, W-pad*2, sell>0?360:150, 20); x.fill();
   x.fillStyle='rgba(255,255,255,.72)'; x.font=F(400,28); x.textAlign='left';
   x.fillText('ต้นทุนรวมต่อแก้ว', pad+34, y+56);
@@ -1012,6 +1031,12 @@ function bars(el, counts, opts){
 }
 
 function renderAdmin(){
+  const qn = LS.get('queue',[]).length, rj = LS.get('rejected',[]).length;
+  $('q-note').textContent = (qn || rj)
+    ? `ในเครื่องนี้มี ${qn} รายการรอส่ง และ ${rj} รายการที่ฐานข้อมูลปฏิเสธ (ส่วนใหญ่เป็นข้อมูลทดสอบรูปแบบเก่า)`
+    : '';
+  $('btn-clearq').style.display = (qn || rj) ? 'block' : 'none';
+
   const rows = filtered();
   $('a-total').textContent  = rows.length;
   $('a-shop').textContent   = rows.filter(l=>/ร้าน/.test(l.status||'')).length;
@@ -1129,6 +1154,11 @@ $('f-pass').onkeydown = e=>{ if(e.key==='Enter') $('btn-pin').click(); };
 $('f-email').onkeydown = e=>{ if(e.key==='Enter') $('f-pass').focus(); };
 $('btn-csv').onclick = downloadCSV;
 $('btn-refresh').onclick = loadAdmin;
+$('btn-clearq').onclick = ()=>{
+  LS.set('queue', []); LS.set('rejected', []);
+  const b = $('offl'); if(b) b.remove();
+  toast('ล้างรายการค้างแล้ว'); renderAdmin();
+};
 ['a-f-venue','a-f-status','a-f-from','a-f-to'].forEach(id=> $(id).onchange = renderAdmin);
 
 initFirebase().then(ok=>{
