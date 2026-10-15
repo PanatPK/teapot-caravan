@@ -260,7 +260,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 
     <div class="card">
       <h2>บรรจุภัณฑ์</h2>
-      <p class="sub">ต้นทุนที่คนมักลืมคิด แต่กินกำไรจริง</p>
+      <p class="sub">คิดแบบเดียวกับส่วนผสม ซื้อมาเป็นแพ็กเท่าไหร่ ได้กี่ชิ้น ระบบหารเป็นต้นทุนต่อชิ้นให้ นี่คือต้นทุนที่คนมักลืมคิด แต่กินกำไรจริง</p>
       <div id="pack-list"></div>
       <button class="addbtn" id="btn-add-pack">+ เพิ่มรายการ</button>
     </div>
@@ -682,8 +682,11 @@ function openRecipe(id, fresh){
              packPrice: remembered ? remembered.packPrice : i.packPrice,
              packSize:  remembered ? remembered.packSize  : i.packSize };
   });
-  packs = (saved && saved.packs) ? saved.packs
-        : JSON.parse(JSON.stringify(CFG.packaging || []));
+  packs = ((saved && saved.packs) ? saved.packs : (CFG.packaging || [])).map(p=>{
+    const q = normPack(p), rem = pb[q.name];
+    if(rem){ q.packPrice = rem.packPrice; q.packSize = rem.packSize; }
+    return q;
+  });
 
   const shot = $('d-img');
   if(cur.image){ shot.src = cur.image; shot.style.display='block'; shot.onerror = ()=>{ shot.style.display='none'; }; }
@@ -705,30 +708,44 @@ function openRecipe(id, fresh){
                     createdAt: new Date().toISOString() });
 }
 
-const UNITS = ['กรัม','มล.','ชิ้น'];
-function unitOpts(u){
-  const list = UNITS.includes(u) ? UNITS.slice() : [u||'กรัม', ...UNITS];
+const UNITS      = ['กรัม','มล.','ชิ้น'];
+const PACK_UNITS = ['ใบ','ชิ้น','เส้น','ถุง'];
+function unitOpts(u, set){
+  const base = set || UNITS;
+  const list = base.includes(u) ? base.slice() : [u||base[0], ...base];
   return list.map(x=>`<option${x===u?' selected':''}>${esc(x)}</option>`).join('');
+}
+
+/* รองรับบรรจุภัณฑ์รูปแบบเก่า {qty, price} ให้กลายเป็นแบบซื้อเป็นแพ็ก */
+function normPack(p){
+  return (p.packPrice == null)
+    ? { name:p.name, qty:p.qty||1, unit:p.unit||'ใบ', packPrice:+(p.price||0), packSize:1 }
+    : { name:p.name, qty:p.qty||1, unit:p.unit||'ใบ', packPrice:+p.packPrice, packSize:+p.packSize||1 };
+}
+
+/* แถวหนึ่งรายการ ใช้ร่วมกันทั้งส่วนผสมและบรรจุภัณฑ์ */
+function rowHTML(r, i, outKey, units){
+  return `
+      <div class="ing">
+        <div class="r1">
+          <input value="${esc(r.name)}" data-k="name" data-i="${i}" placeholder="ชื่อรายการ">
+          <b data-${outKey}="${i}">0.00 ฿</b>
+          <button class="del" data-del="${i}" title="ลบ">×</button>
+        </div>
+        <div class="r2">
+          <input type="number" inputmode="decimal" value="${r.qty}" data-k="qty" data-i="${i}">
+          <select data-k="unit" data-i="${i}">${unitOpts(r.unit, units)}</select>
+          <span class="pfx"><s>฿</s><input type="number" inputmode="decimal" value="${r.packPrice}" data-k="packPrice" data-i="${i}"></span>
+          <span class="pfx"><s>/</s><input type="number" inputmode="decimal" value="${r.packSize}" data-k="packSize" data-i="${i}"></span>
+        </div>
+      </div>`;
 }
 
 function renderIngs(){
   const box = $('ing-list');
   box.innerHTML =
     `<div class="iglg"><span>ใช้/แก้ว</span><span>หน่วย</span><span>ราคาที่ซื้อ</span><span>ได้ปริมาณ</span></div>` +
-    ings.map((ing,i)=>`
-      <div class="ing">
-        <div class="r1">
-          <input value="${esc(ing.name)}" data-k="name" data-i="${i}" placeholder="ชื่อส่วนผสม">
-          <b data-out="${i}">0.00 ฿</b>
-          <button class="del" data-del="${i}" title="ลบ">×</button>
-        </div>
-        <div class="r2">
-          <input type="number" inputmode="decimal" value="${ing.qty}" data-k="qty" data-i="${i}">
-          <select data-k="unit" data-i="${i}">${unitOpts(ing.unit)}</select>
-          <span class="pfx"><s>฿</s><input type="number" inputmode="decimal" value="${ing.packPrice}" data-k="packPrice" data-i="${i}"></span>
-          <span class="pfx"><s>/</s><input type="number" inputmode="decimal" value="${ing.packSize}" data-k="packSize" data-i="${i}"></span>
-        </div>
-      </div>`).join('');
+    ings.map((ing,i)=> rowHTML(ing, i, 'out', UNITS)).join('');
 
   const onEdit = e=>{
     const t = e.target, i = t.dataset.i, k = t.dataset.k;
@@ -747,24 +764,14 @@ function renderIngs(){
 function renderPacks(){
   const box = $('pack-list');
   box.innerHTML =
-    `<div class="iglg p2"><span>จำนวน</span><span>ราคาต่อชิ้น</span></div>` +
-    packs.map((p,i)=>`
-      <div class="ing">
-        <div class="r1">
-          <input value="${esc(p.name)}" data-k="name" data-i="${i}" placeholder="ชื่อรายการ">
-          <b data-pout="${i}">0.00 ฿</b>
-          <button class="del" data-del="${i}" title="ลบ">×</button>
-        </div>
-        <div class="r2 p2">
-          <input type="number" inputmode="decimal" value="${p.qty}" data-k="qty" data-i="${i}">
-          <span class="pfx"><s>฿</s><input type="number" inputmode="decimal" value="${p.price}" data-k="price" data-i="${i}"></span>
-        </div>
-      </div>`).join('');
+    `<div class="iglg"><span>ใช้/แก้ว</span><span>หน่วย</span><span>ราคาที่ซื้อ</span><span>ได้จำนวน</span></div>` +
+    packs.map((p,i)=> rowHTML(p, i, 'pout', PACK_UNITS)).join('');
 
   const onEdit = e=>{
     const t = e.target, i = t.dataset.i, k = t.dataset.k;
     if(i==null||!k) return;
-    packs[i][k] = (k==='name') ? t.value : num(t.value);
+    packs[i][k] = (k==='name'||k==='unit') ? t.value : num(t.value);
+    if(k==='packPrice'||k==='packSize') rememberPrice(packs[i].name, packs[i].packPrice, packs[i].packSize, packs[i].unit);
     calc();
   };
   box.oninput = onEdit; box.onchange = onEdit;
@@ -783,7 +790,7 @@ function calc(){
   });
   let pk = 0;
   packs.forEach((p,i)=>{
-    const c = p.qty * p.price; pk += c;
+    const c = p.packSize > 0 ? (p.packPrice / p.packSize) * p.qty : 0; pk += c;
     const out = document.querySelector(`[data-pout="${i}"]`); if(out) out.textContent = baht(c);
   });
 
@@ -845,7 +852,7 @@ async function saveResultImage(){
   const W=1080, pad=72;
   const rows = ings.filter(i=>i.name && i.packSize>0)
                    .map(i=>[i.name, (i.packPrice/i.packSize)*i.qty]);
-  const packCost = packs.reduce((s,p)=>s+p.qty*p.price, 0);
+  const packCost = packs.reduce((s,p)=>s + (p.packSize>0 ? p.packPrice/p.packSize*p.qty : 0), 0);
   const matCost  = rows.reduce((s,r)=>s+r[1], 0);
   const total    = matCost + packCost;
   const sell     = num($('f-sell').value);
@@ -1077,7 +1084,7 @@ $('btn-admin-back').onclick = ()=> me ? gotoRecipes() : show('s-register');
 $('btn-admin-home').onclick = newLead;
 
 $('btn-add-ing').onclick  = ()=>{ ings.push({name:'',qty:0,unit:'กรัม',packPrice:0,packSize:1000}); renderIngs(); calc(); };
-$('btn-add-pack').onclick = ()=>{ packs.push({name:'',qty:1,price:0}); renderPacks(); calc(); };
+$('btn-add-pack').onclick = ()=>{ packs.push({name:'',qty:1,unit:'ใบ',packPrice:0,packSize:1}); renderPacks(); calc(); };
 $('btn-save-img').onclick = saveResultImage;
 $('shot-close').onclick   = ()=> $('sheet').classList.remove('on');
 $('sheet').onclick        = e=>{ if(e.target.id==='sheet') $('sheet').classList.remove('on'); };
