@@ -187,8 +187,13 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <label>ขายได้ประมาณวันละกี่แก้ว <span class="opt">(ไม่บังคับ)</span></label>
         <select id="f-cups"></select>
 
-        <label>ตอนนี้ใช้ยี่ห้ออะไรอยู่ <span class="opt">(ไม่บังคับ)</span></label>
-        <input id="f-brand" type="text" placeholder="เช่น ยี่ห้อ...">
+        <label>ข้นหวานที่ใช้อยู่</label>
+        <select id="f-brand-sweet"></select>
+        <input id="f-brand-sweet-other" type="text" placeholder="ระบุยี่ห้อ" style="display:none;margin-top:8px">
+
+        <label>ข้นจืดที่ใช้อยู่</label>
+        <select id="f-brand-plain"></select>
+        <input id="f-brand-plain-other" type="text" placeholder="ระบุยี่ห้อ" style="display:none;margin-top:8px">
       </div>
 
       <label class="consent" for="f-consent" style="font-weight:400">
@@ -269,7 +274,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 
 <!-- ==================== 4. หลังบ้าน ==================== -->
 <section id="s-admin" class="screen">
-  <div class="topbar"><button id="btn-admin-back">‹ กลับ</button><div class="t">หลังบ้าน</div></div>
+  <div class="topbar"><button id="btn-admin-back">‹ กลับ</button><div class="t">หลังบ้าน</div><button id="btn-admin-home">หน้าแรก</button></div>
   <div class="wrap">
 
     <div class="card" id="pin-gate">
@@ -291,6 +296,14 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
       <div class="card">
         <h2>ยอดต่อจุด</h2>
         <div class="bars" id="a-venue-bars"></div>
+      </div>
+
+      <div class="card">
+        <h2>ยี่ห้อที่ใช้อยู่</h2>
+        <p class="sub" style="margin-bottom:10px">ข้นหวาน</p>
+        <div class="bars" id="a-brand-sweet"></div>
+        <p class="sub" style="margin:16px 0 10px">ข้นจืด</p>
+        <div class="bars" id="a-brand-plain"></div>
       </div>
 
       <div class="card">
@@ -432,6 +445,20 @@ function buildRegister(){
   $('f-cups').innerHTML = '<option value="">— เลือก —</option>' +
     (CFG.dailyCupsOptions||[]).map(v=>`<option>${v}</option>`).join('');
 
+  /* ยี่ห้อที่ใช้อยู่ แยกข้นหวาน / ข้นจืด */
+  const BR = CFG.brandOptions || BRANDS_FALLBACK;
+  const fill = (id, arr)=>{ $(id).innerHTML = '<option value="">— เลือก —</option>' +
+    (arr||[]).map(v=>`<option>${v}</option>`).join(''); };
+  fill('f-brand-sweet', BR.sweet);
+  fill('f-brand-plain', BR.plain);
+  [['f-brand-sweet','f-brand-sweet-other'],['f-brand-plain','f-brand-plain-other']].forEach(([s,o])=>{
+    $(s).onchange = ()=>{
+      const isOther = /อื่น/.test($(s).value);
+      $(o).style.display = isOther ? 'block' : 'none';
+      if(isOther) $(o).focus(); else $(o).value = '';
+    };
+  });
+
   const wrap = $('f-status'); wrap.innerHTML='';
   (CFG.statusOptions||[]).forEach(s=>{
     const el = document.createElement('div');
@@ -440,12 +467,40 @@ function buildRegister(){
       chosenStatus = s;
       wrap.querySelectorAll('.chip').forEach(c=>c.classList.toggle('sel', c===el));
       $('shop-fields').style.display = /ร้าน/.test(s) ? 'block' : 'none';
+      $('reg-err').classList.remove('on');
     };
     wrap.appendChild(el);
   });
+
+  /* เบอร์โทร ใส่แต่ตัวเลข ระบบเติมขีดให้เอง */
+  $('f-phone').oninput = e=>{ e.target.value = fmtPhone(e.target.value); };
 }
 
-function validPhone(p){ return /^[0-9+\-\s]{9,15}$/.test(p.trim()); }
+const BRANDS_FALLBACK = {
+  sweet: ['ฟอลคอน','ทีพอท','มะลิ','คาร์เนชั่น','ออร์คิด','ตราหมี','วีฟู้ดส์','ยังไม่ได้ใช้ / ไม่แน่ใจ','อื่น ๆ (ระบุ)'],
+  plain: ['ฟอลคอน','ทีพอท','คาร์เนชั่น','มะลิ','ตราหมี','ออร์คิด','ยังไม่ได้ใช้ / ไม่แน่ใจ','อื่น ๆ (ระบุ)']
+};
+
+function fmtPhone(v){
+  let d = String(v).replace(/\D/g,'').slice(0,10);
+  if(d.startsWith('02')){                      // เบอร์บ้านกรุงเทพ 9 หลัก
+    d = d.slice(0,9);
+    if(d.length <= 2) return d;
+    if(d.length <= 5) return d.slice(0,2)+'-'+d.slice(2);
+    return d.slice(0,2)+'-'+d.slice(2,5)+'-'+d.slice(5);
+  }
+  if(d.length <= 3) return d;
+  if(d.length <= 6) return d.slice(0,3)+'-'+d.slice(3);
+  return d.slice(0,3)+'-'+d.slice(3,6)+'-'+d.slice(6);
+}
+
+function validPhone(p){ const d = String(p).replace(/\D/g,''); return d.length >= 9 && d.length <= 10; }
+
+function getBrand(selId, otherId){
+  const v = $(selId).value;
+  if(!v) return '';
+  return /อื่น/.test(v) ? ($(otherId).value.trim() || 'อื่น ๆ') : v;
+}
 
 async function submitRegister(){
   const name  = $('f-name').value.trim();
@@ -454,7 +509,14 @@ async function submitRegister(){
   $('f-name').classList.remove('err'); $('f-phone').classList.remove('err');
 
   if(!name){ $('f-name').classList.add('err'); err.textContent='กรุณากรอกชื่อ'; err.classList.add('on'); return; }
-  if(!validPhone(phone)){ $('f-phone').classList.add('err'); err.textContent='กรุณากรอกเบอร์โทรให้ถูกต้อง'; err.classList.add('on'); return; }
+  if(!validPhone(phone)){ $('f-phone').classList.add('err'); err.textContent='กรุณากรอกเบอร์โทรให้ครบ'; err.classList.add('on'); return; }
+  if(!chosenStatus){ err.textContent='กรุณาเลือกว่าคุณคือใคร'; err.classList.add('on'); return; }
+
+  const brandSweet = getBrand('f-brand-sweet','f-brand-sweet-other');
+  const brandPlain = getBrand('f-brand-plain','f-brand-plain-other');
+  if(/เจ้าของร้าน/.test(chosenStatus) && (!brandSweet || !brandPlain)){
+    err.textContent = 'กรุณาเลือกยี่ห้อข้นหวานและข้นจืดที่ใช้อยู่'; err.classList.add('on'); return;
+  }
   if(!$('f-consent').checked){ err.textContent='กรุณาติ๊กยินยอมให้เก็บข้อมูลก่อน'; err.classList.add('on'); return; }
   err.classList.remove('on');
 
@@ -468,7 +530,7 @@ async function submitRegister(){
     shopName:  $('f-shop').value.trim(),
     shopType:  $('f-shoptype').value,
     dailyCups: $('f-cups').value,
-    currentBrand: $('f-brand').value.trim(),
+    brandSweet, brandPlain,
     consent:   true,
     createdAt: new Date().toISOString()
   };
@@ -520,8 +582,10 @@ function gotoRecipes(){
 /* ล้างข้อมูลคนเดิม เริ่มลงทะเบียนคนใหม่ */
 function newLead(){
   me = null; LS.set('me', null); lastSig = ''; chosenStatus = '';
-  ['f-name','f-phone','f-line','f-shop','f-brand'].forEach(id=> $(id).value = '');
+  ['f-name','f-phone','f-line','f-shop','f-brand-sweet-other','f-brand-plain-other'].forEach(id=> $(id).value = '');
   $('f-shoptype').value = ''; $('f-cups').value = '';
+  $('f-brand-sweet').value = ''; $('f-brand-plain').value = '';
+  $('f-brand-sweet-other').style.display = 'none'; $('f-brand-plain-other').style.display = 'none';
   if(!urlVenue) $('f-venue').value = '';
   $('f-consent').checked = false;
   $('f-status').querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
@@ -767,13 +831,19 @@ function renderAdmin(){
   const rc = {}; views.forEach(v=>{ const k = v.recipeName||v.recipeId||'—'; rc[k]=(rc[k]||0)+1; });
   bars($('a-recipe-bars'), rc);
 
+  const bs = {}, bp = {};
+  rows.forEach(l=>{ if(l.brandSweet) bs[l.brandSweet]=(bs[l.brandSweet]||0)+1;
+                    if(l.brandPlain) bp[l.brandPlain]=(bp[l.brandPlain]||0)+1; });
+  bars($('a-brand-sweet'), bs);
+  bars($('a-brand-plain'), bp);
+
   const cs = calcs.filter(c=>c.costPerCup>0);
   $('a-avgcost').textContent  = cs.length ? baht(cs.reduce((s,c)=>s+c.costPerCup,0)/cs.length) : '—';
   const ps = calcs.filter(c=>c.sellPrice>0);
   $('a-avgprice').textContent = ps.length ? baht(ps.reduce((s,c)=>s+c.sellPrice,0)/ps.length) : '—';
 
   $('a-table').innerHTML =
-    `<thead><tr><th>วันที่</th><th>ชื่อ</th><th>เบอร์</th><th>จุด</th><th>สถานะ</th><th>ร้าน</th><th>ยอด/วัน</th></tr></thead><tbody>` +
+    `<thead><tr><th>วันที่</th><th>ชื่อ</th><th>เบอร์</th><th>จุด</th><th>สถานะ</th><th>ร้าน</th><th>ยอด/วัน</th><th>ข้นหวาน</th><th>ข้นจืด</th></tr></thead><tbody>` +
     (rows.length ? rows.map(l=>`<tr>
         <td>${esc((l.createdAt||'').slice(0,10))}</td>
         <td>${esc(l.name)}</td>
@@ -782,19 +852,21 @@ function renderAdmin(){
         <td>${esc(l.status||'')}</td>
         <td>${esc(l.shopName||'')}</td>
         <td>${esc(l.dailyCups||'')}</td>
+        <td>${esc(l.brandSweet||'')}</td>
+        <td>${esc(l.brandPlain||'')}</td>
       </tr>`).join('')
-      : `<tr><td colspan="7" style="color:var(--muted);padding:18px 8px">ยังไม่มีข้อมูล</td></tr>`) +
+      : `<tr><td colspan="9" style="color:var(--muted);padding:18px 8px">ยังไม่มีข้อมูล</td></tr>`) +
     `</tbody>`;
 }
 
 function downloadCSV(){
   const rows = filtered();
-  const head = ['วันที่','เวลา','ชื่อ','เบอร์','LINE','จุด','สถานะ','ชื่อร้าน','ประเภทร้าน','ยอดต่อวัน','ยี่ห้อที่ใช้'];
+  const head = ['วันที่','เวลา','ชื่อ','เบอร์','LINE','จุด','สถานะ','ชื่อร้าน','ประเภทร้าน','ยอดต่อวัน','ข้นหวานที่ใช้','ข้นจืดที่ใช้'];
   const esc2 = s => `"${String(s==null?'':s).replace(/"/g,'""')}"`;
   const body = rows.map(l=>{
     const d = new Date(l.createdAt||Date.now());
     return [d.toLocaleDateString('th-TH'), d.toLocaleTimeString('th-TH'),
-      l.name,l.phone,l.line,l.venue,l.status,l.shopName,l.shopType,l.dailyCups,l.currentBrand].map(esc2).join(',');
+      l.name,l.phone,l.line,l.venue,l.status,l.shopName,l.shopType,l.dailyCups,l.brandSweet,l.brandPlain].map(esc2).join(',');
   });
   const csv = '﻿' + [head.map(esc2).join(','), ...body].join('\r\n');
   const a = document.createElement('a');
@@ -812,7 +884,8 @@ $('btn-submit').onclick = submitRegister;
 $('go-admin-1').onclick = e=>{ e.preventDefault(); show('s-admin'); };
 $('go-admin-2').onclick = ()=> show('s-admin');
 $('btn-back').onclick   = gotoRecipes;
-$('btn-admin-back').onclick = ()=> show(me ? 's-recipes' : 's-register');
+$('btn-admin-back').onclick = ()=> me ? gotoRecipes() : show('s-register');
+$('btn-admin-home').onclick = newLead;
 
 $('btn-add-ing').onclick  = ()=>{ ings.push({name:'',qty:0,unit:'กรัม',packPrice:0,packSize:1000}); renderIngs(); calc(); };
 $('btn-add-pack').onclick = ()=>{ packs.push({name:'',qty:1,price:0}); renderPacks(); calc(); };
