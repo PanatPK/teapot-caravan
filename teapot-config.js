@@ -16,12 +16,12 @@ const TEAPOT_CONFIG = {
      Firebase Console > Project settings > Your apps > Web app > SDK setup
      ถ้ายังไม่ใส่ เว็บจะทำงานได้ปกติแต่เก็บข้อมูลไว้ในเครื่องอย่างเดียว   */
   firebase: {
-    apiKey: "AIzaSyB6T-lQHXiIeafgPBwLqLQa0odllYNh87w",
-  authDomain: "teapot-caravan.firebaseapp.com",
-  projectId: "teapot-caravan",
-  storageBucket: "teapot-caravan.firebasestorage.app",
-  messagingSenderId: "426547707687",
-  appId: "1:426547707687:web:6c6ad1109cbc79ceaa3302"
+    apiKey: '',
+    authDomain: '',
+    projectId: '',
+    storageBucket: '',
+    messagingSenderId: '',
+    appId: ''
   },
 
   /* ชื่อ collection ใน Firestore */
@@ -108,6 +108,8 @@ const TEAPOT_CONFIG = {
   ],
 
   /* ---------- 8. สูตรน้ำชง ----------
+     units: ใส่เองได้ถ้าส่วนผสมนั้นควรมีหน่วยเฉพาะ เช่น น้ำแข็งที่ซื้อเป็นถุง
+            ไม่ใส่ ระบบจะให้เลือก กรัม กับ มล.
      image: ใส่ชื่อไฟล์รูปที่อัปไว้ใน repo เช่น 'img/thai-tea.jpg'
             แนะนำสัดส่วน 16:10 กว้างราว 800px ไฟล์ไม่เกิน 200KB ต่อรูป
             เว้นว่างไว้ ระบบจะแสดงป้ายขนาดแก้วแทนรูป
@@ -136,7 +138,7 @@ const TEAPOT_CONFIG = {
         { name: 'ทีพอท ข้นหวาน',    qty: 25,  unit: 'กรัม', packPrice: 55,  packSize: 1000 },
         { name: 'ทีพอท ข้นจืด',     qty: 20,  unit: 'กรัม', packPrice: 60,  packSize: 1000 },
         { name: 'น้ำตาลทราย',       qty: 10,  unit: 'กรัม', packPrice: 25,  packSize: 1000 },
-        { name: 'น้ำแข็ง (ซื้อเป็นถุง)', qty: 250, unit: 'กรัม', packPrice: 25, packSize: 5000 }
+        { name: 'น้ำแข็ง', qty: 250, unit: 'กรัม', packPrice: 25, packSize: 5000, units: ['กรัม','ถุง','กระสอบ','ถัง'] }
       ]
     },
     {
@@ -159,7 +161,7 @@ const TEAPOT_CONFIG = {
         { name: 'ผงชาใต้',          qty: 18,  unit: 'กรัม', packPrice: 160, packSize: 1000 },
         { name: 'ทีพอท ข้นหวาน',    qty: 35,  unit: 'กรัม', packPrice: 55,  packSize: 1000 },
         { name: 'ทีพอท ข้นจืด',     qty: 25,  unit: 'กรัม', packPrice: 60,  packSize: 1000 },
-        { name: 'น้ำแข็ง (ซื้อเป็นถุง)', qty: 220, unit: 'กรัม', packPrice: 25, packSize: 5000 }
+        { name: 'น้ำแข็ง', qty: 220, unit: 'กรัม', packPrice: 25, packSize: 5000, units: ['กรัม','ถุง','กระสอบ','ถัง'] }
       ]
     },
     {
@@ -181,7 +183,7 @@ const TEAPOT_CONFIG = {
         { name: 'ผงชาไทย',          qty: 12,  unit: 'กรัม', packPrice: 180, packSize: 1000 },
         { name: 'ทีพอท ข้นหวาน',    qty: 30,  unit: 'กรัม', packPrice: 55,  packSize: 1000 },
         { name: 'ทีพอท ข้นจืด',     qty: 30,  unit: 'กรัม', packPrice: 60,  packSize: 1000 },
-        { name: 'น้ำแข็ง (ซื้อเป็นถุง)', qty: 250, unit: 'กรัม', packPrice: 25, packSize: 5000 }
+        { name: 'น้ำแข็ง', qty: 250, unit: 'กรัม', packPrice: 25, packSize: 5000, units: ['กรัม','ถุง','กระสอบ','ถัง'] }
       ]
     },
     {
@@ -203,7 +205,7 @@ const TEAPOT_CONFIG = {
         { name: 'ทีพอท ข้นหวาน',    qty: 25,  unit: 'กรัม', packPrice: 55,  packSize: 1000 },
         { name: 'ทีพอท ข้นจืด',     qty: 25,  unit: 'กรัม', packPrice: 60,  packSize: 1000 },
         { name: 'น้ำตาลทราย',       qty: 8,   unit: 'กรัม', packPrice: 25,  packSize: 1000 },
-        { name: 'น้ำแข็ง (ซื้อเป็นถุง)', qty: 250, unit: 'กรัม', packPrice: 25, packSize: 5000 }
+        { name: 'น้ำแข็ง', qty: 250, unit: 'กรัม', packPrice: 25, packSize: 5000, units: ['กรัม','ถุง','กระสอบ','ถัง'] }
       ]
     },
     {
@@ -224,7 +226,7 @@ const TEAPOT_CONFIG = {
         { name: 'น้ำแดงสาลี่',      qty: 25,  unit: 'มล.',  packPrice: 45,  packSize: 710 },
         { name: 'ทีพอท ข้นหวาน',    qty: 25,  unit: 'กรัม', packPrice: 55,  packSize: 1000 },
         { name: 'ทีพอท ข้นจืด',     qty: 40,  unit: 'กรัม', packPrice: 60,  packSize: 1000 },
-        { name: 'น้ำแข็ง (ซื้อเป็นถุง)', qty: 250, unit: 'กรัม', packPrice: 25, packSize: 5000 }
+        { name: 'น้ำแข็ง', qty: 250, unit: 'กรัม', packPrice: 25, packSize: 5000, units: ['กรัม','ถุง','กระสอบ','ถัง'] }
       ]
     },
     {
@@ -246,7 +248,7 @@ const TEAPOT_CONFIG = {
         { name: 'ผงชาเขียว',        qty: 12,  unit: 'กรัม', packPrice: 250, packSize: 500 },
         { name: 'ทีพอท ข้นหวาน',    qty: 25,  unit: 'กรัม', packPrice: 55,  packSize: 1000 },
         { name: 'ทีพอท ข้นจืด',     qty: 30,  unit: 'กรัม', packPrice: 60,  packSize: 1000 },
-        { name: 'น้ำแข็ง (ซื้อเป็นถุง)', qty: 250, unit: 'กรัม', packPrice: 25, packSize: 5000 }
+        { name: 'น้ำแข็ง', qty: 250, unit: 'กรัม', packPrice: 25, packSize: 5000, units: ['กรัม','ถุง','กระสอบ','ถัง'] }
       ]
     }
   ]

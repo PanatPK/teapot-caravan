@@ -46,6 +46,7 @@ body{
 .card .sub{margin:0 0 16px;font-size:13.5px;color:var(--muted)}
 label{display:block;font-size:13.5px;font-weight:600;margin:14px 0 6px}
 label .opt{font-weight:400;color:var(--muted)}
+textarea{resize:vertical;min-height:80px;line-height:1.5}
 input,select,textarea{
   width:100%;font:inherit;font-size:16px;padding:11px 13px;border:1px solid var(--line);
   border-radius:11px;background:#fff;color:var(--ink);outline:none;transition:border-color .15s,box-shadow .15s
@@ -100,17 +101,17 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 .ing .r1 b{flex:0 0 auto;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--navy)}
 .ing .del{flex:0 0 auto;border:0;background:#F3F5F8;color:var(--muted);width:24px;height:24px;
   border-radius:7px;cursor:pointer;font-size:15px;line-height:1;padding:0}
-.ing .r2{display:grid;grid-template-columns:64px 70px 1fr 1fr;gap:6px}
-.ing .r2.p2{grid-template-columns:64px 1fr}
+.ing .r2{display:grid;grid-template-columns:60px 76px 1fr;gap:6px}
 .ing .r2 input,.ing .r2 select{padding:7px 8px;font-size:14.5px;border-radius:8px;width:100%}
 .ing .r2 select{padding-right:20px;background-position:right 6px center}
-.ing .r2 .pfx{position:relative}
-.ing .r2 .pfx input{padding-left:19px}
-.ing .r2 .pfx s{position:absolute;left:8px;top:50%;transform:translateY(-50%);
-  font-size:12px;color:var(--muted);text-decoration:none;pointer-events:none}
-.iglg{display:grid;grid-template-columns:64px 70px 1fr 1fr;gap:6px;font-size:10.5px;
+.buy{display:flex;align-items:center;gap:3px;border:1px solid var(--line);
+  border-radius:8px;padding:0 9px;background:#fff;min-width:0}
+.buy:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(58,70,200,.13)}
+.buy input{border:0;padding:7px 0;background:transparent;text-align:left}
+.buy input:focus{box-shadow:none}
+.buy u{text-decoration:none;color:var(--muted);font-size:12.5px;flex:0 0 auto}
+.iglg{display:grid;grid-template-columns:60px 76px 1fr;gap:6px;font-size:10.5px;
   color:var(--muted);padding:0 11px 6px}
-.iglg.p2{grid-template-columns:64px 1fr}
 .addbtn{width:100%;border:1.5px dashed var(--line);background:#fff;color:var(--navy);border-radius:12px;
   padding:12px;font:inherit;font-size:14.5px;font-weight:600;cursor:pointer}
 .sumline{display:flex;justify-content:space-between;padding:7px 0;font-size:14.5px}
@@ -357,7 +358,62 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <p class="tot" id="q-note"></p>
         <button class="btn ghost sm" id="btn-clearq" style="display:none">ล้างรายการค้าง</button>
       </div>
+
+      <div class="card">
+        <h2>แก้ไขเนื้อหา</h2>
+        <p class="sub">แก้สูตร ราคา ตารางจุด ยี่ห้อ และข้อความ โดยไม่ต้องแตะไฟล์</p>
+        <button class="btn" id="btn-settings">เปิดหน้าแก้ไข</button>
+      </div>
     </div>
+  </div>
+</section>
+
+<!-- ==================== 5. แก้ไขเนื้อหา ==================== -->
+<section id="s-settings" class="screen">
+  <div class="topbar"><button id="set-back">‹ กลับ</button><div class="t">แก้ไขเนื้อหา</div></div>
+  <div class="wrap">
+    <div class="offline" id="set-warn" style="display:none"></div>
+
+    <div class="card">
+      <h2>ข้อความหน้าแรก</h2>
+      <label>คำโปรยใต้โลโก้</label>
+      <input id="set-sub" type="text">
+      <label>ข้อความยินยอม PDPA</label>
+      <textarea id="set-pdpa" rows="5"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>ตารางจุดออกบูธ</h2>
+      <p class="sub">ระบบใช้วันที่กับเวลาเลือกจุดให้อัตโนมัติ วันไหนมีจุดเดียวเว้นช่องเวลาไว้ได้</p>
+      <div id="set-sched"></div>
+      <button class="addbtn" id="set-add-sched">+ เพิ่มจุด</button>
+    </div>
+
+    <div class="card">
+      <h2>ยี่ห้อที่ให้เลือก</h2>
+      <p class="sub">บรรทัดละหนึ่งยี่ห้อ ต้องมีบรรทัดที่มีคำว่า "อื่น" ไว้เสมอ</p>
+      <label>ข้นหวาน</label>
+      <textarea id="set-bsweet" rows="7"></textarea>
+      <label>ข้นจืด</label>
+      <textarea id="set-bplain" rows="7"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>บรรจุภัณฑ์</h2>
+      <div id="set-pack"></div>
+      <button class="addbtn" id="set-add-pack">+ เพิ่มรายการ</button>
+    </div>
+
+    <div class="card">
+      <h2>สูตรน้ำชง</h2>
+      <p class="sub">กดชื่อสูตรเพื่อเปิดดูและแก้ไข</p>
+      <div id="set-recipes"></div>
+      <button class="addbtn" id="set-add-recipe">+ เพิ่มสูตร</button>
+    </div>
+
+    <button class="btn" id="set-save">บันทึกขึ้นเซิร์ฟเวอร์</button>
+    <button class="btn ghost sm" id="set-revert">กู้ค่าจากไฟล์ teapot-config.js</button>
+    <p class="foot">บันทึกแล้วทุกคนที่เปิดเว็บจะเห็นทันที ไม่ต้องอัปไฟล์</p>
   </div>
 </section>
 
@@ -376,9 +432,13 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
    TEAPOT คาราวานคู่ชง — app
    =================================================================== */
 /* config ประกาศด้วย const จะไม่ติดอยู่บน window ต้องรับทั้งสองทาง */
-const CFG = (typeof TEAPOT_CONFIG !== 'undefined' && TEAPOT_CONFIG)
+const FILE_CFG = (typeof TEAPOT_CONFIG !== 'undefined' && TEAPOT_CONFIG)
             ? TEAPOT_CONFIG
             : (window.TEAPOT_CONFIG || {});
+/* เนื้อหาที่แก้ได้จากหลังบ้าน ส่วนที่เหลือ (firebase, รหัส, ชื่อ collection) อยู่ในไฟล์เท่านั้น */
+const EDITABLE = ['brand','schedule','venues','statusOptions','shopTypeOptions',
+                  'dailyCupsOptions','brandOptions','pdpaText','packaging','recipes'];
+let CFG = Object.assign({}, FILE_CFG);
 const $  = id => document.getElementById(id);
 
 /* ถ้าโหลดไฟล์ตั้งค่าไม่เจอ ให้บอกชัด ๆ แทนที่จะปล่อยฟอร์มว่าง */
@@ -408,7 +468,8 @@ function toast(msg){ const p = $('pill'); p.textContent = msg; p.classList.add('
 /* ===================================================================
    FIREBASE (optional) + offline queue
    =================================================================== */
-const COL = Object.assign({leads:'teapot_leads',calcs:'teapot_calcs',views:'teapot_views'}, CFG.collections||{});
+const COL = Object.assign({leads:'teapot_leads',calcs:'teapot_calcs',views:'teapot_views',
+                           settings:'teapot_settings'}, CFG.collections||{});
 let db = null, FS = null, auth = null, AU = null;
 
 async function initFirebase(){
@@ -460,6 +521,26 @@ async function flushQueue(){
 }
 window.addEventListener('online', flushQueue);
 
+async function loadRemoteConfig(){
+  if(!db) return false;
+  try{
+    const snap = await FS.getDoc(FS.doc(db, COL.settings, 'config'));
+    if(!snap.exists()) return false;
+    const d = snap.data();
+    EDITABLE.forEach(k=>{ if(d[k] !== undefined) CFG[k] = d[k]; });
+    recomputeVenues();
+    buildRegister();
+    if($('s-recipes').classList.contains('on')) gotoRecipes();
+    return true;
+  }catch(e){ console.warn('โหลดเนื้อหาจาก Firestore ไม่สำเร็จ ใช้ค่าจากไฟล์แทน', e); return false; }
+}
+
+async function saveRemoteConfig(obj){
+  if(!db) throw new Error('ยังไม่ได้ต่อ Firebase');
+  await FS.setDoc(FS.doc(db, COL.settings, 'config'),
+    Object.assign({}, obj, { updatedAt: new Date().toISOString() }));
+}
+
 /* ===================================================================
    SCREENS
    =================================================================== */
@@ -485,11 +566,16 @@ function venueToday(){
   const hit = list.find(s=> hm >= (s.from||'00:00') && hm <= (s.to||'23:59'));
   return (hit || list[0]).venue || '';
 }
-const kiosk     = params.get('kiosk') === '1';   // แท็บเล็ตที่บูธ ไม่จำคนล่าสุด
-const autoVenue = PARAM_V || venueToday();       // ?v= ทับตารางได้เสมอ
-const VENUES    = (CFG.venues && CFG.venues.length)
-                  ? CFG.venues
-                  : [...new Set((CFG.schedule||[]).map(s=>s.venue))];
+const kiosk   = params.get('kiosk') === '1';     // แท็บเล็ตที่บูธ ไม่จำคนล่าสุด
+let autoVenue = '';                              // ?v= ทับตารางได้เสมอ
+let VENUES    = [];
+function recomputeVenues(){
+  autoVenue = PARAM_V || venueToday();
+  VENUES = (CFG.venues && CFG.venues.length)
+           ? CFG.venues
+           : [...new Set((CFG.schedule||[]).map(s=>s.venue))];
+}
+recomputeVenues();
 let me = LS.get('me', null);
 let chosenStatus = '';
 
@@ -689,7 +775,7 @@ function openRecipe(id, fresh){
 
   ings = (saved && saved.ings) ? saved.ings : (cur.ingredients||[]).map(i=>{
     const remembered = pb[i.name];
-    return { name:i.name, qty:i.qty, unit:i.unit,
+    return { name:i.name, qty:i.qty, unit:i.unit, units:i.units,
              packPrice: remembered ? remembered.packPrice : i.packPrice,
              packSize:  remembered ? remembered.packSize  : i.packSize };
   });
@@ -719,10 +805,11 @@ function openRecipe(id, fresh){
                     createdAt: new Date().toISOString() });
 }
 
-const UNITS      = ['กรัม','มล.','ชิ้น'];
-const PACK_UNITS = ['ใบ','ชิ้น','เส้น','ถุง'];
+const UNITS        = ['กรัม','มล.'];              /* ส่วนผสมทั่วไป */
+const UNITS_CUSTOM = ['กรัม','มล.','ชิ้น'];        /* รายการที่ลูกค้าเพิ่มเอง */
+const PACK_UNITS   = ['ใบ','ชิ้น','เส้น'];          /* บรรจุภัณฑ์ */
 function unitOpts(u, set){
-  const base = set || UNITS;
+  const base = set && set.length ? set : UNITS;
   const list = base.includes(u) ? base.slice() : [u||base[0], ...base];
   return list.map(x=>`<option${x===u?' selected':''}>${esc(x)}</option>`).join('');
 }
@@ -745,9 +832,11 @@ function rowHTML(r, i, outKey, units){
         </div>
         <div class="r2">
           <input type="number" inputmode="decimal" value="${r.qty}" data-k="qty" data-i="${i}">
-          <select data-k="unit" data-i="${i}">${unitOpts(r.unit, units)}</select>
-          <span class="pfx"><s>฿</s><input type="number" inputmode="decimal" value="${r.packPrice}" data-k="packPrice" data-i="${i}"></span>
-          <span class="pfx"><s>/</s><input type="number" inputmode="decimal" value="${r.packSize}" data-k="packSize" data-i="${i}"></span>
+          <select data-k="unit" data-i="${i}">${unitOpts(r.unit, r.units || units)}</select>
+          <div class="buy">
+            <u>฿</u><input type="number" inputmode="decimal" value="${r.packPrice}" data-k="packPrice" data-i="${i}">
+            <u>/</u><input type="number" inputmode="decimal" value="${r.packSize}" data-k="packSize" data-i="${i}">
+          </div>
         </div>
       </div>`;
 }
@@ -755,7 +844,7 @@ function rowHTML(r, i, outKey, units){
 function renderIngs(){
   const box = $('ing-list');
   box.innerHTML =
-    `<div class="iglg"><span>ใช้/แก้ว</span><span>หน่วย</span><span>ราคาที่ซื้อ</span><span>ได้ปริมาณ</span></div>` +
+    `<div class="iglg"><span>ใช้/แก้ว</span><span>หน่วย</span><span>ราคาที่ซื้อ ฿ / ได้ปริมาณ</span></div>` +
     ings.map((ing,i)=> rowHTML(ing, i, 'out', UNITS)).join('');
 
   const onEdit = e=>{
@@ -775,7 +864,7 @@ function renderIngs(){
 function renderPacks(){
   const box = $('pack-list');
   box.innerHTML =
-    `<div class="iglg"><span>ใช้/แก้ว</span><span>หน่วย</span><span>ราคาที่ซื้อ</span><span>ได้จำนวน</span></div>` +
+    `<div class="iglg"><span>ใช้/แก้ว</span><span>หน่วย</span><span>ราคาที่ซื้อ ฿ / ได้จำนวน</span></div>` +
     packs.map((p,i)=> rowHTML(p, i, 'pout', PACK_UNITS)).join('');
 
   const onEdit = e=>{
@@ -1096,9 +1185,190 @@ function downloadCSV(){
   a.click(); URL.revokeObjectURL(a.href);
 }
 
+
+/* ===================================================================
+   5. แก้ไขเนื้อหา (หลังบ้าน)
+   =================================================================== */
+let ed = null, openRecipeIdx = -1;
+
+const clone = o => JSON.parse(JSON.stringify(o));
+const lines = s => String(s||'').split('\n').map(x=>x.trim()).filter(Boolean);
+
+function openSettings(fromFile){
+  const src = fromFile ? FILE_CFG : CFG;
+  ed = {
+    brand:        clone(src.brand || {}),
+    pdpaText:     src.pdpaText || '',
+    schedule:     clone(src.schedule || []),
+    brandOptions: clone(src.brandOptions || {sweet:[],plain:[]}),
+    packaging:    clone(src.packaging || []),
+    recipes:      clone(src.recipes || [])
+  };
+  $('set-warn').style.display = db ? 'none' : 'block';
+  $('set-warn').textContent   = 'ยังไม่ได้ต่อ Firebase หน้านี้แก้ได้แต่บันทึกไม่ได้';
+  $('set-sub').value    = ed.brand.subtitle || '';
+  $('set-pdpa').value   = ed.pdpaText;
+  $('set-bsweet').value = (ed.brandOptions.sweet||[]).join('\n');
+  $('set-bplain').value = (ed.brandOptions.plain||[]).join('\n');
+  openRecipeIdx = -1;
+  drawSched(); drawPack(); drawRecipes();
+  show('s-settings');
+}
+
+/* ---- ตารางจุด ---- */
+function drawSched(){
+  const box = $('set-sched');
+  box.innerHTML = ed.schedule.map((s,i)=>`
+    <div class="ing">
+      <div class="r1">
+        <input value="${esc(s.venue||'')}" data-s="venue" data-i="${i}" placeholder="ชื่อจุด">
+        <button class="del" data-dels="${i}" title="ลบ">×</button>
+      </div>
+      <div class="r2" style="grid-template-columns:1fr 70px 70px">
+        <input type="date" value="${esc(s.date||'')}" data-s="date" data-i="${i}">
+        <input value="${esc(s.from||'')}" data-s="from" data-i="${i}" placeholder="เริ่ม">
+        <input value="${esc(s.to||'')}" data-s="to" data-i="${i}" placeholder="จบ">
+      </div>
+    </div>`).join('') || '<p class="sub" style="margin:0">ยังไม่มีจุด</p>';
+  box.oninput = e=>{ const i=e.target.dataset.i, k=e.target.dataset.s;
+    if(i!=null&&k) ed.schedule[i][k] = e.target.value; };
+  box.onclick = e=>{ const d=e.target.dataset.dels;
+    if(d!=null){ ed.schedule.splice(+d,1); drawSched(); } };
+}
+
+/* ---- บรรจุภัณฑ์ ---- */
+function drawPack(){
+  const box = $('set-pack');
+  box.innerHTML = `<div class="iglg"><span>ใช้/แก้ว</span><span>หน่วย</span><span>ราคาที่ซื้อ ฿ / ได้จำนวน</span></div>` +
+    ed.packaging.map((p,i)=>`
+      <div class="ing">
+        <div class="r1">
+          <input value="${esc(p.name||'')}" data-p="name" data-i="${i}" placeholder="ชื่อรายการ">
+          <button class="del" data-delp="${i}" title="ลบ">×</button>
+        </div>
+        <div class="r2">
+          <input type="number" inputmode="decimal" value="${p.qty??1}" data-p="qty" data-i="${i}">
+          <input value="${esc(p.unit||'ใบ')}" data-p="unit" data-i="${i}">
+          <div class="buy"><u>฿</u><input type="number" value="${p.packPrice??0}" data-p="packPrice" data-i="${i}">
+            <u>/</u><input type="number" value="${p.packSize??1}" data-p="packSize" data-i="${i}"></div>
+        </div>
+      </div>`).join('');
+  box.oninput = e=>{ const i=e.target.dataset.i, k=e.target.dataset.p;
+    if(i!=null&&k) ed.packaging[i][k] = (k==='name'||k==='unit') ? e.target.value : num(e.target.value); };
+  box.onclick = e=>{ const d=e.target.dataset.delp;
+    if(d!=null){ ed.packaging.splice(+d,1); drawPack(); } };
+}
+
+/* ---- สูตร ---- */
+function drawRecipes(){
+  const box = $('set-recipes');
+  box.innerHTML = ed.recipes.map((r,i)=>{
+    if(i !== openRecipeIdx){
+      return `<div class="rcard" data-open="${i}" style="margin-bottom:8px">
+        <div class="body"><b>${esc(r.name||'(ไม่มีชื่อ)')}</b>
+          <small>${(r.ingredients||[]).length} ส่วนผสม · ${(r.steps||[]).length} ขั้นตอน</small></div>
+        <div class="go">›</div></div>`;
+    }
+    return `<div class="ing" style="padding:14px;margin-bottom:10px">
+      <div class="r1" style="margin-bottom:12px">
+        <input value="${esc(r.name||'')}" data-r="name" data-i="${i}" placeholder="ชื่อสูตร" style="font-size:16px">
+        <button class="del" data-delr="${i}" title="ลบสูตร">×</button>
+        <button class="del" data-close="1" title="ย่อ">▴</button>
+      </div>
+      <div class="r2" style="grid-template-columns:90px 1fr">
+        <input value="${esc(r.cup||'')}" data-r="cup" data-i="${i}" placeholder="22 oz">
+        <input value="${esc(r.image||'')}" data-r="image" data-i="${i}" placeholder="img/ชื่อรูป.jpg">
+      </div>
+      <label style="margin-top:12px">คำโปรย</label>
+      <textarea rows="2" data-r="note" data-i="${i}">${esc(r.note||'')}</textarea>
+      <label>ขั้นตอนการชง (บรรทัดละหนึ่งขั้น)</label>
+      <textarea rows="9" data-r="steps" data-i="${i}">${esc((r.steps||[]).join('\n'))}</textarea>
+      <label>ส่วนผสม</label>
+      <div class="iglg"><span>ใช้/แก้ว</span><span>หน่วย</span><span>ราคาที่ซื้อ ฿ / ได้ปริมาณ</span></div>
+      ${(r.ingredients||[]).map((g,j)=>`
+        <div class="ing">
+          <div class="r1">
+            <input value="${esc(g.name||'')}" data-g="name" data-i="${i}" data-j="${j}" placeholder="ชื่อส่วนผสม">
+            <button class="del" data-delg="${j}" data-i="${i}" title="ลบ">×</button>
+          </div>
+          <div class="r2">
+            <input type="number" value="${g.qty??0}" data-g="qty" data-i="${i}" data-j="${j}">
+            <input value="${esc(g.unit||'กรัม')}" data-g="unit" data-i="${i}" data-j="${j}">
+            <div class="buy"><u>฿</u><input type="number" value="${g.packPrice??0}" data-g="packPrice" data-i="${i}" data-j="${j}">
+              <u>/</u><input type="number" value="${g.packSize??1}" data-g="packSize" data-i="${i}" data-j="${j}"></div>
+          </div>
+          <input style="margin-top:6px;font-size:13px;padding:6px 9px"
+                 value="${esc((g.units||[]).join(', '))}" data-g="units" data-i="${i}" data-j="${j}"
+                 placeholder="หน่วยที่ให้เลือก คั่นด้วย , (เว้นว่าง = กรัม, มล.)">
+        </div>`).join('')}
+      <button class="addbtn" data-addg="${i}">+ เพิ่มส่วนผสม</button>
+    </div>`;
+  }).join('');
+
+  box.oninput = e=>{
+    const t = e.target, i = t.dataset.i;
+    if(i == null) return;
+    if(t.dataset.r){
+      const k = t.dataset.r;
+      ed.recipes[i][k] = (k === 'steps') ? lines(t.value) : t.value;
+    }else if(t.dataset.g){
+      const j = t.dataset.j, k = t.dataset.g;
+      if(k === 'units') ed.recipes[i].ingredients[j].units = t.value.split(',').map(s=>s.trim()).filter(Boolean);
+      else ed.recipes[i].ingredients[j][k] = (k==='name'||k==='unit') ? t.value : num(t.value);
+    }
+  };
+  box.onclick = e=>{
+    const hit = e.target.closest('[data-open],[data-close],[data-delr],[data-delg],[data-addg]');
+    if(!hit) return;
+    const d = hit.dataset;
+    if(d.open != null){ openRecipeIdx = +d.open; drawRecipes(); }
+    else if(d.close){ openRecipeIdx = -1; drawRecipes(); }
+    else if(d.delr != null){ if(confirm('ลบสูตรนี้?')){ ed.recipes.splice(+d.delr,1); openRecipeIdx=-1; drawRecipes(); } }
+    else if(d.delg != null){ ed.recipes[+d.i].ingredients.splice(+d.delg,1); drawRecipes(); }
+    else if(d.addg != null){ (ed.recipes[+d.addg].ingredients ||= [])
+        .push({name:'',qty:0,unit:'กรัม',packPrice:0,packSize:1000}); drawRecipes(); }
+  };
+}
+
+function collectSettings(){
+  ed.brand.subtitle  = $('set-sub').value.trim();
+  ed.pdpaText        = $('set-pdpa').value.trim();
+  ed.brandOptions    = { sweet: lines($('set-bsweet').value), plain: lines($('set-bplain').value) };
+  ed.recipes.forEach((r,i)=>{ if(!r.id) r.id = 'r' + Date.now() + i; });
+  return {
+    brand: ed.brand, pdpaText: ed.pdpaText, schedule: ed.schedule,
+    brandOptions: ed.brandOptions, packaging: ed.packaging, recipes: ed.recipes
+  };
+}
+
 /* ===================================================================
    WIRE UP
    =================================================================== */
+$('btn-settings').onclick = ()=> openSettings(false);
+$('set-back').onclick     = ()=> show('s-admin');
+$('set-add-sched').onclick = ()=>{ ed.schedule.push({date:'',venue:''}); drawSched(); };
+$('set-add-pack').onclick  = ()=>{ ed.packaging.push({name:'',qty:1,unit:'ใบ',packPrice:0,packSize:1}); drawPack(); };
+$('set-add-recipe').onclick = ()=>{
+  ed.recipes.push({id:'r'+Date.now(), name:'สูตรใหม่', cup:'22 oz', image:'', note:'', steps:[], ingredients:[]});
+  openRecipeIdx = ed.recipes.length-1; drawRecipes();
+};
+$('set-revert').onclick = ()=>{ if(confirm('ทิ้งที่แก้ไว้ แล้วดึงค่าจากไฟล์กลับมา?')) openSettings(true); };
+$('set-save').onclick = async ()=>{
+  const btn = $('set-save'); btn.disabled = true; btn.textContent = 'กำลังบันทึก…';
+  try{
+    const data = collectSettings();
+    await saveRemoteConfig(data);
+    EDITABLE.forEach(k=>{ if(data[k] !== undefined) CFG[k] = data[k]; });
+    recomputeVenues(); buildRegister();
+    toast('บันทึกแล้ว ทุกคนเห็นทันที');
+  }catch(e){
+    toast(e.code === 'permission-denied'
+      ? 'ไม่มีสิทธิ์บันทึก ตรวจ Rules ของ teapot_settings'
+      : 'บันทึกไม่สำเร็จ ' + (e.code || e.message || ''));
+  }
+  btn.disabled = false; btn.textContent = 'บันทึกขึ้นเซิร์ฟเวอร์';
+};
+
 buildRegister();
 
 $('btn-submit').onclick = submitRegister;
@@ -1108,7 +1378,7 @@ $('btn-back').onclick   = gotoRecipes;
 $('btn-admin-back').onclick = ()=> me ? gotoRecipes() : show('s-register');
 $('btn-admin-home').onclick = newLead;
 
-$('btn-add-ing').onclick  = ()=>{ ings.push({name:'',qty:0,unit:'กรัม',packPrice:0,packSize:1000}); renderIngs(); calc(); };
+$('btn-add-ing').onclick  = ()=>{ ings.push({name:'',qty:0,unit:'กรัม',packPrice:0,packSize:1000,units:UNITS_CUSTOM}); renderIngs(); calc(); };
 $('btn-add-pack').onclick = ()=>{ packs.push({name:'',qty:1,unit:'ใบ',packPrice:0,packSize:1}); renderPacks(); calc(); };
 $('btn-save-img').onclick = saveResultImage;
 $('shot-close').onclick   = ()=> $('sheet').classList.remove('on');
@@ -1161,8 +1431,8 @@ $('btn-clearq').onclick = ()=>{
 };
 ['a-f-venue','a-f-status','a-f-from','a-f-to'].forEach(id=> $(id).onchange = renderAdmin);
 
-initFirebase().then(ok=>{
-  if(ok){ flushQueue(); }
+initFirebase().then(async ok=>{
+  if(ok){ flushQueue(); await loadRemoteConfig(); }
   else{
     $('email-field').style.display = 'none';
     $('gate-sub').textContent = 'ยังไม่ได้ต่อ Firebase — ใช้รหัสชั่วคราวดูข้อมูลในเครื่อง';
