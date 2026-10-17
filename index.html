@@ -140,6 +140,9 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 .tbl td{padding:9px 8px;border-bottom:1px solid #EEF2F6;vertical-align:top;white-space:nowrap}
 .tbl tr:last-child td{border-bottom:0}
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.rowdel{border:0;background:#FBE9E7;color:#B03A2E;width:24px;height:24px;border-radius:7px;
+  cursor:pointer;font-size:14px;line-height:1;padding:0}
+.danger{color:var(--red);border-color:var(--red)}
 .tag{display:inline-block;background:var(--blue-soft);color:var(--navy);border-radius:6px;padding:2px 7px;font-size:11px;white-space:nowrap}
 .filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .filters select,.filters input{padding:9px 11px;font-size:14px}
@@ -355,6 +358,9 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <p class="tot" id="a-more"></p>
         <button class="btn sm" id="btn-csv">ดาวน์โหลด CSV</button>
         <button class="btn ghost sm" id="btn-refresh">โหลดข้อมูลใหม่</button>
+        <button class="btn ghost sm" id="btn-del-filtered">ลบรายการที่แสดงอยู่</button>
+        <button class="btn ghost sm danger" id="btn-wipe">ล้างข้อมูลทั้งหมด</button>
+        <p class="tot">ลบแล้วกู้คืนไม่ได้ โหลด CSV เก็บไว้ก่อนถ้าไม่แน่ใจ</p>
         <p class="tot" id="q-note"></p>
         <button class="btn ghost sm" id="btn-clearq" style="display:none">ล้างรายการค้าง</button>
       </div>
@@ -1151,8 +1157,9 @@ function renderAdmin(){
 
   const shown = rows.slice(0, 50);
   $('a-table').innerHTML =
-    `<thead><tr><th>วันที่</th><th>ชื่อ</th><th>เบอร์</th><th>จุด</th><th>สถานะ</th><th>ร้าน</th><th>ยอด/วัน</th><th>ข้นหวาน</th><th>ข้นจืด</th></tr></thead><tbody>` +
+    `<thead><tr><th></th><th>วันที่</th><th>ชื่อ</th><th>เบอร์</th><th>จุด</th><th>สถานะ</th><th>ร้าน</th><th>ยอด/วัน</th><th>ข้นหวาน</th><th>ข้นจืด</th></tr></thead><tbody>` +
     (shown.length ? shown.map(l=>`<tr>
+        <td><button class="rowdel" data-row="${esc(l._id || l.localId || '')}" title="ลบแถวนี้">×</button></td>
         <td>${esc((l.createdAt||'').slice(0,10))}</td>
         <td>${esc(l.name)}</td>
         <td>${esc(l.phone)}</td>
@@ -1163,10 +1170,54 @@ function renderAdmin(){
         <td>${esc(l.brandSweet||'')}</td>
         <td>${esc(l.brandPlain||'')}</td>
       </tr>`).join('')
-      : `<tr><td colspan="9" style="color:var(--muted);padding:18px 8px">ยังไม่มีข้อมูล</td></tr>`) +
+      : `<tr><td colspan="10" style="color:var(--muted);padding:18px 8px">ยังไม่มีข้อมูล</td></tr>`) +
     `</tbody>`;
   $('a-more').textContent = rows.length > 50
     ? `แสดง 50 รายการล่าสุดจากทั้งหมด ${rows.length} รายการ ดาวน์โหลด CSV เพื่อดูครบ` : '';
+}
+
+/* ---------- ลบข้อมูล ---------- */
+async function deleteDocsIn(col, ids){
+  for(let i=0; i<ids.length; i+=400){
+    const batch = FS.writeBatch(db);
+    ids.slice(i, i+400).forEach(id=> batch.delete(FS.doc(db, col, id)));
+    await batch.commit();
+  }
+}
+
+async function removeLeads(list){
+  if(!list.length) return;
+  toast('กำลังลบ…');
+  try{
+    if(db) await deleteDocsIn(COL.leads, list.map(l=>l._id).filter(Boolean));
+    const gone = new Set(list.map(l=> l._id || l.localId));
+    LS.set('local_leads', LS.get('local_leads',[]).filter(l=> !gone.has(l._id || l.localId)));
+    toast('ลบ ' + list.length + ' รายการแล้ว');
+    await loadAdmin();
+  }catch(e){
+    toast(e.code === 'permission-denied'
+      ? 'รูลยังไม่อนุญาตให้ลบ ต้องแก้ allow delete เป็น isAdmin()'
+      : 'ลบไม่สำเร็จ ' + (e.code||''));
+  }
+}
+
+async function wipeEverything(){
+  toast('กำลังล้างข้อมูล…');
+  try{
+    if(db){
+      for(const col of [COL.leads, COL.calcs, COL.views]){
+        const snap = await FS.getDocs(FS.collection(db, col));
+        await deleteDocsIn(col, snap.docs.map(d=>d.id));
+      }
+    }
+    LS.set('local_leads',[]); LS.set('queue',[]); LS.set('rejected',[]);
+    toast('ล้างข้อมูลเรียบร้อย พร้อมเริ่มงานจริง');
+    await loadAdmin();
+  }catch(e){
+    toast(e.code === 'permission-denied'
+      ? 'รูลยังไม่อนุญาตให้ลบ ต้องแก้ allow delete เป็น isAdmin()'
+      : 'ล้างไม่สำเร็จ ' + (e.code||''));
+  }
 }
 
 function downloadCSV(){
@@ -1423,6 +1474,21 @@ $('btn-logout').onclick = async ()=>{
 $('f-pass').onkeydown = e=>{ if(e.key==='Enter') $('btn-pin').click(); };
 $('f-email').onkeydown = e=>{ if(e.key==='Enter') $('f-pass').focus(); };
 $('btn-csv').onclick = downloadCSV;
+$('a-table').onclick = e=>{
+  const id = e.target.dataset && e.target.dataset.row;
+  if(!id) return;
+  const l = leads.find(x=> (x._id||x.localId) === id);
+  if(l && confirm('ลบ "' + (l.name||'รายการนี้') + '" ออกถาวร?')) removeLeads([l]);
+};
+$('btn-del-filtered').onclick = ()=>{
+  const rows = filtered();
+  if(!rows.length) return toast('ไม่มีรายการให้ลบ');
+  if(confirm('ลบ ' + rows.length + ' รายการที่แสดงอยู่ตอนนี้ออกถาวร?')) removeLeads(rows);
+};
+$('btn-wipe').onclick = ()=>{
+  if(prompt('ล้างผู้ลงทะเบียน ตัวเลขต้นทุน และสถิติการเปิดสูตร ทั้งหมด\nพิมพ์คำว่า  ลบ  เพื่อยืนยัน') === 'ลบ')
+    wipeEverything();
+};
 $('btn-refresh').onclick = loadAdmin;
 $('btn-clearq').onclick = ()=>{
   LS.set('queue', []); LS.set('rejected', []);
