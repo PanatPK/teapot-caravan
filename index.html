@@ -215,13 +215,26 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <label>ขายได้ประมาณวันละกี่แก้ว <span class="opt">(ไม่บังคับ)</span></label>
         <select id="f-cups"></select>
 
-        <label>ข้นหวานที่ใช้อยู่</label>
-        <select id="f-brand-sweet"></select>
-        <input id="f-brand-sweet-other" type="text" placeholder="ระบุยี่ห้อ" style="display:none;margin-top:8px">
+      </div>
 
-        <label>ข้นจืดที่ใช้อยู่</label>
-        <select id="f-brand-plain"></select>
-        <input id="f-brand-plain-other" type="text" placeholder="ระบุยี่ห้อ" style="display:none;margin-top:8px">
+      <label>วันนี้มาแบบไหน</label>
+      <div class="chips" id="f-join"></div>
+
+      <div id="brand-block" style="display:none">
+        <label id="brand-label">ยี่ห้อที่นำมาแลก</label>
+        <select id="f-trade-brand"></select>
+        <input id="f-trade-other" type="text" placeholder="ระบุยี่ห้อ" style="display:none;margin-top:8px">
+
+        <div id="trade-only" style="display:none">
+          <label>นำมาเป็น</label>
+          <div class="chips" id="f-trade-type"></div>
+
+          <label>จำนวน</label>
+          <div class="row" style="grid-template-columns:1fr auto;align-items:center;gap:10px">
+            <input id="f-trade-qty" type="number" inputmode="numeric" min="0" value="0">
+            <span class="tag" id="f-trade-right" style="font-size:13px;padding:7px 12px">ได้ 0 สิทธิ์</span>
+          </div>
+        </div>
       </div>
 
       <label class="consent" for="f-consent" style="font-weight:400">
@@ -324,6 +337,8 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <div class="stat"><small>ผู้ลงทะเบียนทั้งหมด</small><b id="a-total">0</b></div>
         <div class="stat"><small>เจ้าของร้าน</small><b id="a-shop">0</b></div>
         <div class="stat"><small>จุดที่เก็บได้</small><b id="a-venues">0</b></div>
+        <div class="stat"><small>มาแลกสินค้า</small><b id="a-trade-n">0</b></div>
+        <div class="stat"><small>มาชิม / ร่วมงาน</small><b id="a-visit-n">0</b></div>
         <div class="stat"><small>คิดต้นทุนแล้ว</small><b id="a-calcs">0</b></div>
       </div>
 
@@ -333,11 +348,12 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
       </div>
 
       <div class="card">
-        <h2>ยี่ห้อที่ใช้อยู่</h2>
-        <p class="sub" style="margin-bottom:10px">ข้นหวาน</p>
-        <div class="bars" id="a-brand-sweet"></div>
-        <p class="sub" style="margin:16px 0 10px">ข้นจืด</p>
-        <div class="bars" id="a-brand-plain"></div>
+        <h2>ยี่ห้อที่นำมาแลก</h2>
+        <p class="sub">นับเป็นจำนวนคนแล้ว ฉลาก 3 ใบ = 1 สิทธิ์ กล่อง 1 ใบ = 1 สิทธิ์</p>
+        <div class="scroll"><table class="tbl" id="a-trade"></table></div>
+        <div class="bars" id="a-brand-sweet" style="margin-top:14px"></div>
+        <p class="sub" style="margin:18px 0 10px">ยี่ห้อที่ใช้อยู่ ของคนที่ไม่ได้เอามาแลก</p>
+        <div class="bars" id="a-brand-use"></div>
       </div>
 
       <div class="card">
@@ -369,11 +385,77 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
       </div>
 
       <div class="card">
+        <h2>บันทึกประจำวัน</h2>
+        <p class="sub">กรอกชื่อตลาด จำนวนร้าน คูปอง ของพรีเมียม และเปิดโฟลเดอร์อัปรูป</p>
+        <button class="btn" id="btn-day">เปิดหน้าบันทึกวันนี้</button>
+      </div>
+
+      <div class="card">
         <h2>แก้ไขเนื้อหา</h2>
         <p class="sub">แก้สูตร ราคา ตารางจุด ยี่ห้อ และข้อความ โดยไม่ต้องแตะไฟล์</p>
         <button class="btn" id="btn-settings">เปิดหน้าแก้ไข</button>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ==================== 6. บันทึกประจำวัน ==================== -->
+<section id="s-day" class="screen">
+  <div class="topbar"><button id="day-back">‹ กลับ</button><div class="t">บันทึกประจำวัน</div></div>
+  <div class="wrap">
+    <div class="card">
+      <label>วันที่</label>
+      <input id="d-date" type="date">
+      <div class="row" style="margin-top:12px">
+        <div class="f"><label style="margin-top:0">จังหวัด</label><input id="d-prov" type="text"></div>
+        <div class="f"><label style="margin-top:0">อำเภอ</label><input id="d-amphoe" type="text"></div>
+      </div>
+      <p class="tot" id="d-hint"></p>
+    </div>
+
+    <div class="card">
+      <h2>รอบเช้า 08:00 – 11:00</h2>
+      <label>ชื่อตลาด <span class="opt">(เว้นว่าง = ไม่มีรอบเช้า)</span></label>
+      <input id="d-m-name" type="text" placeholder="เช่น ตลาดเช้าทุ่งสง">
+      <label>ร้านค้าที่ร่วมกิจกรรม</label>
+      <input id="d-m-shops" type="number" inputmode="numeric" min="0" value="0">
+      <div class="row" style="margin-top:12px">
+        <a class="btn ghost sm" id="d-m-photo" target="_blank" style="margin:0">โฟลเดอร์รูป</a>
+        <a class="btn ghost sm" id="d-m-video" target="_blank" style="margin:0">โฟลเดอร์วิดีโอ</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>รอบเย็น 16:00 – 21:00</h2>
+      <label>ชื่อตลาด</label>
+      <input id="d-e-name" type="text" placeholder="เช่น ตลาดโต้รุ่งทุ่งสง">
+      <label>ร้านค้าที่ร่วมกิจกรรม</label>
+      <input id="d-e-shops" type="number" inputmode="numeric" min="0" value="0">
+      <div class="row" style="margin-top:12px">
+        <a class="btn ghost sm" id="d-e-photo" target="_blank" style="margin:0">โฟลเดอร์รูป</a>
+        <a class="btn ghost sm" id="d-e-video" target="_blank" style="margin:0">โฟลเดอร์วิดีโอ</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>ของที่แจก</h2>
+      <div class="row">
+        <div class="f"><label style="margin-top:0">คูปอง (ใบ)</label>
+          <input id="d-coupon" type="number" inputmode="numeric" min="0" value="0"></div>
+        <div class="f"><label style="margin-top:0">พรีเมียม (ชิ้น)</label>
+          <input id="d-premium" type="number" inputmode="numeric" min="0" value="0"></div>
+      </div>
+      <label>หมายเหตุ</label>
+      <textarea id="d-note" rows="3"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="sumline big"><span>รวมร้านค้าทั้งวัน</span><b id="d-total">0</b></div>
+    </div>
+
+    <button class="btn" id="d-save">บันทึกวันนี้</button>
+    <button class="btn ghost sm" id="d-csv">ดาวน์โหลดรายงานทุกวัน (CSV)</button>
+    <p class="foot">คอลัมน์ใน CSV เรียงเหมือนชีตรีพอร์ตเดิม วางทับได้เลย</p>
   </div>
 </section>
 
@@ -393,6 +475,8 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
       <input id="set-line" type="url" placeholder="https://lin.ee/xxxxxxx">
       <label>ข้อความบนปุ่ม LINE</label>
       <input id="set-linelb" type="text" placeholder="เพิ่มเพื่อนรับโปรโมชัน">
+      <label>ลิงก์โฟลเดอร์ Drive <span class="opt">(วางทั้งก้อนจาก teapot-folders.json)</span></label>
+      <textarea id="set-folders" rows="4" placeholder='{ "2026-11-21": { "day": "...", "m_photo": "..." } }'></textarea>
     </div>
 
     <div class="card">
@@ -450,8 +534,8 @@ const FILE_CFG = (typeof TEAPOT_CONFIG !== 'undefined' && TEAPOT_CONFIG)
             : (window.TEAPOT_CONFIG || {});
 /* เนื้อหาที่แก้ได้จากหลังบ้าน ส่วนที่เหลือ (firebase, รหัส, ชื่อ collection) อยู่ในไฟล์เท่านั้น */
 const EDITABLE = ['brand','schedule','venues','statusOptions','shopTypeOptions',
-                  'dailyCupsOptions','brandOptions','pdpaText','packaging','recipes',
-                  'lineUrl','lineLabel'];
+                  'dailyCupsOptions','tradeBrands','tradeRule','pdpaText','packaging',
+                  'recipes','lineUrl','lineLabel','driveFolders'];
 let CFG = Object.assign({}, FILE_CFG);
 const $  = id => document.getElementById(id);
 
@@ -483,7 +567,7 @@ function toast(msg){ const p = $('pill'); p.textContent = msg; p.classList.add('
    FIREBASE (optional) + offline queue
    =================================================================== */
 const COL = Object.assign({leads:'teapot_leads',calcs:'teapot_calcs',views:'teapot_views',
-                           settings:'teapot_settings'}, CFG.collections||{});
+                           settings:'teapot_settings', days:'teapot_days'}, CFG.collections||{});
 let db = null, FS = null, auth = null, AU = null;
 
 async function initFirebase(){
@@ -612,19 +696,42 @@ function buildRegister(){
   $('f-cups').innerHTML = '<option value="">— เลือก —</option>' +
     (CFG.dailyCupsOptions||[]).map(v=>`<option>${v}</option>`).join('');
 
-  /* ยี่ห้อที่ใช้อยู่ แยกข้นหวาน / ข้นจืด */
-  const BR = CFG.brandOptions || BRANDS_FALLBACK;
-  const fill = (id, arr)=>{ $(id).innerHTML = '<option value="">— เลือก —</option>' +
-    (arr||[]).map(v=>`<option>${v}</option>`).join(''); };
-  fill('f-brand-sweet', BR.sweet);
-  fill('f-brand-plain', BR.plain);
-  [['f-brand-sweet','f-brand-sweet-other'],['f-brand-plain','f-brand-plain-other']].forEach(([s,o])=>{
-    $(s).onchange = ()=>{
-      const isOther = /อื่น/.test($(s).value);
-      $(o).style.display = isOther ? 'block' : 'none';
-      if(isOther) $(o).focus(); else $(o).value = '';
+  /* การแลกสินค้า ยี่ห้อ ประเภท จำนวน */
+  $('f-trade-brand').innerHTML = '<option value="">— เลือก —</option>' +
+    (CFG.tradeBrands || BRANDS_FALLBACK).map(v=>`<option>${esc(v)}</option>`).join('');
+  $('f-trade-brand').onchange = ()=>{
+    const isOther = /อื่น/.test($('f-trade-brand').value);
+    $('f-trade-other').style.display = isOther ? 'block' : 'none';
+    if(isOther) $('f-trade-other').focus(); else $('f-trade-other').value = '';
+  };
+  /* มาแลก หรือ มาชิมเฉย ๆ */
+  const jw = $('f-join'); jw.innerHTML = '';
+  [JOIN_TRADE, JOIN_VISIT].forEach(t=>{
+    const el = document.createElement('div');
+    el.className = 'chip'; el.textContent = t;
+    el.onclick = ()=>{
+      joinType = t;
+      jw.querySelectorAll('.chip').forEach(c=>c.classList.toggle('sel', c===el));
+      const trade = (t === JOIN_TRADE);
+      $('brand-block').style.display = 'block';
+      $('trade-only').style.display  = trade ? 'block' : 'none';
+      $('brand-label').textContent   = trade ? 'ยี่ห้อที่นำมาแลก'
+                                             : 'ตอนนี้ใช้ยี่ห้ออะไรอยู่ (ไม่บังคับ)';
+      $('reg-err').classList.remove('on');
     };
+    jw.appendChild(el);
   });
+
+  const tw = $('f-trade-type'); tw.innerHTML = '';
+  ['ฉลาก','กล่อง'].forEach(t=>{
+    const el = document.createElement('div');
+    el.className = 'chip'; el.textContent = t;
+    el.onclick = ()=>{ tradeType = t;
+      tw.querySelectorAll('.chip').forEach(c=>c.classList.toggle('sel', c===el));
+      showRights(); };
+    tw.appendChild(el);
+  });
+  $('f-trade-qty').oninput = showRights;
 
   const wrap = $('f-status'); wrap.innerHTML='';
   (CFG.statusOptions||[]).forEach(s=>{
@@ -643,10 +750,20 @@ function buildRegister(){
   $('f-phone').oninput = e=>{ e.target.value = fmtPhone(e.target.value); };
 }
 
-const BRANDS_FALLBACK = {
-  sweet: ['ฟอลคอน','ทีพอท','มะลิ','คาร์เนชั่น','ออร์คิด','ตราหมี','วีฟู้ดส์','ยังไม่ได้ใช้ / ไม่แน่ใจ','อื่น ๆ (ระบุ)'],
-  plain: ['ฟอลคอน','ทีพอท','คาร์เนชั่น','มะลิ','ตราหมี','ออร์คิด','ยังไม่ได้ใช้ / ไม่แน่ใจ','อื่น ๆ (ระบุ)']
-};
+const BRANDS_FALLBACK = ['Falcon','Teapot','Carnation','มะลิ','Good Will','Aroma','Dreamy','อื่น ๆ (ระบุ)'];
+const JOIN_TRADE = 'มาแลกสินค้า';
+const JOIN_VISIT = 'มาชิม / มาร่วมงาน';
+let tradeType = '', joinType = '';
+
+/* ฉลาก 3 ใบ = 1 สิทธิ์  กล่อง 1 ใบ = 1 สิทธิ์ */
+function tradeRights(){
+  const r = CFG.tradeRule || {labelPerRight:3, boxPerRight:1};
+  const q = num($('f-trade-qty').value);
+  if(tradeType === 'ฉลาก') return Math.floor(q / (r.labelPerRight||3));
+  if(tradeType === 'กล่อง') return Math.floor(q / (r.boxPerRight||1));
+  return 0;
+}
+function showRights(){ $('f-trade-right').textContent = 'ได้ ' + tradeRights() + ' สิทธิ์'; }
 
 function fmtPhone(v){
   let d = String(v).replace(/\D/g,'').slice(0,10);
@@ -682,10 +799,13 @@ async function submitRegister(){
   const venue = autoVenue || $('f-venue').value;
   if(!venue){ err.textContent='กรุณาเลือกจุดที่เจอเรา'; err.classList.add('on'); $('f-venue').focus(); return; }
 
-  const brandSweet = getBrand('f-brand-sweet','f-brand-sweet-other');
-  const brandPlain = getBrand('f-brand-plain','f-brand-plain-other');
-  if(/เจ้าของร้าน/.test(chosenStatus) && (!brandSweet || !brandPlain)){
-    err.textContent = 'กรุณาเลือกยี่ห้อข้นหวานและข้นจืดที่ใช้อยู่'; err.classList.add('on'); return;
+  if(!joinType){ err.textContent='กรุณาเลือกว่าวันนี้มาแบบไหน'; err.classList.add('on'); return; }
+  const isTrade = (joinType === JOIN_TRADE);
+  const pickedBrand = getBrand('f-trade-brand','f-trade-other');
+  if(isTrade){
+    if(!pickedBrand){ err.textContent='กรุณาเลือกยี่ห้อที่นำมาแลก'; err.classList.add('on'); return; }
+    if(!tradeType){ err.textContent='กรุณาเลือกว่านำมาเป็นฉลากหรือกล่อง'; err.classList.add('on'); return; }
+    if(num($('f-trade-qty').value) <= 0){ err.textContent='กรุณาใส่จำนวนที่นำมาแลก'; err.classList.add('on'); return; }
   }
   if(!$('f-consent').checked){ err.textContent='กรุณาติ๊กยินยอมให้เก็บข้อมูลก่อน'; err.classList.add('on'); return; }
   err.classList.remove('on');
@@ -700,7 +820,12 @@ async function submitRegister(){
     shopName:  $('f-shop').value.trim(),
     shopType:  $('f-shoptype').value,
     dailyCups: $('f-cups').value,
-    brandSweet, brandPlain,
+    joinType,
+    tradeBrand:  isTrade ? pickedBrand : '',
+    useBrand:    isTrade ? '' : pickedBrand,
+    tradeType:   isTrade ? tradeType : '',
+    tradeQty:    isTrade ? num($('f-trade-qty').value) : 0,
+    tradeRights: isTrade ? tradeRights() : 0,
     consent:   true,
     createdAt: new Date().toISOString()
   };
@@ -757,10 +882,14 @@ function gotoRecipes(){
 /* ล้างข้อมูลคนเดิม เริ่มลงทะเบียนคนใหม่ */
 function newLead(){
   me = null; LS.set('me', null); lastSig = ''; chosenStatus = '';
-  ['f-name','f-phone','f-line','f-shop','f-brand-sweet-other','f-brand-plain-other'].forEach(id=> $(id).value = '');
+  ['f-name','f-phone','f-line','f-shop','f-trade-other'].forEach(id=> $(id).value = '');
   $('f-shoptype').value = ''; $('f-cups').value = '';
-  $('f-brand-sweet').value = ''; $('f-brand-plain').value = '';
-  $('f-brand-sweet-other').style.display = 'none'; $('f-brand-plain-other').style.display = 'none';
+  $('f-trade-brand').value = ''; $('f-trade-other').style.display = 'none';
+  $('f-trade-qty').value = 0; tradeType = ''; joinType = '';
+  $('f-trade-type').querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
+  $('f-join').querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
+  $('brand-block').style.display = 'none'; $('trade-only').style.display = 'none';
+  showRights();
   if(!autoVenue) $('f-venue').value = '';
   $('f-consent').checked = false;
   $('f-status').querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
@@ -1148,6 +1277,8 @@ function renderAdmin(){
   $('a-shop').textContent   = rows.filter(l=>/ร้าน/.test(l.status||'')).length;
   $('a-venues').textContent = new Set(rows.map(l=>l.venue).filter(Boolean)).size;
   $('a-calcs').textContent  = calcs.length;
+  $('a-trade-n').textContent = rows.filter(l=>l.tradeBrand).length;
+  $('a-visit-n').textContent = rows.filter(l=>!l.tradeBrand).length;
 
   const vc = {}; rows.forEach(l=>{ const k = l.venue||'ไม่ระบุ'; vc[k]=(vc[k]||0)+1; });
   bars($('a-venue-bars'), vc);
@@ -1155,11 +1286,32 @@ function renderAdmin(){
   const rc = {}; views.forEach(v=>{ const k = v.recipeName||v.recipeId||'—'; rc[k]=(rc[k]||0)+1; });
   bars($('a-recipe-bars'), rc);
 
-  const bs = {}, bp = {};
-  rows.forEach(l=>{ if(l.brandSweet) bs[l.brandSweet]=(bs[l.brandSweet]||0)+1;
-                    if(l.brandPlain) bp[l.brandPlain]=(bp[l.brandPlain]||0)+1; });
-  bars($('a-brand-sweet'), bs, {highlight:/ทีพอท/});
-  bars($('a-brand-plain'), bp, {highlight:/ทีพอท/});
+  /* ตารางยี่ห้อแบบเดียวกับรีพอร์ตที่ลูกค้าใช้อยู่ */
+  const tb = {};
+  rows.forEach(l=>{
+    if(!l.tradeBrand) return;
+    const t = tb[l.tradeBrand] || (tb[l.tradeBrand] = {label:0, box:0});
+    const r = l.tradeRights || 0;
+    if(l.tradeType === 'ฉลาก') t.label += r; else if(l.tradeType === 'กล่อง') t.box += r;
+  });
+  const tEntries = Object.entries(tb).map(([k,v])=>[k, v.label, v.box, v.label+v.box])
+                         .sort((a,b)=>b[3]-a[3]);
+  const tTotal = tEntries.reduce((s,e)=>s+e[3],0);
+  $('a-trade').innerHTML =
+    `<thead><tr><th>ยี่ห้อ</th><th>ฉลาก (คน)</th><th>กล่อง (คน)</th><th>รวม</th><th>%</th></tr></thead><tbody>` +
+    (tEntries.length
+      ? tEntries.map(([k,a,b2,s])=>`<tr><td>${esc(k)}${/Teapot|ทีพอท/i.test(k)?' <span class="tag">ของเรา</span>':''}</td>
+          <td>${a}</td><td>${b2}</td><td><b>${s}</b></td>
+          <td>${tTotal?(s/tTotal*100).toFixed(2):'0.00'}%</td></tr>`).join('')
+        + `<tr><td><b>รวมทั้งหมด</b></td><td><b>${tEntries.reduce((s,e)=>s+e[1],0)}</b></td>
+             <td><b>${tEntries.reduce((s,e)=>s+e[2],0)}</b></td><td><b>${tTotal}</b></td><td><b>100.00%</b></td></tr>`
+      : `<tr><td colspan="5" style="color:var(--muted);padding:16px 8px">ยังไม่มีข้อมูล</td></tr>`) +
+    `</tbody>`;
+  bars($('a-brand-sweet'), Object.fromEntries(tEntries.map(e=>[e[0],e[3]])), {highlight:/Teapot|ทีพอท/i});
+
+  const ub = {};
+  rows.forEach(l=>{ if(l.useBrand) ub[l.useBrand] = (ub[l.useBrand]||0)+1; });
+  bars($('a-brand-use'), ub, {highlight:/Teapot|ทีพอท/i});
 
   const cs = calcs.filter(c=>c.costPerCup>0);
   $('a-avgcost').textContent  = cs.length ? baht(cs.reduce((s,c)=>s+c.costPerCup,0)/cs.length) : '—';
@@ -1168,7 +1320,7 @@ function renderAdmin(){
 
   const shown = rows.slice(0, 50);
   $('a-table').innerHTML =
-    `<thead><tr><th></th><th>วันที่</th><th>ชื่อ</th><th>เบอร์</th><th>จุด</th><th>สถานะ</th><th>ร้าน</th><th>ยอด/วัน</th><th>ข้นหวาน</th><th>ข้นจืด</th></tr></thead><tbody>` +
+    `<thead><tr><th></th><th>วันที่</th><th>ชื่อ</th><th>เบอร์</th><th>จุด</th><th>สถานะ</th><th>ร้าน</th><th>ยอด/วัน</th><th>มาแบบไหน</th><th>ยี่ห้อ</th><th>แลกเป็น</th><th>สิทธิ์</th></tr></thead><tbody>` +
     (shown.length ? shown.map(l=>`<tr>
         <td><button class="rowdel" data-row="${esc(l._id || l.localId || '')}" title="ลบแถวนี้">×</button></td>
         <td>${esc((l.createdAt||'').slice(0,10))}</td>
@@ -1178,10 +1330,12 @@ function renderAdmin(){
         <td>${esc(l.status||'')}</td>
         <td>${esc(l.shopName||'')}</td>
         <td>${esc(l.dailyCups||'')}</td>
-        <td>${esc(l.brandSweet||'')}</td>
-        <td>${esc(l.brandPlain||'')}</td>
+        <td>${esc((l.joinType||'').replace('มาชิม / มาร่วมงาน','มาชิม'))}</td>
+        <td>${esc(l.tradeBrand || l.useBrand || '')}</td>
+        <td>${esc(l.tradeType||'')}${l.tradeQty?' '+l.tradeQty:''}</td>
+        <td>${l.tradeRights||''}</td>
       </tr>`).join('')
-      : `<tr><td colspan="10" style="color:var(--muted);padding:18px 8px">ยังไม่มีข้อมูล</td></tr>`) +
+      : `<tr><td colspan="12" style="color:var(--muted);padding:18px 8px">ยังไม่มีข้อมูล</td></tr>`) +
     `</tbody>`;
   $('a-more').textContent = rows.length > 50
     ? `แสดง 50 รายการล่าสุดจากทั้งหมด ${rows.length} รายการ ดาวน์โหลด CSV เพื่อดูครบ` : '';
@@ -1314,12 +1468,13 @@ async function dailyImage(){
 
 function downloadCSV(){
   const rows = filtered();
-  const head = ['วันที่','เวลา','ชื่อ','เบอร์','LINE','จุด','สถานะ','ชื่อร้าน','ประเภทร้าน','ยอดต่อวัน','ข้นหวานที่ใช้','ข้นจืดที่ใช้'];
+  const head = ['วันที่','เวลา','ชื่อ','เบอร์','LINE','จุด','สถานะ','ชื่อร้าน','ประเภทร้าน','ยอดต่อวัน','มาแบบไหน','ยี่ห้อที่แลก','ยี่ห้อที่ใช้อยู่','แลกเป็น','จำนวน','สิทธิ์'];
   const esc2 = s => `"${String(s==null?'':s).replace(/"/g,'""')}"`;
   const body = rows.map(l=>{
     const d = new Date(l.createdAt||Date.now());
     return [d.toLocaleDateString('th-TH'), d.toLocaleTimeString('th-TH'),
-      l.name,l.phone,l.line,l.venue,l.status,l.shopName,l.shopType,l.dailyCups,l.brandSweet,l.brandPlain].map(esc2).join(',');
+      l.name,l.phone,l.line,l.venue,l.status,l.shopName,l.shopType,l.dailyCups,
+      l.joinType,l.tradeBrand,l.useBrand,l.tradeType,l.tradeQty,l.tradeRights].map(esc2).join(',');
   });
   const csv = '﻿' + [head.map(esc2).join(','), ...body].join('\r\n');
   const a = document.createElement('a');
@@ -1328,6 +1483,124 @@ function downloadCSV(){
   a.click(); URL.revokeObjectURL(a.href);
 }
 
+
+
+/* ===================================================================
+   6. บันทึกประจำวัน
+   =================================================================== */
+const DAYF = ['d-prov','d-amphoe','d-m-name','d-m-shops','d-e-name','d-e-shops',
+              'd-coupon','d-premium','d-note'];
+
+function parseFolders(txt){
+  const s = String(txt||'').trim();
+  if(!s) return {};
+  try{ const o = JSON.parse(s); return (o && typeof o === 'object') ? o : {}; }
+  catch(e){ toast('ลิงก์โฟลเดอร์ไม่ใช่ JSON ที่ถูกต้อง ข้ามไปก่อน'); return {}; }
+}
+
+function todayISO(){
+  const n = new Date(), p = v=>String(v).padStart(2,'0');
+  return n.getFullYear()+'-'+p(n.getMonth()+1)+'-'+p(n.getDate());
+}
+
+function dayTotal(){
+  $('d-total').textContent = num($('d-m-shops').value) + num($('d-e-shops').value);
+}
+
+function fillFolderLinks(date){
+  const f = (CFG.driveFolders || {})[date] || {};
+  [['d-m-photo', f.m_photo], ['d-m-video', f.m_video],
+   ['d-e-photo', f.e_photo], ['d-e-video', f.e_video]].forEach(([id,url])=>{
+    const a = $(id);
+    if(url){ a.href = url; a.style.opacity = 1; a.style.pointerEvents = 'auto'; }
+    else   { a.removeAttribute('href'); a.style.opacity = .4; a.style.pointerEvents = 'none'; }
+  });
+}
+
+async function openDay(date){
+  const d = date || todayISO();
+  $('d-date').value = d;
+  DAYF.forEach(id=> $(id).value = (id.endsWith('shops')||id==='d-coupon'||id==='d-premium') ? 0 : '');
+  if(db){
+    try{
+      const snap = await FS.getDoc(FS.doc(db, COL.days, d));
+      if(snap.exists()){
+        const v = snap.data();
+        DAYF.forEach(id=>{ if(v[id] !== undefined) $(id).value = v[id]; });
+      }
+    }catch(e){ console.warn(e); }
+  }else{
+    const v = LS.get('day_'+d, null);
+    if(v) DAYF.forEach(id=>{ if(v[id] !== undefined) $(id).value = v[id]; });
+  }
+  /* เติมจังหวัดกับชื่อตลาดจากตารางเดินทางถ้ายังว่าง */
+  const sched = (CFG.schedule||[]).filter(s=>s.date === d);
+  if(sched.length && !$('d-e-name').value && !$('d-m-name').value){
+    if(sched.length > 1){ $('d-m-name').value = sched[0].venue; $('d-e-name').value = sched[1].venue; }
+    else $('d-e-name').value = sched[0].venue;
+  }
+  const inDay = leads.filter(l => (l.createdAt||'').slice(0,10) === d).length;
+  $('d-hint').textContent = 'ลงทะเบียนผ่านเว็บวันนี้ ' + inDay + ' คน (ตัวเลขร้านค้าให้นับจากหน้างานจริง)';
+  fillFolderLinks(d);
+  dayTotal();
+  show('s-day');
+}
+
+async function saveDay(){
+  const d = $('d-date').value || todayISO();
+  const rec = { date:d, updatedAt:new Date().toISOString() };
+  DAYF.forEach(id=>{
+    const v = $(id).value;
+    rec[id] = (id.endsWith('shops')||id==='d-coupon'||id==='d-premium') ? num(v) : v.trim();
+  });
+  rec.totalShops = rec['d-m-shops'] + rec['d-e-shops'];
+  LS.set('day_'+d, rec);
+  const btn = $('d-save'); btn.disabled = true; btn.textContent = 'กำลังบันทึก…';
+  try{
+    if(db) await FS.setDoc(FS.doc(db, COL.days, d), rec);
+    toast('บันทึกวันที่ ' + d + ' แล้ว');
+  }catch(e){
+    toast(e.code === 'permission-denied'
+      ? 'รูลยังไม่อนุญาต ต้องเพิ่ม teapot_days'
+      : 'บันทึกไม่สำเร็จ ' + (e.code||''));
+  }
+  btn.disabled = false; btn.textContent = 'บันทึกวันนี้';
+}
+
+async function dayReportCSV(){
+  let days = [];
+  if(db){
+    try{
+      const snap = await FS.getDocs(FS.collection(db, COL.days));
+      days = snap.docs.map(x=>x.data());
+    }catch(e){ toast('โหลดรายงานไม่สำเร็จ ใช้ข้อมูลในเครื่องแทน'); }
+  }
+  if(!days.length){
+    days = Object.keys(localStorage).filter(k=>k.startsWith('teapot_day_'))
+      .map(k=>{ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } })
+      .filter(Boolean);
+  }
+  days.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const f = CFG.driveFolders || {};
+  const head = ['วันที่','จังหวัด','อำเภอ','ตลาดเช้า (08:00–11:00)','ร้านค้าเช้าที่ร่วมกิจกรรม (จำนวน)',
+    'ตลาดเย็น (16:00–21:00)','ร้านค้าเย็นที่ร่วมกิจกรรม (จำนวน)','รวมร้านค้าที่ร่วมกิจกรรม ทั้งวัน',
+    'คูปอง ที่แจก (ใบ)','สรุปของพรีเมี่ยม ที่แจก (ชิ้น)','Link รูปภาพ','หมายเหตุ'];
+  const q = s => `"${String(s==null?'':s).replace(/"/g,'""')}"`;
+  const body = days.map(v=>[
+    v.date, v['d-prov'], v['d-amphoe'],
+    v['d-m-name'] || '❌ ไม่มีรอบเช้า', v['d-m-shops'] || '-',
+    v['d-e-name'] || '❌ ไม่มีรอบเย็น', v['d-e-shops'] || '-',
+    (v['d-m-shops']||0) + (v['d-e-shops']||0),
+    v['d-coupon'], v['d-premium'], (f[v.date]||{}).day || '', v['d-note']
+  ].map(q).join(','));
+  const sum = k => days.reduce((s,v)=>s+(v[k]||0),0);
+  body.push([ '✅ รวมทั้งหมด','','','', sum('d-m-shops'), '', sum('d-e-shops'),
+    sum('d-m-shops')+sum('d-e-shops'), sum('d-coupon'), sum('d-premium'), '', '' ].map(q).join(','));
+  const csv = '﻿' + [head.map(q).join(','), ...body].join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download = 'teapot-รายงานรายวัน.csv'; a.click(); URL.revokeObjectURL(a.href);
+}
 
 /* ===================================================================
    5. แก้ไขเนื้อหา (หลังบ้าน)
@@ -1353,6 +1626,9 @@ function openSettings(fromFile){
   $('set-warn').textContent   = 'ยังไม่ได้ต่อ Firebase หน้านี้แก้ได้แต่บันทึกไม่ได้';
   ed.lineUrl   = src.lineUrl   || '';
   ed.lineLabel = src.lineLabel || 'เพิ่มเพื่อนรับโปรโมชัน';
+  ed.driveFolders = clone(src.driveFolders || {});
+  $('set-folders').value = Object.keys(ed.driveFolders).length
+    ? JSON.stringify(ed.driveFolders) : '';
   $('set-line').value   = ed.lineUrl;
   $('set-linelb').value = ed.lineLabel;
   $('set-sub').value    = ed.brand.subtitle || '';
@@ -1487,13 +1763,21 @@ function collectSettings(){
   return {
     brand: ed.brand, pdpaText: ed.pdpaText, schedule: ed.schedule,
     brandOptions: ed.brandOptions, packaging: ed.packaging, recipes: ed.recipes,
-    lineUrl: $('set-line').value.trim(), lineLabel: $('set-linelb').value.trim()
+    lineUrl: $('set-line').value.trim(), lineLabel: $('set-linelb').value.trim(),
+    driveFolders: parseFolders($('set-folders').value)
   };
 }
 
 /* ===================================================================
    WIRE UP
    =================================================================== */
+$('btn-day').onclick   = ()=> openDay(null);
+$('day-back').onclick  = ()=> show('s-admin');
+$('d-date').onchange   = e=> openDay(e.target.value);
+$('d-m-shops').oninput = dayTotal;
+$('d-e-shops').oninput = dayTotal;
+$('d-save').onclick    = saveDay;
+$('d-csv').onclick     = dayReportCSV;
 $('btn-settings').onclick = ()=> openSettings(false);
 $('set-back').onclick     = ()=> show('s-admin');
 $('set-add-sched').onclick = ()=>{ ed.schedule.push({date:'',venue:''}); drawSched(); };
