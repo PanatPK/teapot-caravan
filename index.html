@@ -454,6 +454,20 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
     </div>
 
     <button class="btn" id="d-save">บันทึกวันนี้</button>
+
+    <div class="card">
+      <h2>รายงานทั้งทริป</h2>
+      <p class="sub">สรุปทุกวันที่บันทึกไว้ เลื่อนตารางไปทางขวาเพื่อดูคอลัมน์ที่เหลือ</p>
+      <div class="stats" style="margin-top:0">
+        <div class="stat"><small>ร้านค้ารวม</small><b id="r-shops">0</b></div>
+        <div class="stat"><small>วันที่บันทึกแล้ว</small><b id="r-days">0</b></div>
+        <div class="stat"><small>คูปองที่แจก</small><b id="r-coupon">0</b></div>
+        <div class="stat"><small>พรีเมียมที่แจก</small><b id="r-premium">0</b></div>
+      </div>
+      <div class="scroll" style="margin-top:14px"><table class="tbl" id="d-report"></table></div>
+      <button class="btn ghost sm" id="d-refresh">โหลดใหม่</button>
+    </div>
+
     <button class="btn ghost sm" id="d-csv">ดาวน์โหลดรายงานทุกวัน (CSV)</button>
     <p class="foot">คอลัมน์ใน CSV เรียงเหมือนชีตรีพอร์ตเดิม วางทับได้เลย</p>
   </div>
@@ -1544,6 +1558,7 @@ async function openDay(date){
   fillFolderLinks(d);
   dayTotal();
   show('s-day');
+  renderTripReport();
 }
 
 async function saveDay(){
@@ -1567,7 +1582,7 @@ async function saveDay(){
   btn.disabled = false; btn.textContent = 'บันทึกวันนี้';
 }
 
-async function dayReportCSV(){
+async function fetchDays(){
   let days = [];
   if(db){
     try{
@@ -1580,7 +1595,42 @@ async function dayReportCSV(){
       .map(k=>{ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } })
       .filter(Boolean);
   }
-  days.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  return days.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+}
+
+async function renderTripReport(){
+  const days = await fetchDays();
+  const sum = k => days.reduce((s,v)=>s+(v[k]||0),0);
+  const shops = sum('d-m-shops') + sum('d-e-shops');
+  $('r-days').textContent    = days.length;
+  $('r-shops').textContent   = shops;
+  $('r-coupon').textContent  = sum('d-coupon');
+  $('r-premium').textContent = sum('d-premium');
+
+  const d2 = s => (s||'').slice(8,10) + '/' + (s||'').slice(5,7);
+  $('d-report').innerHTML =
+    `<thead><tr><th>วันที่</th><th>จังหวัด</th><th>ตลาดเช้า</th><th>เช้า</th>
+      <th>ตลาดเย็น</th><th>เย็น</th><th>รวม</th><th>คูปอง</th><th>พรีเมียม</th></tr></thead><tbody>` +
+    (days.length ? days.map(v=>`<tr>
+        <td>${esc(d2(v.date))}</td>
+        <td>${esc(v['d-prov']||'')}</td>
+        <td>${esc(v['d-m-name']||'—')}</td>
+        <td>${v['d-m-shops']||'-'}</td>
+        <td>${esc(v['d-e-name']||'—')}</td>
+        <td>${v['d-e-shops']||'-'}</td>
+        <td><b>${(v['d-m-shops']||0)+(v['d-e-shops']||0)}</b></td>
+        <td>${v['d-coupon']||0}</td>
+        <td>${v['d-premium']||0}</td>
+      </tr>`).join('')
+      + `<tr><td colspan="3"><b>รวมทั้งหมด</b></td><td><b>${sum('d-m-shops')}</b></td>
+           <td></td><td><b>${sum('d-e-shops')}</b></td><td><b>${shops}</b></td>
+           <td><b>${sum('d-coupon')}</b></td><td><b>${sum('d-premium')}</b></td></tr>`
+      : `<tr><td colspan="9" style="color:var(--muted);padding:16px 8px">ยังไม่มีวันที่บันทึกไว้</td></tr>`) +
+    `</tbody>`;
+}
+
+async function dayReportCSV(){
+  const days = await fetchDays();
   const f = CFG.driveFolders || {};
   const head = ['วันที่','จังหวัด','อำเภอ','ตลาดเช้า (08:00–11:00)','ร้านค้าเช้าที่ร่วมกิจกรรม (จำนวน)',
     'ตลาดเย็น (16:00–21:00)','ร้านค้าเย็นที่ร่วมกิจกรรม (จำนวน)','รวมร้านค้าที่ร่วมกิจกรรม ทั้งวัน',
@@ -1778,6 +1828,7 @@ $('d-m-shops').oninput = dayTotal;
 $('d-e-shops').oninput = dayTotal;
 $('d-save').onclick    = saveDay;
 $('d-csv').onclick     = dayReportCSV;
+$('d-refresh').onclick = renderTripReport;
 $('btn-settings').onclick = ()=> openSettings(false);
 $('set-back').onclick     = ()=> show('s-admin');
 $('set-add-sched').onclick = ()=>{ ed.schedule.push({date:'',venue:''}); drawSched(); };
