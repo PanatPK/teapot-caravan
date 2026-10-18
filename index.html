@@ -75,6 +75,8 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 /* ---------- recipe list ---------- */
 .greet{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-top:16px;box-shadow:var(--sh)}
 .greet b{color:var(--navy)}
+.linebtn{display:block;margin-top:12px;background:#06C755;color:#fff;text-decoration:none;
+  text-align:center;padding:13px;border-radius:12px;font-weight:600;font-size:16px}
 .rgrid{display:grid;gap:12px;margin-top:16px}
 .rcard{background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);
   padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:.15s}
@@ -356,6 +358,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         </div>
         <div class="scroll"><table class="tbl" id="a-table"></table></div>
         <p class="tot" id="a-more"></p>
+        <button class="btn" id="btn-daily">สรุปวันนี้เป็นรูป</button>
         <button class="btn sm" id="btn-csv">ดาวน์โหลด CSV</button>
         <button class="btn ghost sm" id="btn-refresh">โหลดข้อมูลใหม่</button>
         <button class="btn ghost sm" id="btn-del-filtered">ลบรายการที่แสดงอยู่</button>
@@ -386,6 +389,10 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
       <input id="set-sub" type="text">
       <label>ข้อความยินยอม PDPA</label>
       <textarea id="set-pdpa" rows="5"></textarea>
+      <label>ลิงก์เพิ่มเพื่อน LINE <span class="opt">(เว้นว่าง = ไม่แสดงปุ่ม)</span></label>
+      <input id="set-line" type="url" placeholder="https://lin.ee/xxxxxxx">
+      <label>ข้อความบนปุ่ม LINE</label>
+      <input id="set-linelb" type="text" placeholder="เพิ่มเพื่อนรับโปรโมชัน">
     </div>
 
     <div class="card">
@@ -443,7 +450,8 @@ const FILE_CFG = (typeof TEAPOT_CONFIG !== 'undefined' && TEAPOT_CONFIG)
             : (window.TEAPOT_CONFIG || {});
 /* เนื้อหาที่แก้ได้จากหลังบ้าน ส่วนที่เหลือ (firebase, รหัส, ชื่อ collection) อยู่ในไฟล์เท่านั้น */
 const EDITABLE = ['brand','schedule','venues','statusOptions','shopTypeOptions',
-                  'dailyCupsOptions','brandOptions','pdpaText','packaging','recipes'];
+                  'dailyCupsOptions','brandOptions','pdpaText','packaging','recipes',
+                  'lineUrl','lineLabel'];
 let CFG = Object.assign({}, FILE_CFG);
 const $  = id => document.getElementById(id);
 
@@ -715,6 +723,9 @@ function gotoRecipes(){
   g.innerHTML = (me
     ? `สวัสดีครับ <b>${esc(me.name)}</b><br><small style="color:var(--muted)">เลือกสูตรที่สนใจ แล้วลองคิดต้นทุนของร้านคุณดู</small>`
     : 'เลือกสูตรที่สนใจ แล้วลองคิดต้นทุนของร้านคุณดู')
+    + (CFG.lineUrl
+        ? `<a class="linebtn" href="${esc(CFG.lineUrl)}" target="_blank" rel="noopener">${esc(CFG.lineLabel||'เพิ่มเพื่อนใน LINE')}</a>`
+        : '')
     + `<button class="btn ghost sm" id="btn-newlead">ลงทะเบียนคนใหม่</button>`;
   $('btn-newlead').onclick = newLead;
 
@@ -1220,6 +1231,87 @@ async function wipeEverything(){
   }
 }
 
+
+/* ---------- สรุปรายวันเป็นรูป ---------- */
+async function dailyImage(){
+  try{ await document.fonts.ready; }catch(e){}
+  const n = new Date(), pad = v=>String(v).padStart(2,'0');
+  const day = n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate());
+  const todays = leads.filter(l => (l.createdAt||'').slice(0,10) === day);
+  const shops  = todays.filter(l=>/เจ้าของร้าน/.test(l.status||'')).length;
+  const venues = [...new Set(todays.map(l=>l.venue).filter(Boolean))];
+  const top = (arr, key)=>{
+    const c = {}; arr.forEach(l=>{ if(l[key]) c[l[key]] = (c[l[key]]||0)+1; });
+    const e = Object.entries(c).sort((a,b)=>b[1]-a[1])[0];
+    return e ? { name:e[0], pct: e[1]/arr.length*100 } : null;
+  };
+  const bs = top(todays,'brandSweet'), bp = top(todays,'brandPlain');
+  const todayCalcs = calcs.filter(c => (c.createdAt||'').slice(0,10) === day);
+  const avg = a => a.length ? a.reduce((s,v)=>s+v,0)/a.length : 0;
+
+  const W = 1080, pad2 = 72;
+  const H = 1210;
+  const c = document.createElement('canvas'); c.width=W; c.height=H;
+  const x = c.getContext('2d');
+  const F = (w,s)=>`${w} ${s}px 'IBM Plex Sans Thai', system-ui, sans-serif`;
+  const rr = (X,Y,w,hh,r)=>{ x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+w,Y,X+w,Y+hh,r);
+    x.arcTo(X+w,Y+hh,X,Y+hh,r); x.arcTo(X,Y+hh,X,Y,r); x.arcTo(X,Y,X+w,Y,r); x.closePath(); };
+
+  x.fillStyle='#F6F7FC'; x.fillRect(0,0,W,H);
+  const g=x.createLinearGradient(0,0,W,330);
+  g.addColorStop(0,'#2A34A3'); g.addColorStop(1,'#000C51');
+  x.fillStyle=g; x.fillRect(0,0,W,330);
+  const lg=$('h-logo');
+  if(lg && lg.complete && lg.naturalWidth){
+    const lw=350, lh=lw*lg.naturalHeight/lg.naturalWidth;
+    x.drawImage(lg,(W-lw)/2,36,lw,lh);
+  }
+  x.fillStyle='rgba(255,255,255,.85)'; x.font=F(500,30); x.textAlign='center';
+  x.fillText('สรุปประจำวันที่ ' + n.toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'}), W/2, 294);
+
+  x.fillStyle='#6B7189'; x.font=F(400,28); x.textAlign='center';
+  x.fillText(venues.length ? venues.join('  ·  ') : 'ยังไม่ระบุจุด', W/2, 392);
+
+  const tile = (X,Y,w,label,val)=>{
+    x.fillStyle='#fff'; rr(X,Y,w,150,18); x.fill();
+    x.fillStyle='#6B7189'; x.font=F(400,26); x.textAlign='left'; x.fillText(label, X+28, Y+52);
+    x.fillStyle='#202985'; x.font=F(700,56); x.fillText(val, X+28, Y+116);
+  };
+  const half = (W-pad2*2-20)/2;
+  tile(pad2, 434, half, 'ลงทะเบียนวันนี้', String(todays.length));
+  tile(pad2+half+20, 434, half, 'เจ้าของร้าน', String(shops));
+
+  let y = 630;
+  x.fillStyle='#fff'; rr(pad2, y, W-pad2*2, 300, 20); x.fill();
+  const row = (label, val, yy)=>{
+    x.fillStyle='#6B7189'; x.font=F(400,28); x.textAlign='left'; x.fillText(label, pad2+34, yy);
+    x.fillStyle='#16182E'; x.font=F(600,30); x.textAlign='right'; x.fillText(val, W-pad2-34, yy);
+  };
+  row('ข้นหวานที่เจอมากสุด', bs ? `${bs.name}  ${bs.pct.toFixed(0)}%` : '—', y+62);
+  row('ข้นจืดที่เจอมากสุด',  bp ? `${bp.name}  ${bp.pct.toFixed(0)}%` : '—', y+124);
+  row('คิดต้นทุนในเว็บ',     String(todayCalcs.length) + ' ครั้ง', y+186);
+  row('ราคาขายเฉลี่ยที่ตั้ง',
+      todayCalcs.filter(v=>v.sellPrice>0).length
+        ? avg(todayCalcs.filter(v=>v.sellPrice>0).map(v=>v.sellPrice)).toFixed(0) + ' ฿'
+        : '—', y+248);
+
+  y += 360;
+  x.fillStyle='#202985'; rr(pad2, y, W-pad2*2, 130, 20); x.fill();
+  x.fillStyle='rgba(255,255,255,.75)'; x.font=F(400,26); x.textAlign='left';
+  x.fillText('รวมสะสมทั้งทริป', pad2+34, y+52);
+  x.fillStyle='#fff'; x.font=F(700,54); x.textAlign='right';
+  x.fillText(String(leads.length) + ' คน', W-pad2-34, y+92);
+
+  x.fillStyle='#9AA1B8'; x.font=F(400,24); x.textAlign='center';
+  x.fillText('ทีพอท คาราวานคู่ชงทั่วไทย', W/2, H-44);
+
+  const url = c.toDataURL('image/png');
+  $('shot-out').src = url;
+  $('shot-dl').href = url;
+  $('shot-dl').download = 'สรุป-' + day + '.png';
+  $('sheet').classList.add('on');
+}
+
 function downloadCSV(){
   const rows = filtered();
   const head = ['วันที่','เวลา','ชื่อ','เบอร์','LINE','จุด','สถานะ','ชื่อร้าน','ประเภทร้าน','ยอดต่อวัน','ข้นหวานที่ใช้','ข้นจืดที่ใช้'];
@@ -1249,6 +1341,8 @@ function openSettings(fromFile){
   const src = fromFile ? FILE_CFG : CFG;
   ed = {
     brand:        clone(src.brand || {}),
+    lineUrl:      src.lineUrl || '',
+    lineLabel:    src.lineLabel || '',
     pdpaText:     src.pdpaText || '',
     schedule:     clone(src.schedule || []),
     brandOptions: clone(src.brandOptions || {sweet:[],plain:[]}),
@@ -1257,6 +1351,10 @@ function openSettings(fromFile){
   };
   $('set-warn').style.display = db ? 'none' : 'block';
   $('set-warn').textContent   = 'ยังไม่ได้ต่อ Firebase หน้านี้แก้ได้แต่บันทึกไม่ได้';
+  ed.lineUrl   = src.lineUrl   || '';
+  ed.lineLabel = src.lineLabel || 'เพิ่มเพื่อนรับโปรโมชัน';
+  $('set-line').value   = ed.lineUrl;
+  $('set-linelb').value = ed.lineLabel;
   $('set-sub').value    = ed.brand.subtitle || '';
   $('set-pdpa').value   = ed.pdpaText;
   $('set-bsweet').value = (ed.brandOptions.sweet||[]).join('\n');
@@ -1388,7 +1486,8 @@ function collectSettings(){
   ed.recipes.forEach((r,i)=>{ if(!r.id) r.id = 'r' + Date.now() + i; });
   return {
     brand: ed.brand, pdpaText: ed.pdpaText, schedule: ed.schedule,
-    brandOptions: ed.brandOptions, packaging: ed.packaging, recipes: ed.recipes
+    brandOptions: ed.brandOptions, packaging: ed.packaging, recipes: ed.recipes,
+    lineUrl: $('set-line').value.trim(), lineLabel: $('set-linelb').value.trim()
   };
 }
 
@@ -1473,6 +1572,7 @@ $('btn-logout').onclick = async ()=>{
 };
 $('f-pass').onkeydown = e=>{ if(e.key==='Enter') $('btn-pin').click(); };
 $('f-email').onkeydown = e=>{ if(e.key==='Enter') $('f-pass').focus(); };
+$('btn-daily').onclick = dailyImage;
 $('btn-csv').onclick = downloadCSV;
 $('a-table').onclick = e=>{
   const id = e.target.dataset && e.target.dataset.row;
