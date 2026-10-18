@@ -16,12 +16,12 @@ const TEAPOT_CONFIG = {
      Firebase Console > Project settings > Your apps > Web app > SDK setup
      ถ้ายังไม่ใส่ เว็บจะทำงานได้ปกติแต่เก็บข้อมูลไว้ในเครื่องอย่างเดียว   */
   firebase: {
-    apiKey: "AIzaSyB6T-lQHXiIeafgPBwLqLQa0odllYNh87w",
-  authDomain: "teapot-caravan.firebaseapp.com",
-  projectId: "teapot-caravan",
-  storageBucket: "teapot-caravan.firebasestorage.app",
-  messagingSenderId: "426547707687",
-  appId: "1:426547707687:web:6c6ad1109cbc79ceaa3302"
+    apiKey: '',
+    authDomain: '',
+    projectId: '',
+    storageBucket: '',
+    messagingSenderId: '',
+    appId: ''
   },
 
   /* ชื่อ collection ใน Firestore */
@@ -100,6 +100,9 @@ const TEAPOT_CONFIG = {
 
   /* ฉลากกี่ใบต่อหนึ่งสิทธิ์ กล่องกี่ใบต่อหนึ่งสิทธิ์ */
   tradeRule: { labelPerRight: 3, boxPerRight: 1 },
+
+  /* ของพรีเมียมที่แจกหน้างาน ใช้ในฟอร์มลงทะเบียน แก้ได้จากหลังบ้าน */
+  premiumItems: ['แก้วเก็บความเย็น','ผ้ากันเปื้อน','ถุงผ้า','พวงกุญแจ','ไม่ได้รับ'],
 
   /* ---------- 5.2 ลิงก์โฟลเดอร์ Drive ----------
      ได้จากไฟล์ teapot-folders.json ที่ Apps Script สร้างให้

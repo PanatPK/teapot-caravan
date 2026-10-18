@@ -142,6 +142,18 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 .tbl td{padding:9px 8px;border-bottom:1px solid #EEF2F6;vertical-align:top;white-space:nowrap}
 .tbl tr:last-child td{border-bottom:0}
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.drow{cursor:pointer}
+.dexp td{background:#F1F3FB;padding:12px 10px !important;white-space:normal !important}
+.dbox{max-width:360px}
+.dsec{margin-bottom:14px}
+.dsec:last-child{margin-bottom:0}
+.dhd{display:flex;align-items:center;gap:8px;justify-content:space-between;
+  padding-bottom:6px;margin-bottom:6px;border-bottom:1px solid #D7DDEE;font-size:13px}
+.copybtn{flex:0 0 auto;border:1px solid var(--navy);background:#fff;color:var(--navy);
+  border-radius:8px;padding:4px 10px;font:inherit;font-size:11.5px;cursor:pointer}
+.dli{padding:7px 0;border-bottom:1px solid #E2E7F3;font-size:13px}
+.dli:last-child{border-bottom:0}
+.dli small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
 .rowdel{border:0;background:#FBE9E7;color:#B03A2E;width:24px;height:24px;border-radius:7px;
   cursor:pointer;font-size:14px;line-height:1;padding:0}
 .danger{color:var(--red);border-color:var(--red)}
@@ -235,6 +247,11 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
             <span class="tag" id="f-trade-right" style="font-size:13px;padding:7px 12px">ได้ 0 สิทธิ์</span>
           </div>
         </div>
+      </div>
+
+      <div id="premium-field" style="display:none">
+        <label>ของพรีเมียมที่ได้รับ <span class="opt">(ไม่บังคับ)</span></label>
+        <select id="f-premium"></select>
       </div>
 
       <label class="consent" for="f-consent" style="font-weight:400">
@@ -354,6 +371,8 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <div class="bars" id="a-brand-sweet" style="margin-top:14px"></div>
         <p class="sub" style="margin:18px 0 10px">ยี่ห้อที่ใช้อยู่ ของคนที่ไม่ได้เอามาแลก</p>
         <div class="bars" id="a-brand-use"></div>
+        <p class="sub" style="margin:18px 0 10px">ของพรีเมียมที่แจกไป</p>
+        <div class="bars" id="a-premium"></div>
       </div>
 
       <div class="card">
@@ -445,6 +464,12 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <div class="f"><label style="margin-top:0">พรีเมียม (ชิ้น)</label>
           <input id="d-premium" type="number" inputmode="numeric" min="0" value="0"></div>
       </div>
+      <label>ร้านค้าที่ระบุในคูปอง</label>
+      <textarea id="d-coupon-note" rows="3" placeholder="- ร้านบุญดานันท์ (กานดา บรรจุภัณฑ์)&#10;จำนวน 10 ใบ"></textarea>
+
+      <label>รายละเอียดพรีเมียมที่แจก</label>
+      <textarea id="d-premium-note" rows="5" placeholder="พ่อค้าแม่ค้า (ร่วมกิจกรรม)&#10;ผ้ากันเปื้อน 5 ผืน&#10;นมข้นจืด 6 กล่อง&#10;&#10;ช่วงเล่นเกมตอบคำถาม&#10;แก้วเล็ก 5 ใบ"></textarea>
+
       <label>หมายเหตุ</label>
       <textarea id="d-note" rows="3"></textarea>
     </div>
@@ -469,7 +494,8 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
     </div>
 
     <button class="btn ghost sm" id="d-csv">ดาวน์โหลดรายงานทุกวัน (CSV)</button>
-    <p class="foot">คอลัมน์ใน CSV เรียงเหมือนชีตรีพอร์ตเดิม วางทับได้เลย</p>
+    <p class="foot">CSV เรียงคอลัมน์และใช้รูปแบบวันที่เหมือนชีตรีพอร์ตเดิม<br>
+      เปิดแล้วก๊อปทั้งแถว วางในชีตโดยคลิกที่ช่องใต้หัวตาราง คอลัมน์วันที่</p>
   </div>
 </section>
 
@@ -747,6 +773,11 @@ function buildRegister(){
   });
   $('f-trade-qty').oninput = showRights;
 
+  const pm = CFG.premiumItems || [];
+  $('premium-field').style.display = pm.length ? 'block' : 'none';
+  $('f-premium').innerHTML = '<option value="">— เลือก —</option>' +
+    pm.map(v=>`<option>${esc(v)}</option>`).join('');
+
   const wrap = $('f-status'); wrap.innerHTML='';
   (CFG.statusOptions||[]).forEach(s=>{
     const el = document.createElement('div');
@@ -835,11 +866,13 @@ async function submitRegister(){
     shopType:  $('f-shoptype').value,
     dailyCups: $('f-cups').value,
     joinType,
+    round: (new Date().getHours() < 14) ? 'เช้า' : 'เย็น',
     tradeBrand:  isTrade ? pickedBrand : '',
     useBrand:    isTrade ? '' : pickedBrand,
     tradeType:   isTrade ? tradeType : '',
     tradeQty:    isTrade ? num($('f-trade-qty').value) : 0,
     tradeRights: isTrade ? tradeRights() : 0,
+    premium:     $('f-premium').value,
     consent:   true,
     createdAt: new Date().toISOString()
   };
@@ -897,7 +930,7 @@ function gotoRecipes(){
 function newLead(){
   me = null; LS.set('me', null); lastSig = ''; chosenStatus = '';
   ['f-name','f-phone','f-line','f-shop','f-trade-other'].forEach(id=> $(id).value = '');
-  $('f-shoptype').value = ''; $('f-cups').value = '';
+  $('f-shoptype').value = ''; $('f-cups').value = ''; $('f-premium').value = '';
   $('f-trade-brand').value = ''; $('f-trade-other').style.display = 'none';
   $('f-trade-qty').value = 0; tradeType = ''; joinType = '';
   $('f-trade-type').querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
@@ -1323,9 +1356,13 @@ function renderAdmin(){
     `</tbody>`;
   bars($('a-brand-sweet'), Object.fromEntries(tEntries.map(e=>[e[0],e[3]])), {highlight:/Teapot|ทีพอท/i});
 
-  const ub = {};
-  rows.forEach(l=>{ if(l.useBrand) ub[l.useBrand] = (ub[l.useBrand]||0)+1; });
+  const ub = {}, pmc = {};
+  rows.forEach(l=>{
+    if(l.useBrand) ub[l.useBrand] = (ub[l.useBrand]||0)+1;
+    if(l.premium)  pmc[l.premium] = (pmc[l.premium]||0)+1;
+  });
   bars($('a-brand-use'), ub, {highlight:/Teapot|ทีพอท/i});
+  bars($('a-premium'), pmc);
 
   const cs = calcs.filter(c=>c.costPerCup>0);
   $('a-avgcost').textContent  = cs.length ? baht(cs.reduce((s,c)=>s+c.costPerCup,0)/cs.length) : '—';
@@ -1482,13 +1519,13 @@ async function dailyImage(){
 
 function downloadCSV(){
   const rows = filtered();
-  const head = ['วันที่','เวลา','ชื่อ','เบอร์','LINE','จุด','สถานะ','ชื่อร้าน','ประเภทร้าน','ยอดต่อวัน','มาแบบไหน','ยี่ห้อที่แลก','ยี่ห้อที่ใช้อยู่','แลกเป็น','จำนวน','สิทธิ์'];
+  const head = ['วันที่','เวลา','ชื่อ','เบอร์','LINE','จุด','สถานะ','ชื่อร้าน','ประเภทร้าน','ยอดต่อวัน','มาแบบไหน','ยี่ห้อที่แลก','ยี่ห้อที่ใช้อยู่','แลกเป็น','จำนวน','สิทธิ์','พรีเมียมที่ได้'];
   const esc2 = s => `"${String(s==null?'':s).replace(/"/g,'""')}"`;
   const body = rows.map(l=>{
     const d = new Date(l.createdAt||Date.now());
     return [d.toLocaleDateString('th-TH'), d.toLocaleTimeString('th-TH'),
       l.name,l.phone,l.line,l.venue,l.status,l.shopName,l.shopType,l.dailyCups,
-      l.joinType,l.tradeBrand,l.useBrand,l.tradeType,l.tradeQty,l.tradeRights].map(esc2).join(',');
+      l.joinType,l.tradeBrand,l.useBrand,l.tradeType,l.tradeQty,l.tradeRights,l.premium].map(esc2).join(',');
   });
   const csv = '﻿' + [head.map(esc2).join(','), ...body].join('\r\n');
   const a = document.createElement('a');
@@ -1503,7 +1540,7 @@ function downloadCSV(){
    6. บันทึกประจำวัน
    =================================================================== */
 const DAYF = ['d-prov','d-amphoe','d-m-name','d-m-shops','d-e-name','d-e-shops',
-              'd-coupon','d-premium','d-note'];
+              'd-coupon','d-premium','d-coupon-note','d-premium-note','d-note'];
 
 function parseFolders(txt){
   const s = String(txt||'').trim();
@@ -1599,8 +1636,10 @@ async function fetchDays(){
   return days.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
 }
 
+let dayCache = {};
 async function renderTripReport(){
   const days = await fetchDays();
+  dayCache = {}; days.forEach(v=>{ if(v.date) dayCache[v.date] = v; });
   const sum = k => days.reduce((s,v)=>s+(v[k]||0),0);
   const shops = sum('d-m-shops') + sum('d-e-shops');
   $('r-days').textContent    = days.length;
@@ -1608,12 +1647,13 @@ async function renderTripReport(){
   $('r-coupon').textContent  = sum('d-coupon');
   $('r-premium').textContent = sum('d-premium');
 
-  const d2 = s => (s||'').slice(8,10) + '/' + (s||'').slice(5,7);
   $('d-report').innerHTML =
     `<thead><tr><th>วันที่</th><th>จังหวัด</th><th>ตลาดเช้า</th><th>เช้า</th>
-      <th>ตลาดเย็น</th><th>เย็น</th><th>รวม</th><th>คูปอง</th><th>พรีเมียม</th></tr></thead><tbody>` +
-    (days.length ? days.map(v=>`<tr>
-        <td>${esc(d2(v.date))}</td>
+      <th>ตลาดเย็น</th><th>เย็น</th><th>รวม</th><th>คูปอง</th><th>พรีเมียม</th><th></th></tr></thead><tbody>` +
+    (days.length ? days.map(v=>{
+      const n = leads.filter(l=>(l.createdAt||'').slice(0,10) === v.date).length;
+      return `<tr class="drow" data-day="${esc(v.date)}">
+        <td>${esc(thaiDate(v.date))}</td>
         <td>${esc(v['d-prov']||'')}</td>
         <td>${esc(v['d-m-name']||'—')}</td>
         <td>${v['d-m-shops']||'-'}</td>
@@ -1622,30 +1662,116 @@ async function renderTripReport(){
         <td><b>${(v['d-m-shops']||0)+(v['d-e-shops']||0)}</b></td>
         <td>${v['d-coupon']||0}</td>
         <td>${v['d-premium']||0}</td>
-      </tr>`).join('')
+        <td>${n ? '<span class="tag">ดู '+n+' ราย</span>' : ''}</td>
+      </tr>`;
+    }).join('')
       + `<tr><td colspan="3"><b>รวมทั้งหมด</b></td><td><b>${sum('d-m-shops')}</b></td>
            <td></td><td><b>${sum('d-e-shops')}</b></td><td><b>${shops}</b></td>
-           <td><b>${sum('d-coupon')}</b></td><td><b>${sum('d-premium')}</b></td></tr>`
-      : `<tr><td colspan="9" style="color:var(--muted);padding:16px 8px">ยังไม่มีวันที่บันทึกไว้</td></tr>`) +
+           <td><b>${sum('d-coupon')}</b></td><td><b>${sum('d-premium')}</b></td><td></td></tr>`
+      : `<tr><td colspan="10" style="color:var(--muted);padding:16px 8px">ยังไม่มีวันที่บันทึกไว้</td></tr>`) +
     `</tbody>`;
+
+  /* กดที่แถวเพื่อดูว่ารอบไหนมีใครบ้าง แลกอะไร ได้พรีเมียมอะไร */
+  $('d-report').onclick = e=>{
+    if(e.target.closest('.copybtn')) return;
+    const tr = e.target.closest('.drow');
+    if(!tr) return;
+    const nx = tr.nextElementSibling;
+    if(nx && nx.classList.contains('dexp')){ nx.remove(); return; }
+    const d   = tr.dataset.day;
+    const rec = (dayCache[d] || {});
+    const list = leads.filter(l=>(l.createdAt||'').slice(0,10) === d);
+    if(!list.length) return;
+
+    const blocks = ['เช้า','เย็น'].map(r=>{
+      const people = list.filter(l => roundOf(l) === r);
+      if(!people.length) return '';
+      const venue = rec[r === 'เช้า' ? 'd-m-name' : 'd-e-name'] || '';
+      return { r, venue, people, text: noteText(r, venue, people) };
+    }).filter(Boolean);
+
+    const html = blocks.map((b,i)=>`
+      <div class="dsec">
+        <div class="dhd"><b>${esc(b.r)} — ${esc(b.venue || 'ไม่ระบุตลาด')}</b>
+          <button class="copybtn" data-note="${i}">คัดลอกโน้ต</button></div>
+        ${b.people.map((l,n)=>`<div class="dli">
+            <b>${n+1}. ${esc(l.shopName || l.name || '')}</b>${l.shopName && l.name ? ' (' + esc(l.name) + ')' : ''}
+            <small>🥛 นำมาแลก : ${esc(tradeLine(l))}</small>
+            <small>🎁 พรีเมี่ยม : ${esc(l.premium || '-')}</small>
+            <small>📞 ${esc(l.phone || '-')}</small>
+          </div>`).join('')}
+      </div>`).join('');
+
+    tr.insertAdjacentHTML('afterend',
+      '<tr class="dexp"><td colspan="10"><div class="dbox">' + html + '</div></td></tr>');
+
+    tr.nextElementSibling.querySelectorAll('.copybtn').forEach(btn=>{
+      btn.onclick = ()=>{
+        const t = blocks[+btn.dataset.note].text;
+        (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject())
+          .then(()=> toast('คัดลอกแล้ว วางในโน้ตของเซลล์ได้เลย'))
+          .catch(()=>{
+            const ta = document.createElement('textarea');
+            ta.value = t; document.body.appendChild(ta); ta.select();
+            try{ document.execCommand('copy'); toast('คัดลอกแล้ว'); }catch(e){ toast('คัดลอกไม่สำเร็จ'); }
+            ta.remove();
+          });
+      };
+    });
+  };
+}
+
+/* รอบของแต่ละคน ถ้าไม่มีข้อมูลให้เดาจากเวลาที่ลงทะเบียน */
+function roundOf(l){
+  if(l.round) return l.round;
+  const t = new Date(l.createdAt || 0);
+  return (isNaN(t) || t.getHours() < 14) ? 'เช้า' : 'เย็น';
+}
+
+function tradeLine(l){
+  if(l.tradeBrand) return (l.tradeType ? l.tradeType + ' ' : '') + l.tradeBrand
+                        + (l.tradeQty ? ' ' + l.tradeQty : '');
+  return l.useBrand ? 'ไม่ได้แลก (ใช้ ' + l.useBrand + ')' : 'ไม่ได้แลก';
+}
+
+/* ข้อความสำหรับวางในโน้ตของเซลล์ในชีต */
+function noteText(round, venue, people){
+  return round + ' — ' + (venue || 'ไม่ระบุตลาด') + '\n\n' +
+    people.map((l,i)=>
+      (i+1) + '. ' + (l.shopName || l.name || '') + (l.shopName && l.name ? ' (' + l.name + ')' : '') + '\n' +
+      '🥛 นำมาแลก : ' + tradeLine(l) + '\n' +
+      '🎁 พรีเมี่ยม : ' + (l.premium || '-') + '\n' +
+      '📞 ' + (l.phone || '-')
+    ).join('\n\n');
+}
+
+/* 2026-11-21 → 21 พ.ย. (ส) ให้ตรงกับรูปแบบในชีตรีพอร์ตเดิม */
+const TH_MON = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const TH_DOW = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+function thaiDate(iso){
+  if(!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  if(isNaN(d)) return iso;
+  return d.getDate() + ' ' + TH_MON[d.getMonth()] + ' (' + TH_DOW[d.getDay()] + ')';
 }
 
 async function dayReportCSV(){
   const days = await fetchDays();
   const f = CFG.driveFolders || {};
+  /* คอลัมน์ว่างหลังช่องร้านค้าเย็น มีในชีตเดิม ต้องเว้นไว้ให้ตรง */
   const head = ['วันที่','จังหวัด','อำเภอ','ตลาดเช้า (08:00–11:00)','ร้านค้าเช้าที่ร่วมกิจกรรม (จำนวน)',
-    'ตลาดเย็น (16:00–21:00)','ร้านค้าเย็นที่ร่วมกิจกรรม (จำนวน)','รวมร้านค้าที่ร่วมกิจกรรม ทั้งวัน',
+    'ตลาดเย็น (16:00–21:00)','ร้านค้าเย็นที่ร่วมกิจกรรม (จำนวน)','','รวมร้านค้าที่ร่วมกิจกรรม ทั้งวัน',
     'คูปอง ที่แจก (ใบ)','สรุปของพรีเมี่ยม ที่แจก (ชิ้น)','Link รูปภาพ','หมายเหตุ'];
   const q = s => `"${String(s==null?'':s).replace(/"/g,'""')}"`;
   const body = days.map(v=>[
-    v.date, v['d-prov'], v['d-amphoe'],
+    thaiDate(v.date), v['d-prov'], v['d-amphoe'],
     v['d-m-name'] || '❌ ไม่มีรอบเช้า', v['d-m-shops'] || '-',
     v['d-e-name'] || '❌ ไม่มีรอบเย็น', v['d-e-shops'] || '-',
-    (v['d-m-shops']||0) + (v['d-e-shops']||0),
+    '', (v['d-m-shops']||0) + (v['d-e-shops']||0),
     v['d-coupon'], v['d-premium'], (f[v.date]||{}).day || '', v['d-note']
   ].map(q).join(','));
   const sum = k => days.reduce((s,v)=>s+(v[k]||0),0);
-  body.push([ '✅ รวมทั้งหมด','','','', sum('d-m-shops'), '', sum('d-e-shops'),
+  body.push([ '✅ รวมทั้งหมด','','','', sum('d-m-shops'), '', sum('d-e-shops'), '',
     sum('d-m-shops')+sum('d-e-shops'), sum('d-coupon'), sum('d-premium'), '', '' ].map(q).join(','));
   const csv = '﻿' + [head.map(q).join(','), ...body].join('\r\n');
   const a = document.createElement('a');
