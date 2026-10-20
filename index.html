@@ -958,7 +958,6 @@ function newLead(){
   if(!autoVenue) $('f-venue').value = '';
   $('f-consent').checked = false;
   $('f-status').querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
-  $('shop-fields').style.display = 'none';
   $('reg-err').classList.remove('on');
   $('f-name').classList.remove('err'); $('f-phone').classList.remove('err');
   show('s-register');
