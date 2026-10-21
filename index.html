@@ -206,6 +206,20 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 .sheet-in img{width:100%;border-radius:10px;display:block}
 .sheet-in p{font-size:13px;color:var(--muted);margin:12px 0 0}
 .sheet-in .btn{text-decoration:none;display:block;box-sizing:border-box}
+/* มิเตอร์เทียบเป้า สีฟ้า = ยังไม่ถึง สีเขียว + เครื่องหมายถูก = ถึงแล้ว
+   ไม่ใช้สีอย่างเดียวบอกสถานะ มีตัวหนังสือกำกับเสมอ */
+.mt{margin-bottom:15px}
+.mt:last-child{margin-bottom:0}
+.mt .lb{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;margin-bottom:5px}
+.mt .lb span{min-width:0}
+.mt .lb b{flex:0 0 auto;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mt .lb b i{font-style:normal;font-weight:500;color:var(--muted)}
+.mt .track{height:10px;background:#E8EBF4;border-radius:99px;overflow:hidden}
+.mt .fill{height:100%;background:#3A46C8;border-radius:99px;min-width:3px}
+.mt.ok .fill{background:#0CA30C}
+.mt .okt{color:#0A8A0A;font-size:12px;margin-left:7px}
+.mt .lot{color:var(--muted);font-size:12px;margin-left:7px}
+.mt small{display:block;color:var(--muted);font-size:11.5px;margin-top:4px}
 .melist .r{display:flex;justify-content:space-between;gap:14px;padding:10px 0;
   border-bottom:1px solid #EEF2F6;font-size:14px}
 .melist .r:last-child{border-bottom:0}
@@ -290,6 +304,47 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
     </div>
     <button class="btn" id="me-recipes">กลับไปดูสูตร</button>
     <button class="btn ghost sm" id="me-new">ลงทะเบียนคนใหม่</button>
+  </div>
+</section>
+
+<!-- ==================== 2.2 รายงานความคืบหน้า ==================== -->
+<section id="s-report" class="screen">
+  <div class="topbar"><button id="rp-back">‹ กลับ</button><div class="t">รายงานความคืบหน้า</div></div>
+  <div class="wrap">
+
+    <div class="card">
+      <label>เลือกวัน</label>
+      <input id="rp-date" type="date">
+      <p class="sub" id="rp-where" style="margin:10px 0 0"></p>
+    </div>
+
+    <div class="card">
+      <h2>วันนี้ได้ตามเป้ามั้ย</h2>
+      <p class="sub" style="margin-bottom:14px">เป้าต่อจุดตามแผนงาน หน้า KPI</p>
+      <div id="rp-meters"></div>
+    </div>
+
+    <div class="card">
+      <h2>ใครมาวันนี้</h2>
+      <p class="sub" style="margin-bottom:10px">แยกกลุ่มจากยี่ห้อที่กรอกในฟอร์ม</p>
+      <div class="bars" id="rp-entry"></div>
+    </div>
+
+    <div class="card">
+      <h2>ชิงมาจากยี่ห้อไหน</h2>
+      <p class="sub" style="margin-bottom:10px">ยี่ห้อเดิมของคนที่เอาของมาแลกวันนี้</p>
+      <div class="bars" id="rp-from"></div>
+    </div>
+
+    <div class="card">
+      <h2>ความคืบหน้าทั้งทริป</h2>
+      <p class="sub" style="margin-bottom:14px" id="rp-trip-sub"></p>
+      <div id="rp-trip"></div>
+    </div>
+
+    <button class="btn" id="rp-img">บันทึกรายงานวันนี้เป็นรูป</button>
+    <p class="foot">ส่งให้ลูกค้าทางไลน์ได้เลย เป็นรูปหน้าเดียว</p>
+
   </div>
 </section>
 
@@ -420,12 +475,15 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         </div>
         <div class="scroll"><table class="tbl" id="a-table"></table></div>
         <p class="tot" id="a-more"></p>
-        <button class="btn" id="btn-daily">สรุปวันนี้เป็นรูป</button>
-        <button class="btn sm" id="btn-csv">ดาวน์โหลด CSV</button>
+        <button class="btn" id="btn-csv">ดาวน์โหลด CSV</button>
+        <button class="btn sm" id="btn-daily">สรุปวันนี้เป็นรูป</button>
         <button class="btn ghost sm" id="btn-refresh">โหลดข้อมูลใหม่</button>
-        <button class="btn ghost sm" id="btn-del-filtered">ลบรายการที่แสดงอยู่</button>
-        <button class="btn ghost sm danger" id="btn-wipe">ล้างข้อมูลทั้งหมด</button>
-        <p class="tot">ลบแล้วกู้คืนไม่ได้ โหลด CSV เก็บไว้ก่อนถ้าไม่แน่ใจ</p>
+        <button class="btn ghost sm" id="btn-del-filtered">ลบเฉพาะรายชื่อที่กรองอยู่</button>
+        <p class="tot">ลบแค่รายชื่อตามตัวกรองด้านบน ถ้าไม่ได้ตั้งตัวกรอง = ลบรายชื่อทั้งหมด
+          แต่ตัวเลขต้นทุน สถิติเปิดสูตร รายการแลกของ และบันทึกประจำวัน ยังอยู่ครบ</p>
+        <button class="btn ghost sm danger" id="btn-wipe">ล้างข้อมูลทดสอบทั้งระบบ</button>
+        <p class="tot">ล้างทุกอย่าง รายชื่อ ต้นทุน สถิติ รายการแลกของ และบันทึกประจำวัน
+          ใช้ครั้งเดียวก่อนเริ่มงานจริง ลบแล้วกู้คืนไม่ได้ โหลด CSV เก็บไว้ก่อน</p>
         <p class="tot" id="q-note"></p>
         <button class="btn ghost sm" id="btn-clearq" style="display:none">ล้างรายการค้าง</button>
       </div>
@@ -440,6 +498,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <h2>บันทึกประจำวัน</h2>
         <p class="sub">กรอกชื่อตลาด จำนวนร้าน คูปอง ของพรีเมียม และเปิดโฟลเดอร์อัปรูป</p>
         <button class="btn" id="btn-day">เปิดหน้าบันทึกวันนี้</button>
+        <button class="btn sm" id="btn-report">ดูรายงานความคืบหน้า</button>
       </div>
 
       <div class="card">
@@ -662,7 +721,7 @@ const FILE_CFG = (typeof TEAPOT_CONFIG !== 'undefined' && TEAPOT_CONFIG)
 const EDITABLE = ['brand','schedule','venues','statusOptions','shopTypeOptions',
                   'dailyCupsOptions','tradeBrands','tradeRule','pdpaText','packaging',
                   'recipes','lineUrl','lineLabel','fbUrl','fbLabel','driveFolders',
-                  'brandOptions','entryPoints','tradeIn','tradeOut','premiumItems'];
+                  'brandOptions','entryPoints','tradeIn','tradeOut','premiumItems','kpi'];
 /* ค่าจากไฟล์ระบบทับไฟล์เนื้อหาเสมอ อัปไฟล์เนื้อหาใหม่จึงลบ firebase ทิ้งไม่ได้ */
 const SYS_KEYS = ['firebase','collections','adminPin'];
 let CFG = Object.assign({}, FILE_CFG);
@@ -1640,12 +1699,16 @@ async function wipeEverything(){
   toast('กำลังล้างข้อมูล…');
   try{
     if(db){
-      for(const col of [COL.leads, COL.calcs, COL.views]){
+      /* ต้องรวม trades กับ days ด้วย ไม่งั้นข้อมูลทดสอบค้างอยู่ในรายงาน */
+      for(const col of [COL.leads, COL.calcs, COL.views, COL.trades, COL.days]){
         const snap = await FS.getDocs(FS.collection(db, col));
         await deleteDocsIn(col, snap.docs.map(d=>d.id));
       }
     }
-    LS.set('local_leads',[]); LS.set('queue',[]); LS.set('rejected',[]);
+    LS.set('local_leads',[]); LS.set('local_trades',[]);
+    LS.set('queue',[]); LS.set('rejected',[]);
+    Object.keys(localStorage).filter(k=>k.startsWith('teapot_day_'))
+      .forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
     toast('ล้างข้อมูลเรียบร้อย พร้อมเริ่มงานจริง');
     await loadAdmin();
   }catch(e){
@@ -1656,83 +1719,213 @@ async function wipeEverything(){
 }
 
 
-/* ---------- สรุปรายวันเป็นรูป ---------- */
-async function dailyImage(){
-  try{ await document.fonts.ready; }catch(e){}
-  const n = new Date(), pad = v=>String(v).padStart(2,'0');
-  const day = n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate());
-  const todays = leads.filter(l => dayOf(l) === day);
-  const shops  = todays.filter(l=>/เจ้าของร้าน/.test(l.status||'')).length;
-  const venues = [...new Set(todays.map(l=>l.venue).filter(Boolean))];
-  const top = (arr, key)=>{
-    const c = {}; arr.forEach(l=>{ if(l[key]) c[l[key]] = (c[l[key]]||0)+1; });
-    const e = Object.entries(c).sort((a,b)=>b[1]-a[1])[0];
-    return e ? { name:e[0], pct: e[1]/arr.length*100 } : null;
-  };
-  const bs = top(todays,'brandSweet'), bp = top(todays,'brandPlain');
-  const todayCalcs = calcs.filter(c => dayOf(c) === day);
-  const avg = a => a.length ? a.reduce((s,v)=>s+v,0)/a.length : 0;
+/* ===================================================================
+   รายงานความคืบหน้า เทียบกับเป้า KPI ในแผนงาน
+   =================================================================== */
+const KPI_DEF = {forms:20, switchAll:15, nonuser:5, switcherA:5, switcherB:5, coupon:15, stops:24};
+const kpiOf = k => { const v = (CFG.kpi||{})[k]; return (v===undefined||v===null) ? KPI_DEF[k] : +v; };
 
-  const W = 1080, pad2 = 72;
-  const H = 1210;
+/* แถบเทียบเป้า ถึงเป้าแล้วเปลี่ยนเป็นเขียวพร้อมข้อความกำกับ ไม่ใช้สีบอกอย่างเดียว */
+function meter(label, value, target, note){
+  const t   = Math.max(0, +target || 0);
+  const pct = t ? Math.min(100, value / t * 100) : 0;
+  const hit = t > 0 && value >= t;
+  const tail = t
+    ? (hit ? '<span class="okt">\u2713 ถึงเป้า</span>'
+           : '<span class="lot">ขาด ' + (t - value) + '</span>')
+    : '';
+  return `<div class="mt${hit ? ' ok' : ''}">
+    <div class="lb"><span>${esc(label)}</span>
+      <b>${value}<i> / ${t || '—'}</i>${tail}</b></div>
+    <div class="track"><div class="fill" style="width:${pct.toFixed(0)}%"></div></div>
+    ${note ? `<small>${esc(note)}</small>` : ''}
+  </div>`;
+}
+
+function epName(k){ return ((CFG.entryPoints||{})[k]||{}).name || k || 'ไม่ระบุ'; }
+
+async function openReport(d){
+  $('rp-date').value = d || $('rp-date').value || todayISO();
+  show('s-report');
+  await drawReport();
+}
+
+async function drawReport(){
+  const day = $('rp-date').value || todayISO();
+  const L = leads.filter(l  => dayOf(l) === day);
+  const T = trades.filter(t => dayOf(t) === day);
+
+  /* จุดที่ออกบูธวันนั้น ดูจากตารางก่อน ถ้าไม่มีค่อยดูจากข้อมูลที่เก็บได้ */
+  const planned = (CFG.schedule||[]).filter(r => r.date === day).map(r => r.venue);
+  const seen    = [...new Set(L.map(l => l.venue).filter(Boolean))];
+  const where   = (planned.length ? planned : seen);
+  $('rp-where').textContent = where.length
+    ? where.join('  ·  ') + (planned.length > 1 ? '  (วันนี้ ' + planned.length + ' รอบ)' : '')
+    : 'วันนี้ไม่มีจุดในตาราง';
+
+  /* นับการแลกแยกตามกลุ่ม ใช้ entry ที่ติดมากับคนคนนั้นตอนลงทะเบียน */
+  const tBy = k => T.filter(t => t.entry === k).length;
+  const stops = where.length || 1;   /* วันไหนสองรอบ เป้าคูณสอง */
+
+  $('rp-meters').innerHTML =
+      meter('กรอกแบบฟอร์มรับสูตร',      L.length, kpiOf('forms')     * stops, 'เป้า ' + kpiOf('forms') + ' คนต่อจุด')
+    + meter('เปลี่ยนมาใช้ TEAPOT รวม',  T.length, kpiOf('switchAll') * stops, 'นับจากคนที่เอาของมาแลกจริง')
+    + meter('Non-user เปลี่ยนครบ 2 ตัว', tBy('nonuser'),   kpiOf('nonuser')   * stops)
+    + meter('Switcher A เปลี่ยนข้นหวาน', tBy('switcherA'), kpiOf('switcherA') * stops)
+    + meter('Switcher B เปลี่ยนข้นจืด',  tBy('switcherB'), kpiOf('switcherB') * stops);
+
+  /* ใครมาวันนี้ แยกทุกกลุ่มรวมคนที่ใช้ครบคู่อยู่แล้ว */
+  const ec = {};
+  L.forEach(l => { const n = epName(l.entry); ec[n] = (ec[n]||0) + 1; });
+  bars($('rp-entry'), ec, {highlight:/ใช้ครบคู่/});
+
+  /* ยี่ห้อเดิมของคนที่มาแลก = ยี่ห้อที่เราชิงมาได้ */
+  const fc = {};
+  T.forEach(t => { const b = (t.brand||'').trim(); if(b) fc[b] = (fc[b]||0) + 1; });
+  bars($('rp-from'), fc);
+
+  /* ทั้งทริป */
+  const allStops = kpiOf('stops');
+  const done = new Set(leads.map(dayOf).filter(Boolean)).size;
+  $('rp-trip-sub').textContent = 'เป้าทั้งทริป ' + allStops + ' จุด · เก็บข้อมูลไปแล้ว ' + done + ' วัน';
+  $('rp-trip').innerHTML =
+      meter('แบบฟอร์มรวมทั้งทริป',  leads.length,  kpiOf('forms')     * allStops)
+    + meter('เปลี่ยนมาใช้ TEAPOT รวม', trades.length, kpiOf('switchAll') * allStops)
+    + meter('Non-user',  trades.filter(t=>t.entry==='nonuser').length,   kpiOf('nonuser')   * allStops)
+    + meter('Switcher A', trades.filter(t=>t.entry==='switcherA').length, kpiOf('switcherA') * allStops)
+    + meter('Switcher B', trades.filter(t=>t.entry==='switcherB').length, kpiOf('switcherB') * allStops);
+}
+
+/* ---------- สรุปรายวันเป็นรูป ---------- */
+async function dailyImage(theDay){
+  try{ await document.fonts.ready; }catch(e){}
+  const day = theDay || todayISO();
+  const L = leads.filter(l  => dayOf(l)  === day);
+  const T = trades.filter(t => dayOf(t) === day);
+  const tBy = k => T.filter(t => t.entry === k).length;
+
+  const planned = (CFG.schedule||[]).filter(r => r.date === day).map(r => r.venue);
+  const seen    = [...new Set(L.map(l => l.venue).filter(Boolean))];
+  const where   = planned.length ? planned : seen;
+  const stops   = where.length || 1;
+
+  /* แถวเป้าของวันนี้ ชุดเดียวกับที่โชว์ในหน้ารายงาน ตัวเลขจะได้ไม่ขัดกัน */
+  const rows = [
+    ['กรอกแบบฟอร์มรับสูตร',      L.length,         kpiOf('forms')     * stops],
+    ['เปลี่ยนมาใช้ TEAPOT',      T.length,         kpiOf('switchAll') * stops],
+    ['Non-user ครบ 2 ตัว',       tBy('nonuser'),   kpiOf('nonuser')   * stops],
+    ['Switcher A ข้นหวาน',       tBy('switcherA'), kpiOf('switcherA') * stops],
+    ['Switcher B ข้นจืด',        tBy('switcherB'), kpiOf('switcherB') * stops]
+  ];
+
+  const ec = {};
+  L.forEach(l => { const n = epName(l.entry); ec[n] = (ec[n]||0) + 1; });
+  const eRows = Object.entries(ec).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  const eMax  = Math.max(1, ...eRows.map(r=>r[1]));
+  const eTot  = eRows.reduce((s,r)=>s+r[1], 0);
+
+  const W = 1080, PAD = 72, CW = W - PAD*2;
+  const headH = 330, venueY = 392;
+  const mCardY = 430, mCardH = 58 + 44 + rows.length*92 + 18;
+  const eCardY = mCardY + mCardH + 28;
+  const eCardH = eRows.length ? (58 + 44 + eRows.length*84 + 18) : 150;
+  const tCardY = eCardY + eCardH + 28;
+  const tCardH = 212;
+  const H      = tCardY + tCardH + 92;
+
   const c = document.createElement('canvas'); c.width=W; c.height=H;
   const x = c.getContext('2d');
-  const F = (w,s)=>`${w} ${s}px 'IBM Plex Sans Thai', system-ui, sans-serif`;
-  const rr = (X,Y,w,hh,r)=>{ x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+w,Y,X+w,Y+hh,r);
-    x.arcTo(X+w,Y+hh,X,Y+hh,r); x.arcTo(X,Y+hh,X,Y,r); x.arcTo(X,Y,X+w,Y,r); x.closePath(); };
+  const F  = (w,sz)=>`${w} ${sz}px 'IBM Plex Sans Thai', system-ui, sans-serif`;
+  const rr = (X,Y,w,h,r)=>{ x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+w,Y,X+w,Y+h,r);
+    x.arcTo(X+w,Y+h,X,Y+h,r); x.arcTo(X,Y+h,X,Y,r); x.arcTo(X,Y,X+w,Y,r); x.closePath(); };
+  const bar = (X,Y,w,pct,color)=>{
+    x.fillStyle='#E8EBF4'; rr(X,Y,w,14,7); x.fill();
+    if(!(pct > 0)) return;          /* ศูนย์ = ไม่ต้องมีเศษแถบโผล่มาให้เข้าใจผิด */
+    const fw = Math.max(14, w * Math.min(1, pct));
+    x.fillStyle=color; rr(X,Y,fw,14,7); x.fill();
+  };
+  /* ตัวเลขชิดขวา ต่อท้ายด้วยสถานะคนละสี วัดความกว้างก่อนค่อยถอยตำแหน่ง */
+  const rightPair = (xR,yy,main,tail,tailCol)=>{
+    x.textAlign='right'; let back = 0;
+    if(tail){ x.font=F(500,26); x.fillStyle=tailCol; x.fillText(tail,xR,yy);
+              back = x.measureText(tail).width + 16; }
+    x.font=F(700,32); x.fillStyle='#16182E'; x.fillText(main, xR-back, yy);
+    x.textAlign='left';
+  };
 
   x.fillStyle='#F6F7FC'; x.fillRect(0,0,W,H);
-  const g=x.createLinearGradient(0,0,W,330);
+  const g=x.createLinearGradient(0,0,W,headH);
   g.addColorStop(0,'#2A34A3'); g.addColorStop(1,'#000C51');
-  x.fillStyle=g; x.fillRect(0,0,W,330);
+  x.fillStyle=g; x.fillRect(0,0,W,headH);
   const lg=$('h-logo');
   if(lg && lg.complete && lg.naturalWidth){
     const lw=350, lh=lw*lg.naturalHeight/lg.naturalWidth;
     x.drawImage(lg,(W-lw)/2,36,lw,lh);
   }
+  const dObj = new Date(day + 'T00:00:00');
   x.fillStyle='rgba(255,255,255,.85)'; x.font=F(500,30); x.textAlign='center';
-  x.fillText('สรุปประจำวันที่ ' + n.toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'}), W/2, 294);
+  x.fillText('รายงานประจำวันที่ ' + (isNaN(dObj) ? day
+      : dObj.toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'})), W/2, 294);
+  x.fillStyle='#6B7189'; x.font=F(400,28);
+  x.fillText(where.length ? where.join('   ·   ') : 'ยังไม่ระบุจุด', W/2, venueY);
+  x.textAlign='left';
 
-  x.fillStyle='#6B7189'; x.font=F(400,28); x.textAlign='center';
-  x.fillText(venues.length ? venues.join('  ·  ') : 'ยังไม่ระบุจุด', W/2, 392);
+  /* การ์ดเป้า */
+  x.fillStyle='#fff'; rr(PAD,mCardY,CW,mCardH,20); x.fill();
+  x.fillStyle='#16182E'; x.font=F(700,34);
+  x.fillText('วันนี้ได้ตามเป้ามั้ย', PAD+34, mCardY+58);
+  rows.forEach(([lb,v,t],i)=>{
+    const yy = mCardY + 58 + 72 + i*92;
+    x.fillStyle='#6B7189'; x.font=F(400,28); x.fillText(lb, PAD+34, yy);
+    const hit = t > 0 && v >= t;
+    rightPair(W-PAD-34, yy, v + ' / ' + (t || '—'),
+      t ? (hit ? '✓ ถึงเป้า' : 'ขาด ' + (t - v)) : '',
+      hit ? '#0A8A0A' : '#8A90A6');
+    bar(PAD+34, yy+22, CW-68, t ? v/t : 0, hit ? '#0CA30C' : '#3A46C8');
+  });
 
-  const tile = (X,Y,w,label,val)=>{
-    x.fillStyle='#fff'; rr(X,Y,w,150,18); x.fill();
-    x.fillStyle='#6B7189'; x.font=F(400,26); x.textAlign='left'; x.fillText(label, X+28, Y+52);
-    x.fillStyle='#202985'; x.font=F(700,56); x.fillText(val, X+28, Y+116);
-  };
-  const half = (W-pad2*2-20)/2;
-  tile(pad2, 434, half, 'ลงทะเบียนวันนี้', String(todays.length));
-  tile(pad2+half+20, 434, half, 'เจ้าของร้าน', String(shops));
+  /* การ์ดกลุ่มที่มา */
+  x.fillStyle='#fff'; rr(PAD,eCardY,CW,eCardH,20); x.fill();
+  x.fillStyle='#16182E'; x.font=F(700,34);
+  x.fillText('ใครมาวันนี้', PAD+34, eCardY+58);
+  if(!eRows.length){
+    x.fillStyle='#8A90A6'; x.font=F(400,28);
+    x.fillText('ยังไม่มีคนลงทะเบียนวันนี้', PAD+34, eCardY+112);
+  }else{
+    eRows.forEach(([lb,v],i)=>{
+      const yy = eCardY + 58 + 72 + i*84;
+      x.fillStyle='#6B7189'; x.font=F(400,28); x.fillText(lb, PAD+34, yy);
+      x.textAlign='right'; x.fillStyle='#16182E'; x.font=F(600,28);
+      x.fillText((eTot ? (v/eTot*100).toFixed(0) : 0) + '%   ' + v + ' คน', W-PAD-34, yy);
+      x.textAlign='left';
+      bar(PAD+34, yy+22, CW-68, v/eMax, '#3A46C8');
+    });
+  }
 
-  let y = 630;
-  x.fillStyle='#fff'; rr(pad2, y, W-pad2*2, 300, 20); x.fill();
-  const row = (label, val, yy)=>{
-    x.fillStyle='#6B7189'; x.font=F(400,28); x.textAlign='left'; x.fillText(label, pad2+34, yy);
-    x.fillStyle='#16182E'; x.font=F(600,30); x.textAlign='right'; x.fillText(val, W-pad2-34, yy);
-  };
-  row('ข้นหวานที่เจอมากสุด', bs ? `${bs.name}  ${bs.pct.toFixed(0)}%` : '—', y+62);
-  row('ข้นจืดที่เจอมากสุด',  bp ? `${bp.name}  ${bp.pct.toFixed(0)}%` : '—', y+124);
-  row('คิดต้นทุนในเว็บ',     String(todayCalcs.length) + ' ครั้ง', y+186);
-  row('ราคาขายเฉลี่ยที่ตั้ง',
-      todayCalcs.filter(v=>v.sellPrice>0).length
-        ? avg(todayCalcs.filter(v=>v.sellPrice>0).map(v=>v.sellPrice)).toFixed(0) + ' ฿'
-        : '—', y+248);
-
-  y += 360;
-  x.fillStyle='#202985'; rr(pad2, y, W-pad2*2, 130, 20); x.fill();
-  x.fillStyle='rgba(255,255,255,.75)'; x.font=F(400,26); x.textAlign='left';
-  x.fillText('รวมสะสมทั้งทริป', pad2+34, y+52);
-  x.fillStyle='#fff'; x.font=F(700,54); x.textAlign='right';
-  x.fillText(String(leads.length) + ' คน', W-pad2-34, y+92);
+  /* การ์ดสะสมทั้งทริป */
+  const allStops = kpiOf('stops');
+  x.fillStyle='#202985'; rr(PAD,tCardY,CW,tCardH,20); x.fill();
+  x.fillStyle='rgba(255,255,255,.72)'; x.font=F(400,27);
+  x.fillText('สะสมทั้งทริป  เป้า ' + allStops + ' จุด', PAD+34, tCardY+52);
+  const tRows = [
+    ['แบบฟอร์มรับสูตร',   leads.length,  kpiOf('forms')     * allStops],
+    ['เปลี่ยนมาใช้ TEAPOT', trades.length, kpiOf('switchAll') * allStops]
+  ];
+  tRows.forEach(([lb,v,t],i)=>{
+    const yy = tCardY + 108 + i*60;
+    x.fillStyle='rgba(255,255,255,.8)'; x.font=F(400,28); x.fillText(lb, PAD+34, yy);
+    x.textAlign='right'; x.fillStyle='#fff'; x.font=F(700,32);
+    x.fillText(v + ' / ' + t, W-PAD-34, yy);
+    x.textAlign='left';
+  });
 
   x.fillStyle='#9AA1B8'; x.font=F(400,24); x.textAlign='center';
-  x.fillText('ทีพอท คาราวานคู่ชงทั่วไทย', W/2, H-44);
+  x.fillText('ทีพอท คาราวานคู่ชงทั่วไทย  ·  ' + pageUrl().replace(/^https?:\/\//,''), W/2, H-40);
 
   const url = c.toDataURL('image/png');
   $('shot-out').src = url;
   $('shot-dl').href = url;
-  $('shot-dl').download = 'สรุป-' + day + '.png';
+  $('shot-dl').download = 'รายงาน-' + day + '.png';
   $('sheet').classList.add('on');
 }
 
@@ -2377,7 +2570,11 @@ $('btn-logout').onclick = async ()=>{
 };
 $('f-pass').onkeydown = e=>{ if(e.key==='Enter') $('btn-pin').click(); };
 $('f-email').onkeydown = e=>{ if(e.key==='Enter') $('f-pass').focus(); };
-$('btn-daily').onclick = dailyImage;
+$('btn-daily').onclick  = dailyImage;
+$('btn-report').onclick = ()=> openReport(todayISO());
+$('rp-back').onclick    = ()=>{ renderAdmin(); show('s-admin'); };
+$('rp-date').onchange   = drawReport;
+$('rp-img').onclick     = ()=> dailyImage($('rp-date').value || todayISO());
 $('btn-csv').onclick = downloadCSV;
 $('a-table').onclick = e=>{
   const btn = e.target.closest('[data-row],[data-edit]');
