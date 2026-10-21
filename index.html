@@ -206,6 +206,15 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 .sheet-in img{width:100%;border-radius:10px;display:block}
 .sheet-in p{font-size:13px;color:var(--muted);margin:12px 0 0}
 .sheet-in .btn{text-decoration:none;display:block;box-sizing:border-box}
+.melist .r{display:flex;justify-content:space-between;gap:14px;padding:10px 0;
+  border-bottom:1px solid #EEF2F6;font-size:14px}
+.melist .r:last-child{border-bottom:0}
+.melist .r span{color:var(--muted);flex:0 0 auto}
+.melist .r b{text-align:right;min-width:0;word-break:break-word}
+.rowedit{border:0;background:var(--blue-soft);color:var(--navy);width:24px;height:24px;
+  border-radius:7px;cursor:pointer;font-size:13px;line-height:1;padding:0;margin-right:4px}
+.sheet-in.form{text-align:left}
+.sheet-in.form h2{margin:0 0 4px}
 .offline{background:#FFF4E0;border:1px solid #F0D9A8;color:#7A5A12;border-radius:10px;padding:10px 13px;font-size:13px;margin-top:12px}
 .foot{text-align:center;font-size:12px;color:var(--muted);margin-top:26px}
 .foot a{color:var(--muted)}
@@ -262,11 +271,25 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 
 <!-- ==================== 2. รายการสูตร ==================== -->
 <section id="s-recipes" class="screen">
-  <div class="topbar"><div class="t">สูตรน้ำชงคู่ชง</div><button id="go-admin-2">หลังบ้าน</button></div>
+  <div class="topbar"><button id="go-me">‹ ข้อมูลของฉัน</button><div class="t">สูตรน้ำชงคู่ชง</div><button id="go-admin-2">หลังบ้าน</button></div>
   <div class="wrap">
     <div class="greet" id="greet"></div>
     <div class="rgrid" id="recipe-list"></div>
     <p class="foot">เลือกสูตร แล้วใส่ราคาวัตถุดิบของร้านคุณ ระบบจะคิดต้นทุนต่อแก้วให้ทันที</p>
+  </div>
+</section>
+
+<!-- ==================== 2.1 ข้อมูลที่กรอกไว้ (ดูอย่างเดียว) ==================== -->
+<section id="s-me" class="screen">
+  <div class="topbar"><button id="me-back">‹ กลับ</button><div class="t">ข้อมูลของคุณ</div></div>
+  <div class="wrap">
+    <div class="card">
+      <h2>ข้อมูลที่กรอกไว้</h2>
+      <p class="sub">ดูได้อย่างเดียว ถ้ามีตรงไหนผิด แจ้งสตาฟที่บูธแก้ให้ได้เลย</p>
+      <div class="melist" id="me-list"></div>
+    </div>
+    <button class="btn" id="me-recipes">กลับไปดูสูตร</button>
+    <button class="btn ghost sm" id="me-new">ลงทะเบียนคนใหม่</button>
   </div>
 </section>
 
@@ -603,6 +626,19 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
     <p>กดค้างที่รูปเพื่อบันทึกลงเครื่อง หรือกดปุ่มดาวน์โหลด</p>
     <a class="btn" id="shot-dl" download>ดาวน์โหลดรูป</a>
     <button class="btn ghost sm" id="shot-close">ปิด</button>
+  </div>
+</div>
+<div class="sheet" id="leadsheet">
+  <div class="sheet-in form">
+    <h2>แก้ข้อมูลผู้ลงทะเบียน</h2>
+    <p class="sub" id="le-meta" style="margin:0 0 12px"></p>
+    <label>ชื่อ</label>
+    <input id="le-name" type="text">
+    <label>เบอร์โทร</label>
+    <input id="le-phone" type="tel" inputmode="numeric" placeholder="08x-xxx-xxxx">
+    <div class="err-msg" id="le-err"></div>
+    <button class="btn" id="le-save">บันทึก</button>
+    <button class="btn ghost sm" id="le-cancel">ยกเลิก</button>
   </div>
 </div>
 <div class="pill" id="pill"></div>
@@ -1018,6 +1054,31 @@ async function copyPageUrl(){
   ta.remove();
   toast(ok ? 'คัดลอกลิงก์แล้ว ไปวางในแชตหรือโน้ตได้เลย'
            : 'กดค้างที่ลิงก์ด้านบนแล้วเลือกคัดลอก');
+}
+
+/* หน้าดูข้อมูลที่กรอกไว้ อ่านอย่างเดียว แก้ไม่ได้ จะได้ไม่เกิดรายการซ้ำ
+   ถ้าผิดจริงให้สตาฟแก้ในหลังบ้าน ซึ่งล็อกอินแล้วและ Rules อนุญาตเฉพาะแอดมิน */
+function openMe(){
+  if(!me || !me.name){ show('s-register'); return; }
+  const ep   = (CFG.entryPoints||{})[me.entry] || {};
+  let when = '';
+  if(me.createdAt){
+    const d = new Date(me.createdAt);
+    if(!isNaN(d)) when = d.toLocaleString('th-TH',{dateStyle:'medium',timeStyle:'short'});
+  }
+  const rows = [
+    ['ชื่อ',            me.name],
+    ['เบอร์โทร',        me.phone],
+    ['จุดที่พบ',         me.venue],
+    ['คุณคือ',          me.status],
+    ['ข้นหวานที่ใช้อยู่', me.brandSweet],
+    ['ข้นจืดที่ใช้อยู่',   me.brandPlain],
+    ['กลุ่ม',           ep.name],
+    ['ลงทะเบียนเมื่อ',   when + (me.round ? ' · รอบ' + me.round : '')]
+  ];
+  $('me-list').innerHTML = rows.filter(r=>r[1]).map(r=>
+    `<div class="r"><span>${esc(r[0])}</span><b>${esc(r[1])}</b></div>`).join('');
+  show('s-me');
 }
 
 /* ล้างข้อมูลคนเดิม เริ่มลงทะเบียนคนใหม่ */
@@ -1474,7 +1535,9 @@ function renderAdmin(){
   $('a-table').innerHTML =
     `<thead><tr><th></th><th>วันที่</th><th>ชื่อ</th><th>เบอร์</th><th>จุด</th><th>สถานะ</th><th>ร้าน</th><th>ยอด/วัน</th><th>กลุ่ม</th><th>ข้นหวาน</th><th>ข้นจืด</th><th>แลกแล้ว</th></tr></thead><tbody>` +
     (shown.length ? shown.map(l=>`<tr>
-        <td><button class="rowdel" data-row="${esc(l._id || l.localId || '')}" title="ลบแถวนี้">×</button></td>
+        <td style="white-space:nowrap">
+          <button class="rowedit" data-edit="${esc(l._id || l.localId || '')}" title="แก้ชื่อหรือเบอร์">✎</button>
+          <button class="rowdel" data-row="${esc(l._id || l.localId || '')}" title="ลบแถวนี้">×</button></td>
         <td>${esc(dayOf(l))}</td>
         <td>${esc(l.name)}</td>
         <td>${esc(l.phone)}</td>
@@ -1491,6 +1554,61 @@ function renderAdmin(){
     `</tbody>`;
   $('a-more').textContent = rows.length > 50
     ? `แสดง 50 รายการล่าสุดจากทั้งหมด ${rows.length} รายการ ดาวน์โหลด CSV เพื่อดูครบ` : '';
+}
+
+/* ---------- แก้ชื่อ/เบอร์ (แอดมินเท่านั้น) ----------
+   แก้ทับแถวเดิม ไม่สร้างแถวใหม่ จำนวนผู้ลงทะเบียนจึงไม่มีทางเพิ่มจากการแก้
+   วันที่ จุด รอบ ยี่ห้อ และกลุ่ม ล็อกไว้ ใครก็ย้อนไปปั่นตัวเลขรายงานไม่ได้ */
+let editLead = null;
+
+function openLeadEdit(id){
+  const l = leads.find(x => (x._id || x.localId) === id);
+  if(!l) return;
+  editLead = l;
+  $('le-meta').textContent =
+    [dayOf(l), l.venue, l.round ? 'รอบ'+l.round : ''].filter(Boolean).join(' · ')
+    + ' — แก้ได้เฉพาะชื่อกับเบอร์';
+  $('le-name').value  = l.name  || '';
+  $('le-phone').value = l.phone || '';
+  $('le-err').classList.remove('on');
+  $('leadsheet').classList.add('on');
+}
+
+function closeLeadEdit(){ $('leadsheet').classList.remove('on'); editLead = null; }
+
+async function saveLeadEdit(){
+  if(!editLead) return;
+  const err   = $('le-err');
+  const name  = $('le-name').value.trim();
+  const phone = $('le-phone').value.trim();
+  const digits = phone.replace(/\D/g,'');
+  err.classList.remove('on');
+  if(name.length < 2){ err.textContent='ใส่ชื่อก่อน'; err.classList.add('on'); return; }
+  if(digits.length < 9){ err.textContent='เบอร์โทรไม่ครบ'; err.classList.add('on'); return; }
+
+  const btn = $('le-save'); btn.disabled = true; btn.textContent = 'กำลังบันทึก…';
+  try{
+    if(db && editLead._id){
+      await FS.updateDoc(FS.doc(db, COL.leads, editLead._id), { name, phone });
+    }
+    editLead.name = name; editLead.phone = phone;
+
+    /* ซิงก์สำเนาในเครื่องด้วย ไม่งั้นออฟไลน์แล้วเห็นของเก่า */
+    const key = editLead._id || editLead.localId;
+    const mine = LS.get('local_leads',[]).map(x =>
+      ((x._id || x.localId) === key) ? Object.assign({}, x, {name, phone}) : x);
+    LS.set('local_leads', mine);
+    if(me && (me.docId || me.localId) === key){
+      me.name = name; me.phone = phone; LS.set('me', me);
+    }
+    closeLeadEdit(); renderAdmin(); toast('แก้ข้อมูลแล้ว');
+  }catch(e){
+    err.textContent = e.code === 'permission-denied'
+      ? 'รูลยังไม่อนุญาตให้แก้ ต้องแก้ allow update เป็น isAdmin()'
+      : 'บันทึกไม่สำเร็จ ' + (e.code || e.message || '');
+    err.classList.add('on');
+  }
+  btn.disabled = false; btn.textContent = 'บันทึก';
 }
 
 /* ---------- ลบข้อมูล ---------- */
@@ -2210,6 +2328,10 @@ $('go-admin-2').onclick = ()=> show('s-admin');
 $('btn-back').onclick   = gotoRecipes;
 $('btn-admin-back').onclick = ()=> me ? gotoRecipes() : show('s-register');
 $('btn-admin-home').onclick = newLead;
+$('go-me').onclick      = openMe;
+$('me-back').onclick    = gotoRecipes;
+$('me-recipes').onclick = gotoRecipes;
+$('me-new').onclick     = newLead;
 
 $('btn-add-ing').onclick  = ()=>{ ings.push({name:'',qty:0,unit:'กรัม',packPrice:0,packSize:1000,units:UNITS_CUSTOM}); renderIngs(); calc(); };
 $('btn-add-pack').onclick = ()=>{ packs.push({name:'',qty:1,unit:'ใบ',packPrice:0,packSize:1}); renderPacks(); calc(); };
@@ -2258,11 +2380,17 @@ $('f-email').onkeydown = e=>{ if(e.key==='Enter') $('f-pass').focus(); };
 $('btn-daily').onclick = dailyImage;
 $('btn-csv').onclick = downloadCSV;
 $('a-table').onclick = e=>{
-  const id = e.target.dataset && e.target.dataset.row;
-  if(!id) return;
-  const l = leads.find(x=> (x._id||x.localId) === id);
+  const btn = e.target.closest('[data-row],[data-edit]');
+  if(!btn) return;
+  const d = btn.dataset;
+  if(d.edit){ openLeadEdit(d.edit); return; }
+  const l = leads.find(x=> (x._id||x.localId) === d.row);
   if(l && confirm('ลบ "' + (l.name||'รายการนี้') + '" ออกถาวร?')) removeLeads([l]);
 };
+$('le-phone').oninput = e=>{ e.target.value = fmtPhone(e.target.value); };
+$('le-save').onclick   = saveLeadEdit;
+$('le-cancel').onclick = closeLeadEdit;
+$('leadsheet').onclick = e=>{ if(e.target.id === 'leadsheet') closeLeadEdit(); };
 $('btn-del-filtered').onclick = ()=>{
   const rows = filtered();
   if(!rows.length) return toast('ไม่มีรายการให้ลบ');
