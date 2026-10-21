@@ -85,7 +85,11 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
   text-align:center;padding:13px;border-radius:12px;font-weight:600;font-size:16px}
 .urlbox{margin-top:14px;background:#fff;border:1px dashed var(--line);border-radius:12px;
   padding:12px 14px;text-align:center}
-.urlbox code{display:block;font-size:13px;color:var(--navy);word-break:break-all;margin-top:4px}
+.urlbox code{display:block;font-size:13px;color:var(--navy);word-break:break-all;margin-top:4px;
+  -webkit-user-select:all;user-select:all}
+.urlbox .cp{margin-top:10px;background:var(--blue-soft);color:var(--navy);border:0;
+  border-radius:10px;padding:9px 18px;font:600 14px inherit;font-family:inherit;cursor:pointer}
+.urlbox .cp:active{transform:scale(.97)}
 .linebtn{display:block;margin-top:12px;background:#06C755;color:#fff;text-decoration:none;
   text-align:center;padding:13px;border-radius:12px;font-weight:600;font-size:16px}
 .rgrid{display:grid;gap:12px;margin-top:16px}
@@ -942,11 +946,13 @@ function gotoRecipes(){
     + (CFG.fbUrl
         ? `<a class="fbbtn" href="${esc(CFG.fbUrl)}" target="_blank" rel="noopener">${esc(CFG.fbLabel||'กดถูกใจเพจ')}</a>`
         : '')
-    + `<div class="urlbox">เปิดหน้านี้อีกครั้งได้ที่<code>${esc(location.origin + location.pathname)}</code>
-         <small style="display:block;color:var(--muted);font-size:12px;margin-top:6px">
+    + `<div class="urlbox">เปิดหน้านี้อีกครั้งได้ที่<code>${esc(pageUrl())}</code>
+         <button class="cp" id="btn-copy-url">คัดลอกลิงก์</button>
+         <small style="display:block;color:var(--muted);font-size:12px;margin-top:8px">
          iPhone กดปุ่มแชร์แล้วเลือก Add to Home Screen · Android กดจุดสามจุดแล้วเลือกเพิ่มลงหน้าจอหลัก</small></div>`
     + `<button class="btn ghost sm" id="btn-newlead">ลงทะเบียนคนใหม่</button>`;
-  $('btn-newlead').onclick = newLead;
+  $('btn-newlead').onclick  = newLead;
+  $('btn-copy-url').onclick = copyPageUrl;
 
   const old = $('offl'); if(old) old.remove();
   const qn = LS.get('queue',[]).length;
@@ -973,6 +979,29 @@ function gotoRecipes(){
   show('s-recipes');
 }
 
+/* ลิงก์หน้านี้ ตัด ?v= ?kiosk= ออก ลูกค้าจะได้ลิงก์สะอาด ๆ ไปเปิดที่บ้าน */
+const pageUrl = () => location.origin + location.pathname;
+
+/* ก๊อปลิงก์ เบราว์เซอร์ในแอป LINE บางรุ่นไม่ให้ใช้คลิปบอร์ด มีทางสำรองให้ */
+async function copyPageUrl(){
+  const t = pageUrl();
+  try{
+    await navigator.clipboard.writeText(t);
+    toast('คัดลอกลิงก์แล้ว ไปวางในแชตหรือโน้ตได้เลย');
+    return;
+  }catch(e){}
+  const ta = document.createElement('textarea');
+  ta.value = t;
+  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select(); ta.setSelectionRange(0, t.length);
+  let ok = false;
+  try{ ok = document.execCommand('copy'); }catch(e){}
+  ta.remove();
+  toast(ok ? 'คัดลอกลิงก์แล้ว ไปวางในแชตหรือโน้ตได้เลย'
+           : 'กดค้างที่ลิงก์ด้านบนแล้วเลือกคัดลอก');
+}
+
 /* ล้างข้อมูลคนเดิม เริ่มลงทะเบียนคนใหม่ */
 function newLead(){
   me = null; LS.set('me', null); lastSig = ''; chosenStatus = '';
@@ -997,6 +1026,11 @@ let packs = [];        // working packaging rows
 let saveT;
 
 /* ราคาวัตถุดิบที่เคยกรอก ใช้ร่วมกันทุกสูตร */
+/* แถวที่กดเพิ่มแล้วไม่ได้กรอกอะไรเลย ไม่ต้องเก็บ ออกแล้วเข้ามาใหม่จะได้ไม่ค้าง
+   ถ้าใส่ชื่อหรือใส่ราคาไว้อย่างใดอย่างหนึ่ง ถือว่าตั้งใจ เก็บไว้ */
+const blankRow  = r => !String(r && r.name || '').trim() && !num(r && r.packPrice);
+const keepRows  = a => (a||[]).filter(r=>!blankRow(r));
+
 function priceBook(){ return LS.get('pricebook', {}); }
 function rememberPrice(name, packPrice, packSize, unit){
   const pb = priceBook(); pb[name] = {packPrice, packSize, unit}; LS.set('pricebook', pb);
@@ -1007,13 +1041,13 @@ function openRecipe(id, fresh){
   const saved = fresh ? null : LS.get('calc_'+id, null);
   const pb = priceBook();
 
-  ings = (saved && saved.ings) ? saved.ings : (cur.ingredients||[]).map(i=>{
+  ings = (saved && saved.ings) ? keepRows(saved.ings) : (cur.ingredients||[]).map(i=>{
     const remembered = pb[i.name];
     return { name:i.name, qty:i.qty, unit:i.unit, units:i.units,
              packPrice: remembered ? remembered.packPrice : i.packPrice,
              packSize:  remembered ? remembered.packSize  : i.packSize };
   });
-  packs = ((saved && saved.packs) ? saved.packs : (CFG.packaging || [])).map(p=>{
+  packs = ((saved && saved.packs) ? keepRows(saved.packs) : (CFG.packaging || [])).map(p=>{
     const q = normPack(p), rem = pb[q.name];
     if(rem){ q.packPrice = rem.packPrice; q.packSize = rem.packSize; }
     return q;
@@ -1152,7 +1186,8 @@ function calc(){
     kp.parentElement.classList.remove('warn'); km.parentElement.classList.remove('warn');
   }
 
-  if(cur) LS.set('calc_'+cur.id, {ings, packs, sell, cupsDay, days});
+  if(cur) LS.set('calc_'+cur.id,
+    {ings: keepRows(ings), packs: keepRows(packs), sell, cupsDay, days});
 
   clearTimeout(saveT);
   saveT = setTimeout(()=>{ if(cur && total > 0) saveCalc(total, sell); }, 2500);
@@ -1204,7 +1239,7 @@ async function saveResultImage(){
   const hasProj = sell>0 && perDay>0 && days>0;
   const projY   = navyTop + navyH + 60;
   const footY   = hasProj ? projY + 118 : navyTop + navyH + 84;
-  const H       = footY + 46;
+  const H       = footY + 84;   /* เผื่อบรรทัดลิงก์ใต้สุด */
 
   const c = document.createElement('canvas'); c.width=W; c.height=H;
   const x = c.getContext('2d');
@@ -1278,6 +1313,11 @@ async function saveResultImage(){
 
   x.fillStyle='#9AA1B8'; x.font=F(400,24); x.textAlign='center';
   x.fillText('คำนวณจากราคาที่กรอกเอง · ทีพอท คาราวานคู่ชงทั่วไทย', W/2, footY);
+  /* ใส่ลิงก์ลงในรูปด้วย ลูกค้าเซฟรูปเก็บไว้ = พกทางกลับเข้าเว็บไปเองในมือถือ */
+  x.fillStyle='#202985'; x.font=F(600,26);
+  x.fillText('เปิดสูตรและคิดต้นทุนอีกครั้งที่', W/2, footY + 38);
+  x.font=F(400,24);
+  x.fillText(pageUrl().replace(/^https?:\/\//,''), W/2, footY + 70);
 
   const url = c.toDataURL('image/png');
   $('shot-out').src = url;
