@@ -289,7 +289,52 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
   <div class="wrap">
     <div class="greet" id="greet"></div>
     <div class="rgrid" id="recipe-list"></div>
-    <p class="foot">เลือกสูตร แล้วใส่ราคาวัตถุดิบของร้านคุณ ระบบจะคิดต้นทุนต่อแก้วให้ทันที</p>
+
+    <div class="card" id="calc-top" style="margin-top:22px">
+      <h2>คิดต้นทุนต่อแก้ว</h2>
+      <p class="sub">เลือกสูตรที่จะคิด แล้วใส่ราคาที่ซื้อมาและปริมาณที่ได้ ระบบหารเป็นต้นทุนต่อหน่วยให้เอง
+        ตัวเลขทางขวาคือต้นทุนของส่วนผสมนั้นต่อหนึ่งแก้ว</p>
+      <label>คิดต้นทุนสูตร</label>
+      <select id="c-recipe"></select>
+      <div id="ing-list" style="margin-top:16px"></div>
+      <button class="addbtn" id="btn-add-ing">+ เพิ่มส่วนผสม</button>
+    </div>
+
+    <div class="card">
+      <h2>บรรจุภัณฑ์</h2>
+      <p class="sub">คิดแบบเดียวกับส่วนผสม ซื้อมาเป็นแพ็กเท่าไหร่ ได้กี่ชิ้น ระบบหารเป็นต้นทุนต่อชิ้นให้
+        นี่คือต้นทุนที่คนมักลืมคิด แต่กินกำไรจริง</p>
+      <div id="pack-list"></div>
+      <button class="addbtn" id="btn-add-pack">+ เพิ่มรายการ</button>
+    </div>
+
+    <div class="card">
+      <h2>สรุปต้นทุน</h2>
+      <div class="sumline"><span>ค่าวัตถุดิบ</span><b id="sum-mat">0.00 ฿</b></div>
+      <div class="sumline"><span>ค่าบรรจุภัณฑ์</span><b id="sum-pack">0.00 ฿</b></div>
+      <div class="sumline big"><span>ต้นทุนรวมต่อแก้ว</span><b id="sum-total">0.00 ฿</b></div>
+    </div>
+
+    <div class="pricebox">
+      <label>ตั้งราคาขายแก้วละ (บาท)</label>
+      <input id="f-sell" type="number" inputmode="decimal" placeholder="45">
+      <div class="kpis">
+        <div class="kpi"><small>กำไรต่อแก้ว</small><b id="k-profit">—</b></div>
+        <div class="kpi"><small>กำไรคิดเป็น</small><b id="k-margin">—</b></div>
+      </div>
+      <div class="proj">
+        <div class="f"><label>ขายวันละ (แก้ว)</label><input id="f-cupsday" type="number" inputmode="numeric" value="60"></div>
+        <div class="f"><label>เดือนละ (วัน)</label><input id="f-days" type="number" inputmode="numeric" value="30"></div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><small>กำไรต่อวัน</small><b id="k-day">—</b></div>
+        <div class="kpi"><small>กำไรต่อเดือน</small><b id="k-month">—</b></div>
+      </div>
+    </div>
+
+    <button class="btn" id="btn-save-img">บันทึกผลเป็นรูป</button>
+    <button class="btn ghost sm" id="btn-reset">คืนค่าปริมาณตามสูตรทีพอท</button>
+    <p class="foot">ราคาวัตถุดิบที่กรอกจะถูกจำไว้ สลับไปคิดสูตรอื่นได้โดยไม่ต้องกรอกใหม่</p>
   </div>
 </section>
 
@@ -356,50 +401,21 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
       <img class="shot" id="d-img" alt="" style="display:none">
       <h2 id="d-name"></h2>
       <p class="sub" id="d-note"></p>
+    </div>
+
+    <div class="card">
+      <h2>ส่วนผสม</h2>
+      <p class="sub" style="margin-bottom:6px">ปริมาณต่อหนึ่งแก้ว ตามสูตรทีพอท</p>
+      <div class="melist" id="d-ings"></div>
+    </div>
+
+    <div class="card">
+      <h2>วิธีทำ</h2>
       <ol class="steps" id="d-steps"></ol>
     </div>
 
-    <div class="card">
-      <h2>คิดต้นทุนต่อแก้ว</h2>
-      <p class="sub">ใส่ราคาที่ซื้อมาและปริมาณที่ได้ ระบบหารเป็นต้นทุนต่อหน่วยให้เอง ตัวเลขทางขวาคือต้นทุนของส่วนผสมนั้นต่อหนึ่งแก้ว</p>
-      <div id="ing-list"></div>
-      <button class="addbtn" id="btn-add-ing">+ เพิ่มส่วนผสม</button>
-    </div>
-
-    <div class="card">
-      <h2>บรรจุภัณฑ์</h2>
-      <p class="sub">คิดแบบเดียวกับส่วนผสม ซื้อมาเป็นแพ็กเท่าไหร่ ได้กี่ชิ้น ระบบหารเป็นต้นทุนต่อชิ้นให้ นี่คือต้นทุนที่คนมักลืมคิด แต่กินกำไรจริง</p>
-      <div id="pack-list"></div>
-      <button class="addbtn" id="btn-add-pack">+ เพิ่มรายการ</button>
-    </div>
-
-    <div class="card">
-      <h2>สรุปต้นทุน</h2>
-      <div class="sumline"><span>ค่าวัตถุดิบ</span><b id="sum-mat">0.00 ฿</b></div>
-      <div class="sumline"><span>ค่าบรรจุภัณฑ์</span><b id="sum-pack">0.00 ฿</b></div>
-      <div class="sumline big"><span>ต้นทุนรวมต่อแก้ว</span><b id="sum-total">0.00 ฿</b></div>
-    </div>
-
-    <div class="pricebox">
-      <label>ตั้งราคาขายแก้วละ (บาท)</label>
-      <input id="f-sell" type="number" inputmode="decimal" placeholder="45">
-      <div class="kpis">
-        <div class="kpi"><small>กำไรต่อแก้ว</small><b id="k-profit">—</b></div>
-        <div class="kpi"><small>กำไรคิดเป็น</small><b id="k-margin">—</b></div>
-      </div>
-      <div class="proj">
-        <div class="f"><label>ขายวันละ (แก้ว)</label><input id="f-cupsday" type="number" inputmode="numeric" value="60"></div>
-        <div class="f"><label>เดือนละ (วัน)</label><input id="f-days" type="number" inputmode="numeric" value="30"></div>
-      </div>
-      <div class="kpis">
-        <div class="kpi"><small>กำไรต่อวัน</small><b id="k-day">—</b></div>
-        <div class="kpi"><small>กำไรต่อเดือน</small><b id="k-month">—</b></div>
-      </div>
-    </div>
-
-    <button class="btn" id="btn-save-img">บันทึกผลเป็นรูป</button>
-    <button class="btn ghost sm" id="btn-reset">คืนค่าปริมาณตามสูตรทีพอท</button>
-    <p class="foot">ราคาวัตถุดิบที่กรอกจะถูกจำไว้ ใช้ต่อได้ทุกสูตรโดยไม่ต้องกรอกใหม่</p>
+    <button class="btn" id="btn-calc-this">คิดต้นทุนสูตรนี้</button>
+    <p class="foot">กดแล้วจะพากลับไปที่เครื่องคิดต้นทุน โดยเลือกสูตรนี้ไว้ให้เลย</p>
   </div>
 </section>
 
@@ -1064,6 +1080,8 @@ function gotoRecipes(){
   if(qn) g.insertAdjacentHTML('afterend',
     `<div class="offline" id="offl">มีข้อมูล ${qn} รายการรอส่ง จะส่งอัตโนมัติเมื่อสัญญาณกลับมา</div>`);
 
+  buildRecipePicker();
+
   const list = $('recipe-list'); list.innerHTML='';
   const rs = CFG.recipes || [];
   if(!rs.length){
@@ -1174,8 +1192,46 @@ function rememberPrice(name, packPrice, packSize, unit){
   const pb = priceBook(); pb[name] = {packPrice, packSize, unit}; LS.set('pricebook', pb);
 }
 
-function openRecipe(id, fresh){
+/* หน้าสูตร = ดูอย่างเดียว ส่วนผสม ปริมาณ วิธีทำ ไม่มีช่องกรอกราคา */
+let viewR = null;
+
+function openRecipe(id){
+  viewR = (CFG.recipes||[]).find(r=>r.id===id); if(!viewR) return;
+
+  const shot = $('d-img');
+  if(viewR.image){ shot.src = viewR.image; shot.style.display='block';
+                   shot.onerror = ()=>{ shot.style.display='none'; }; }
+  else shot.style.display='none';
+
+  $('d-title').textContent = viewR.name;
+  $('d-name').textContent  = viewR.name + (viewR.cup ? ' · แก้ว ' + viewR.cup : '');
+  $('d-note').textContent  = viewR.note || '';
+  $('d-ings').innerHTML    = (viewR.ingredients||[]).map(i=>
+    `<div class="r"><span>${esc(i.name)}</span><b>${esc(i.qty)} ${esc(i.unit||'')}</b></div>`).join('')
+    || '<p class="sub" style="margin:0">ยังไม่ได้ใส่ส่วนผสมในสูตรนี้</p>';
+  $('d-steps').innerHTML   = (viewR.steps||[]).map(x=>`<li>${esc(x)}</li>`).join('');
+
+  show('s-detail');
+
+  send(COL.views, { leadId: me ? (me.docId||me.localId) : null, recipeId: viewR.id,
+                    recipeName: viewR.name, venue: me ? me.venue : autoVenue,
+                    createdAt: new Date().toISOString() });
+}
+
+/* เครื่องคิดต้นทุนอันเดียวบนหน้าเมนู สลับสูตรด้วยดรอปดาวน์
+   ราคาที่เคยกรอกถูกจำไว้ใน pricebook สลับสูตรแล้วไม่ต้องกรอกใหม่ */
+function buildRecipePicker(){
+  const sel = $('c-recipe'), rs = CFG.recipes || [];
+  sel.innerHTML = rs.map(r=>`<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
+  if(!rs.length) return;
+  const keep = cur && rs.some(r=>r.id===cur.id) ? cur.id : rs[0].id;
+  sel.value = keep;
+  loadCalc(keep);
+}
+
+function loadCalc(id, fresh){
   cur = (CFG.recipes||[]).find(r=>r.id===id); if(!cur) return;
+  $('c-recipe').value = cur.id;
   const saved = fresh ? null : LS.get('calc_'+id, null);
   const pb = priceBook();
 
@@ -1191,24 +1247,11 @@ function openRecipe(id, fresh){
     return q;
   });
 
-  const shot = $('d-img');
-  if(cur.image){ shot.src = cur.image; shot.style.display='block'; shot.onerror = ()=>{ shot.style.display='none'; }; }
-  else shot.style.display='none';
-
-  $('d-title').textContent = cur.name;
-  $('d-name').textContent  = cur.name + (cur.cup ? ' · แก้ว ' + cur.cup : '');
-  $('d-note').textContent  = cur.note || '';
-  $('d-steps').innerHTML   = (cur.steps||[]).map(s=>`<li>${esc(s)}</li>`).join('');
-  $('f-sell').value = (saved && saved.sell) || '';
+  $('f-sell').value    = (saved && saved.sell) || '';
   $('f-cupsday').value = (saved && saved.cupsDay) || 60;
-  $('f-days').value = (saved && saved.days) || 30;
+  $('f-days').value    = (saved && saved.days) || 30;
 
   renderIngs(); renderPacks(); calc();
-  show('s-detail');
-
-  send(COL.views, { leadId: me ? (me.docId||me.localId) : null, recipeId: cur.id,
-                    recipeName: cur.name, venue: me ? me.venue : autoVenue,
-                    createdAt: new Date().toISOString() });
 }
 
 const UNITS        = ['กรัม','มล.'];              /* ส่วนผสมทั่วไป */
@@ -2531,7 +2574,14 @@ $('btn-add-pack').onclick = ()=>{ packs.push({name:'',qty:1,unit:'ใบ',packPr
 $('btn-save-img').onclick = saveResultImage;
 $('shot-close').onclick   = ()=> $('sheet').classList.remove('on');
 $('sheet').onclick        = e=>{ if(e.target.id==='sheet') $('sheet').classList.remove('on'); };
-$('btn-reset').onclick    = ()=>{ if(cur){ LS.set('calc_'+cur.id,null); openRecipe(cur.id,true); toast('คืนค่าตามสูตรแล้ว'); } };
+$('btn-reset').onclick    = ()=>{ if(cur){ LS.set('calc_'+cur.id,null); loadCalc(cur.id,true); toast('คืนค่าตามสูตรแล้ว'); } };
+$('c-recipe').onchange    = e=> loadCalc(e.target.value);
+$('btn-calc-this').onclick = ()=>{
+  if(viewR) loadCalc(viewR.id);
+  gotoRecipes();
+  setTimeout(()=>{ const el = $('calc-top');
+    if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); }, 60);
+};
 ['f-sell','f-cupsday','f-days'].forEach(id=> $(id).oninput = calc);
 
 function openAdmin(){
