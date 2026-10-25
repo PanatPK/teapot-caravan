@@ -414,8 +414,9 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
       <ol class="steps" id="d-steps"></ol>
     </div>
 
-    <button class="btn" id="btn-calc-this">คิดต้นทุนสูตรนี้</button>
-    <p class="foot">กดแล้วจะพากลับไปที่เครื่องคิดต้นทุน โดยเลือกสูตรนี้ไว้ให้เลย</p>
+    <button class="btn" id="btn-recipe-img">เซฟรูปสูตรนี้</button>
+    <p class="foot">เก็บไว้ในมือถือ เปิดดูตอนชงได้เลยไม่ต้องต่อเน็ต
+      อยากคิดต้นทุน กดกลับไปหน้าแรก เครื่องคิดต้นทุนอยู่ใต้รายการสูตร</p>
   </div>
 </section>
 
@@ -883,10 +884,48 @@ async function saveRemoteConfig(obj){
 /* ===================================================================
    SCREENS
    =================================================================== */
+/* ปุ่ม back ของเบราว์เซอร์กับปุ่มย้อนกลับของแอนดรอยด์
+   เดิมกดแล้วหลุดออกจากเว็บไปเลย เพราะทุกหน้าอยู่ไฟล์เดียวไม่เคยเปลี่ยน URL
+   แก้โดยผูกแต่ละหน้าเข้ากับ history ของเบราว์เซอร์ */
+let navBack = false;          /* true = กำลังถอยจาก popstate อย่า push ซ้ำ */
+
 function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   $(id).classList.add('on'); window.scrollTo(0,0);
+  if(navBack) return;
+  const st = {screen:id};
+  if(!history.state) history.replaceState(st,'');
+  else if(history.state.screen !== id || history.state.sheet) history.pushState(st,'');
 }
+
+function sheetsOpen(){ return document.querySelector('.sheet.on'); }
+function closeSheetsNow(){
+  document.querySelectorAll('.sheet.on').forEach(x=>x.classList.remove('on'));
+  editLead = null;
+}
+/* เปิดแผ่นซ้อน = เพิ่มขั้นใน history ปุ่ม back จะได้ปิดแผ่นก่อน ไม่ใช่เด้งออกจากหน้า */
+function openSheet(id){
+  $(id).classList.add('on');
+  const now = history.state && history.state.screen;
+  history.pushState({screen:now, sheet:id},'');
+}
+/* ปิดด้วยปุ่มในแผ่น ให้ถอย history ด้วย ไม่งั้นต้องกด back สองทีถึงจะขยับ */
+function dismissSheet(){
+  if(history.state && history.state.sheet) history.back();
+  else closeSheetsNow();
+}
+
+window.addEventListener('popstate', e=>{
+  if(sheetsOpen()){ closeSheetsNow(); return; }
+  const id = (e.state && e.state.screen) || 's-register';
+  navBack = true;
+  try{
+    if(id === 's-recipes')      gotoRecipes();
+    else if(id === 's-me')      openMe();
+    else if(id === 's-register' && me && me.name && !kiosk) gotoRecipes();
+    else                        show(id);
+  }finally{ navBack = false; }
+});
 
 /* ===================================================================
    1. REGISTER
@@ -1504,7 +1543,7 @@ async function saveResultImage(){
   $('shot-out').src = url;
   $('shot-dl').href = url;
   $('shot-dl').download = 'ต้นทุน-' + cur.name + '.png';
-  $('sheet').classList.add('on');
+  openSheet('sheet');
 }
 
 /* ===================================================================
@@ -1673,10 +1712,10 @@ function openLeadEdit(id){
   $('le-name').value  = l.name  || '';
   $('le-phone').value = l.phone || '';
   $('le-err').classList.remove('on');
-  $('leadsheet').classList.add('on');
+  openSheet('leadsheet');
 }
 
-function closeLeadEdit(){ $('leadsheet').classList.remove('on'); editLead = null; }
+function closeLeadEdit(){ dismissSheet(); }
 
 async function saveLeadEdit(){
   if(!editLead) return;
@@ -1839,6 +1878,108 @@ async function drawReport(){
     + meter('Switcher B', trades.filter(t=>t.entry==='switcherB').length, kpiOf('switcherB') * allStops);
 }
 
+/* ---------- เซฟสูตรเป็นรูป ----------
+   ลูกค้าเก็บไว้ในคลังรูป เปิดดูตอนชงได้โดยไม่ต้องต่อเน็ต */
+async function recipeImage(){
+  if(!viewR) return;
+  try{ await document.fonts.ready; }catch(e){}
+  const r = viewR;
+  const W = 1080, PAD = 72, CW = W - PAD*2, INNER = CW - 68;
+
+  const probe = document.createElement('canvas').getContext('2d');
+  const F = (w,sz)=>`${w} ${sz}px 'IBM Plex Sans Thai', system-ui, sans-serif`;
+  /* ตัดบรรทัดเอง canvas ไม่มี word wrap ให้ ตัดทีละคำ ไทยไม่มีเว้นวรรคก็ตัดทีละตัว */
+  const wrap = (txt, maxW, font)=>{
+    probe.font = font;
+    const out = []; let line = '';
+    const push = ()=>{ if(line) out.push(line); line = ''; };
+    String(txt||'').split(/(\s+)/).forEach(tok=>{
+      if(probe.measureText(line + tok).width <= maxW){ line += tok; return; }
+      if(probe.measureText(tok).width <= maxW){ push(); line = tok.replace(/^\s+/,''); return; }
+      for(const ch of tok){
+        if(probe.measureText(line + ch).width > maxW) push();
+        line += ch;
+      }
+    });
+    push();
+    return out.length ? out : [''];
+  };
+
+  const ings  = r.ingredients || [];
+  const steps = (r.steps || []).map(t => wrap(t, INNER - 66, F(400,28)));
+  const noteL = r.note ? wrap(r.note, INNER, F(400,28)) : [];
+
+  const headH  = 300;
+  const titleY = headH + 78;
+  const noteH  = noteL.length * 40;
+  const iCardY = titleY + 34 + noteH + 36;
+  const iCardH = 58 + 30 + ings.length*56 + 20;
+  const sCardY = iCardY + iCardH + 28;
+  const sCardH = 58 + 30 + steps.reduce((a,l)=>a + l.length*40 + 22, 0);
+  const H      = sCardY + sCardH + 110;
+
+  const c = document.createElement('canvas'); c.width=W; c.height=H;
+  const x = c.getContext('2d');
+  const rr = (X,Y,w,h,rad)=>{ x.beginPath(); x.moveTo(X+rad,Y); x.arcTo(X+w,Y,X+w,Y+h,rad);
+    x.arcTo(X+w,Y+h,X,Y+h,rad); x.arcTo(X,Y+h,X,Y,rad); x.arcTo(X,Y,X+w,Y,rad); x.closePath(); };
+
+  x.fillStyle='#F6F7FC'; x.fillRect(0,0,W,H);
+  const g=x.createLinearGradient(0,0,W,headH);
+  g.addColorStop(0,'#2A34A3'); g.addColorStop(1,'#000C51');
+  x.fillStyle=g; x.fillRect(0,0,W,headH);
+  const lg=$('h-logo');
+  if(lg && lg.complete && lg.naturalWidth){
+    const lw=330, lh=lw*lg.naturalHeight/lg.naturalWidth;
+    x.drawImage(lg,(W-lw)/2,40,lw,lh);
+  }
+  x.fillStyle='rgba(255,255,255,.85)'; x.font=F(500,28); x.textAlign='center';
+  x.fillText('สูตรน้ำชงคู่ชง', W/2, 268);
+
+  x.fillStyle='#16182E'; x.font=F(700,52);
+  x.fillText(r.name + (r.cup ? '  ·  แก้ว ' + r.cup : ''), W/2, titleY);
+  x.fillStyle='#6B7189'; x.font=F(400,28);
+  noteL.forEach((ln,i)=> x.fillText(ln, W/2, titleY + 48 + i*40));
+  x.textAlign='left';
+
+  x.fillStyle='#fff'; rr(PAD,iCardY,CW,iCardH,20); x.fill();
+  x.fillStyle='#16182E'; x.font=F(700,34);
+  x.fillText('ส่วนผสม  ต่อ 1 แก้ว', PAD+34, iCardY+58);
+  ings.forEach((i,n)=>{
+    const yy = iCardY + 58 + 52 + n*56;
+    x.fillStyle='#6B7189'; x.font=F(400,29); x.fillText(i.name, PAD+34, yy);
+    x.textAlign='right'; x.fillStyle='#16182E'; x.font=F(600,29);
+    x.fillText((i.qty||'') + ' ' + (i.unit||''), W-PAD-34, yy);
+    x.textAlign='left';
+    if(n < ings.length-1){
+      x.fillStyle='#EEF2F6'; x.fillRect(PAD+34, yy+18, INNER, 1);
+    }
+  });
+
+  x.fillStyle='#fff'; rr(PAD,sCardY,CW,sCardH,20); x.fill();
+  x.fillStyle='#16182E'; x.font=F(700,34);
+  x.fillText('วิธีทำ', PAD+34, sCardY+58);
+  let sy = sCardY + 58 + 52;
+  steps.forEach((lines,n)=>{
+    x.fillStyle='#202985'; x.beginPath(); x.arc(PAD+54, sy-10, 20, 0, Math.PI*2); x.fill();
+    x.fillStyle='#fff'; x.font=F(600,24); x.textAlign='center';
+    x.fillText(String(n+1), PAD+54, sy-1);
+    x.textAlign='left'; x.fillStyle='#2A2E45'; x.font=F(400,28);
+    lines.forEach((ln,k)=> x.fillText(ln, PAD+100, sy + k*40));
+    sy += lines.length*40 + 22;
+  });
+
+  x.fillStyle='#9AA1B8'; x.font=F(400,24); x.textAlign='center';
+  x.fillText('ทีพอท คาราวานคู่ชงทั่วไทย', W/2, H-66);
+  x.fillStyle='#202985'; x.font=F(600,26);
+  x.fillText('คิดต้นทุนต่อแก้วได้ที่  ' + pageUrl().replace(/^https?:\/\//,''), W/2, H-28);
+
+  const url = c.toDataURL('image/png');
+  $('shot-out').src = url;
+  $('shot-dl').href = url;
+  $('shot-dl').download = 'สูตร-' + r.name + '.png';
+  openSheet('sheet');
+}
+
 /* ---------- สรุปรายวันเป็นรูป ---------- */
 async function dailyImage(theDay){
   try{ await document.fonts.ready; }catch(e){}
@@ -1969,7 +2110,7 @@ async function dailyImage(theDay){
   $('shot-out').src = url;
   $('shot-dl').href = url;
   $('shot-dl').download = 'รายงาน-' + day + '.png';
-  $('sheet').classList.add('on');
+  openSheet('sheet');
 }
 
 function downloadCSV(){
@@ -2572,16 +2713,11 @@ $('me-new').onclick     = newLead;
 $('btn-add-ing').onclick  = ()=>{ ings.push({name:'',qty:0,unit:'กรัม',packPrice:0,packSize:1000,units:UNITS_CUSTOM}); renderIngs(); calc(); };
 $('btn-add-pack').onclick = ()=>{ packs.push({name:'',qty:1,unit:'ใบ',packPrice:0,packSize:1}); renderPacks(); calc(); };
 $('btn-save-img').onclick = saveResultImage;
-$('shot-close').onclick   = ()=> $('sheet').classList.remove('on');
-$('sheet').onclick        = e=>{ if(e.target.id==='sheet') $('sheet').classList.remove('on'); };
+$('shot-close').onclick   = dismissSheet;
+$('sheet').onclick        = e=>{ if(e.target.id==='sheet') dismissSheet(); };
 $('btn-reset').onclick    = ()=>{ if(cur){ LS.set('calc_'+cur.id,null); loadCalc(cur.id,true); toast('คืนค่าตามสูตรแล้ว'); } };
-$('c-recipe').onchange    = e=> loadCalc(e.target.value);
-$('btn-calc-this').onclick = ()=>{
-  if(viewR) loadCalc(viewR.id);
-  gotoRecipes();
-  setTimeout(()=>{ const el = $('calc-top');
-    if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); }, 60);
-};
+$('c-recipe').onchange     = e=> loadCalc(e.target.value);
+$('btn-recipe-img').onclick = recipeImage;
 ['f-sell','f-cupsday','f-days'].forEach(id=> $(id).oninput = calc);
 
 function openAdmin(){
@@ -2637,7 +2773,7 @@ $('a-table').onclick = e=>{
 $('le-phone').oninput = e=>{ e.target.value = fmtPhone(e.target.value); };
 $('le-save').onclick   = saveLeadEdit;
 $('le-cancel').onclick = closeLeadEdit;
-$('leadsheet').onclick = e=>{ if(e.target.id === 'leadsheet') closeLeadEdit(); };
+$('leadsheet').onclick = e=>{ if(e.target.id === 'leadsheet') dismissSheet(); };
 $('btn-del-filtered').onclick = ()=>{
   const rows = filtered();
   if(!rows.length) return toast('ไม่มีรายการให้ลบ');
