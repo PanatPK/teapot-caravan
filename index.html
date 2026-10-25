@@ -220,6 +220,17 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 .mt .okt{color:#0A8A0A;font-size:12px;margin-left:7px}
 .mt .lot{color:var(--muted);font-size:12px;margin-left:7px}
 .mt small{display:block;color:var(--muted);font-size:11.5px;margin-top:4px}
+/* การ์ดเครื่องมือบนหน้าเมนู ให้ดูต่างจากการ์ดสูตร จะได้รู้ว่าไม่ใช่สูตร */
+.toolcard{width:100%;margin-top:14px;background:var(--navy);color:#fff;border:0;
+  border-radius:var(--r);box-shadow:var(--sh);padding:16px 18px;cursor:pointer;
+  display:flex;align-items:center;gap:14px;text-align:left;font:inherit}
+.toolcard:active{transform:scale(.995)}
+.toolcard .ic{flex:0 0 46px;height:46px;border-radius:12px;background:rgba(255,255,255,.14);
+  display:grid;place-items:center;font-weight:700;font-size:20px}
+.toolcard .body{flex:1;min-width:0}
+.toolcard .body b{display:block;font-size:16.5px}
+.toolcard .body small{display:block;color:rgba(255,255,255,.72);font-size:12.5px;margin-top:2px}
+.toolcard .go{flex:0 0 auto;opacity:.6;font-size:20px}
 .melist .r{display:flex;justify-content:space-between;gap:14px;padding:10px 0;
   border-bottom:1px solid #EEF2F6;font-size:14px}
 .melist .r:last-child{border-bottom:0}
@@ -290,7 +301,20 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
     <div class="greet" id="greet"></div>
     <div class="rgrid" id="recipe-list"></div>
 
-    <div class="card" id="calc-top" style="margin-top:22px">
+    <button class="toolcard" id="open-calc">
+      <span class="ic">฿</span>
+      <span class="body"><b>คิดต้นทุนต่อแก้ว</b>
+        <small>ใส่ราคาวัตถุดิบของร้านคุณ รู้ต้นทุนและกำไรต่อแก้วทันที</small></span>
+      <span class="go">›</span>
+    </button>
+  </div>
+</section>
+
+<!-- ==================== 2.3 คิดต้นทุน ==================== -->
+<section id="s-calc" class="screen">
+  <div class="topbar"><button id="calc-back">‹ กลับ</button><div class="t">คิดต้นทุนต่อแก้ว</div></div>
+  <div class="wrap">
+    <div class="card" id="calc-top">
       <h2>คิดต้นทุนต่อแก้ว</h2>
       <p class="sub">เลือกสูตรที่จะคิด แล้วใส่ราคาที่ซื้อมาและปริมาณที่ได้ ระบบหารเป็นต้นทุนต่อหน่วยให้เอง
         ตัวเลขทางขวาคือต้นทุนของส่วนผสมนั้นต่อหนึ่งแก้ว</p>
@@ -416,7 +440,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 
     <button class="btn" id="btn-recipe-img">เซฟรูปสูตรนี้</button>
     <p class="foot">เก็บไว้ในมือถือ เปิดดูตอนชงได้เลยไม่ต้องต่อเน็ต
-      อยากคิดต้นทุน กดกลับไปหน้าแรก เครื่องคิดต้นทุนอยู่ใต้รายการสูตร</p>
+      อยากคิดต้นทุน กดกลับ แล้วเลือกเมนูคิดต้นทุนต่อแก้ว</p>
   </div>
 </section>
 
@@ -1266,6 +1290,11 @@ function buildRecipePicker(){
   const keep = cur && rs.some(r=>r.id===cur.id) ? cur.id : rs[0].id;
   sel.value = keep;
   loadCalc(keep);
+}
+
+function openCalc(){
+  if(!cur) buildRecipePicker();
+  show('s-calc');
 }
 
 function loadCalc(id, fresh){
@@ -2716,8 +2745,10 @@ $('btn-save-img').onclick = saveResultImage;
 $('shot-close').onclick   = dismissSheet;
 $('sheet').onclick        = e=>{ if(e.target.id==='sheet') dismissSheet(); };
 $('btn-reset').onclick    = ()=>{ if(cur){ LS.set('calc_'+cur.id,null); loadCalc(cur.id,true); toast('คืนค่าตามสูตรแล้ว'); } };
-$('c-recipe').onchange     = e=> loadCalc(e.target.value);
+$('c-recipe').onchange      = e=> loadCalc(e.target.value);
 $('btn-recipe-img').onclick = recipeImage;
+$('open-calc').onclick      = openCalc;
+$('calc-back').onclick      = gotoRecipes;
 ['f-sell','f-cupsday','f-days'].forEach(id=> $(id).oninput = calc);
 
 function openAdmin(){
