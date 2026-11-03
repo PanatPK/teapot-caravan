@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
 <meta name="theme-color" content="#202985">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>ทีพอท คู่ชง — คาราวานคู่ชงทั่วไทย</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -58,6 +60,10 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
 .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 15px;font-size:14px;cursor:pointer;transition:.15s}
 .chip.sel{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
+/* ชิปยี่ห้อ ตัวอังกฤษเป็นตัวนำ ไทยตัวเล็กต่อท้าย กดครั้งเดียวจบ ไม่ต้องเปิดดรอปดาวน์ */
+.brands .chip{padding:7px 13px;font-size:13.5px;line-height:1.25}
+.brands .chip i{font-style:normal;font-size:11.5px;opacity:.6;margin-left:4px}
+.brands .chip.sel i{opacity:.8}
 .consent{display:flex;gap:11px;align-items:flex-start;margin-top:20px;background:var(--blue-soft);
   border:1px solid #D2E2F3;border-radius:12px;padding:14px}
 .consent input{width:20px;height:20px;flex:0 0 20px;margin-top:2px;accent-color:var(--navy)}
@@ -87,6 +93,8 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
   padding:12px 14px;text-align:center}
 .urlbox code{display:block;font-size:13px;color:var(--navy);word-break:break-all;margin-top:4px;
   -webkit-user-select:all;user-select:all}
+.urlbox .qr{display:block;width:150px;height:150px;margin:12px auto 2px;border-radius:10px;
+  background:#fff;padding:7px;box-sizing:content-box}
 .urlbox .cp{margin-top:10px;background:var(--blue-soft);color:var(--navy);border:0;
   border-radius:10px;padding:9px 18px;font:600 14px inherit;font-family:inherit;cursor:pointer}
 .urlbox .cp:active{transform:scale(.97)}
@@ -260,8 +268,8 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
       <h2>ลงทะเบียนรับสูตรน้ำชง</h2>
       <p class="sub">กรอกข้อมูลเพื่อรับสูตรน้ำชง พร้อมเครื่องมือคิดต้นทุนและกำไรต่อแก้วของร้านคุณ</p>
 
-      <label>ชื่อ - นามสกุล</label>
-      <input id="f-name" type="text" placeholder="เช่น สมชาย ใจดี" autocomplete="name">
+      <label>ชื่อเล่น หรือ ชื่อร้าน</label>
+      <input id="f-name" type="text" placeholder="เช่น พี่แดง หรือ ชาไข่มุกพี่แดง" autocomplete="name">
 
       <label>เบอร์โทรศัพท์</label>
       <input id="f-phone" type="tel" inputmode="numeric" placeholder="08x-xxx-xxxx" autocomplete="tel">
@@ -275,10 +283,10 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
       <div class="chips" id="f-status"></div>
 
       <label>ข้นหวานที่ใช้อยู่</label>
-      <select id="f-brand-sweet"></select>
+      <div class="chips brands" id="f-brand-sweet"></div>
 
       <label>ข้นจืดที่ใช้อยู่</label>
-      <select id="f-brand-plain"></select>
+      <div class="chips brands" id="f-brand-plain"></div>
 
       <div id="ep-box" style="display:none"></div>
 
@@ -625,6 +633,13 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <div class="f"><label style="margin-top:0">พรีเมียม (ชิ้น)</label>
           <input id="d-premium" type="number" inputmode="numeric" min="0" value="0"></div>
       </div>
+      <div class="row" style="margin-top:12px">
+        <div class="f"><label style="margin-top:0">แก้วใหญ่ที่แจกชิม</label>
+          <input id="d-cup-big" type="number" inputmode="numeric" min="0" value="0"></div>
+        <div class="f"><label style="margin-top:0">แก้วเล็กที่แจกชิม</label>
+          <input id="d-cup-small" type="number" inputmode="numeric" min="0" value="0"></div>
+      </div>
+
       <label>ร้านค้าที่ระบุในคูปอง</label>
       <textarea id="d-coupon-note" rows="3" placeholder="- ร้านบุญดานันท์ (กานดา บรรจุภัณฑ์)&#10;จำนวน 10 ใบ"></textarea>
 
@@ -995,14 +1010,12 @@ function buildRegister(){
     const bd = $('venue-badge'); bd.style.display='inline-block'; bd.textContent = '📍 ' + autoVenue;
   }
 
-  /* ยี่ห้อที่ใช้อยู่ สองช่องนี้ใช้แยก Entry Point */
+  /* ยี่ห้อที่ใช้อยู่ สองช่องนี้ใช้แยก Entry Point
+     ใช้ชิปแทนดรอปดาวน์ กดครั้งเดียวได้คำตอบ ไม่ต้องเปิดแล้วเลื่อนหา
+     ค่าที่เก็บยังเป็นข้อความเต็ม เช่น FALCON (ฟอลคอน) รายงานไม่เปลี่ยน */
   const BR = CFG.brandOptions || BRANDS_FALLBACK;
-  const fill = (id, arr)=>{ $(id).innerHTML = '<option value="">— เลือก —</option>' +
-    (arr||[]).map(v=>`<option>${esc(v)}</option>`).join(''); };
-  fill('f-brand-sweet', BR.sweet);
-  fill('f-brand-plain', BR.plain);
-  $('f-brand-sweet').onchange = showEntry;
-  $('f-brand-plain').onchange = showEntry;
+  fillBrands('f-brand-sweet', BR.sweet);
+  fillBrands('f-brand-plain', BR.plain);
 
   const wrap = $('f-status'); wrap.innerHTML='';
   (CFG.statusOptions||[]).forEach(s=>{
@@ -1021,11 +1034,33 @@ function buildRegister(){
   $('f-phone').oninput = e=>{ e.target.value = fmtPhone(e.target.value); };
 }
 
+/* ค่าที่เลือกไว้ของชิปยี่ห้อ ใช้แทน .value ของ select เดิม */
+const brandPick = { 'f-brand-sweet':'', 'f-brand-plain':'' };
+const brandVal  = id => brandPick[id] || '';
+
+/* แยกข้อความในวงเล็บออกมาแสดงตัวเล็ก ให้ชิปสั้นลงแต่ยังอ่านไทยได้ */
+function fillBrands(id, arr){
+  const box = $(id); box.innerHTML = ''; brandPick[id] = '';
+  (arr||[]).forEach(v=>{
+    const m  = String(v).match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+    const el = document.createElement('div');
+    el.className = 'chip';
+    el.innerHTML = m ? `${esc(m[1])}<i>${esc(m[2])}</i>` : esc(v);
+    el.onclick = ()=>{
+      brandPick[id] = v;
+      box.querySelectorAll('.chip').forEach(c=>c.classList.toggle('sel', c===el));
+      $('reg-err').classList.remove('on');
+      showEntry();
+    };
+    box.appendChild(el);
+  });
+}
+
 const isTeapot = b => /teapot/i.test(b||'');
 
 /* แยกกลุ่มจากยี่ห้อที่ใช้อยู่ ตาม 3 Entry Points ในแผนงาน */
 function entryKey(){
-  const s = $('f-brand-sweet').value, p = $('f-brand-plain').value;
+  const s = brandVal('f-brand-sweet'), p = brandVal('f-brand-plain');
   if(!s || !p) return '';
   if(isTeapot(s) && isTeapot(p))   return 'loyal';
   if(!isTeapot(s) && !isTeapot(p)) return 'nonuser';
@@ -1086,11 +1121,22 @@ async function submitRegister(){
   const venue = autoVenue || $('f-venue').value;
   if(!venue){ err.textContent='กรุณาเลือกจุดที่เจอเรา'; err.classList.add('on'); $('f-venue').focus(); return; }
 
-  const bSweet = $('f-brand-sweet').value, bPlain = $('f-brand-plain').value;
+  const bSweet = brandVal('f-brand-sweet'), bPlain = brandVal('f-brand-plain');
   if(!bSweet || !bPlain){
     err.textContent = 'กรุณาเลือกยี่ห้อข้นหวานและข้นจืดที่ใช้อยู่'; err.classList.add('on'); return;
   }
   if(!$('f-consent').checked){ err.textContent='กรุณาติ๊กยินยอมให้เก็บข้อมูลก่อน'; err.classList.add('on'); return; }
+
+  /* เบอร์เดิมลงไปแล้ววันนี้ในเครื่องนี้ ถามก่อน ไม่งั้นยอดลงทะเบียนจะเกินจริง
+     เช็คได้เฉพาะเครื่องเดียวกัน ซึ่งเป็นเคสที่เจอบ่อยสุดคือแท็บเล็ตที่บูธ */
+  const digits = phone.replace(/\D/g,'');
+  const dupe = LS.get('local_leads',[]).find(l =>
+    String(l.phone||'').replace(/\D/g,'') === digits && dayOf(l) === localDay());
+  if(dupe && !confirm('เบอร์นี้ลงทะเบียนไว้แล้ววันนี้ ในชื่อ ' + (dupe.name||'-')
+      + '\n\nกด ตกลง ถ้าเป็นคนละคนและต้องการลงเพิ่ม\nกด ยกเลิก ถ้ากดซ้ำ')){
+    me = dupe; LS.set('me', me);
+    err.classList.remove('on'); gotoRecipes(); return;
+  }
   err.classList.remove('on');
 
   const btn = $('btn-submit'); btn.disabled = true; btn.textContent = 'กำลังบันทึก…';
@@ -1132,6 +1178,7 @@ function gotoRecipes(){
         ? `<a class="fbbtn" href="${esc(CFG.fbUrl)}" target="_blank" rel="noopener">${esc(CFG.fbLabel||'กดถูกใจเพจ')}</a>`
         : '')
     + `<div class="urlbox">เปิดหน้านี้อีกครั้งได้ที่<code>${esc(pageUrl())}</code>
+         ${pageUrl() === QR_URL ? `<img class="qr" src="${QR_IMG}" alt="QR เปิดหน้าสูตร" width="150" height="150">` : ''}
          <button class="cp" id="btn-copy-url">คัดลอกลิงก์</button>
          <small class="hint"><em>เพิ่มลงหน้าจอหลักไว้เปิดครั้งหน้า</em><span class="os"><span>iPhone ปุ่ม${ICO_SHARE}</span><span>Android ปุ่ม${ICO_DOTS}</span></span></small></div>`
     + `<button class="btn ghost sm" id="btn-newlead">ลงทะเบียนคนใหม่</button>`;
@@ -1175,6 +1222,11 @@ const ICO_DOTS  = `<svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria
 
 /* ลิงก์หน้านี้ ตัด ?v= ?kiosk= ออก ลูกค้าจะได้ลิงก์สะอาด ๆ ไปเปิดที่บ้าน */
 const pageUrl = () => location.origin + location.pathname;
+
+/* QR ของหน้าเว็บ ฝังเป็นรูปไว้เลย จะได้ขึ้นทันทีและใช้ได้ตอนเน็ตช้า
+   ถ้าย้ายโดเมนเมื่อไหร่ต้องสร้างรูปนี้ใหม่ให้ตรงกับ URL ใหม่ */
+const QR_URL = 'https://panatpk.github.io/teapot-caravan/';
+const QR_IMG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAHgCAIAAADytinCAAAIIklEQVR42u3csbEbRxREUUC1idBViAqAIcplKCMDCeyw2Np+g3PsX6j9g8Wtsfq91noB0OcvRwAg0AAINIBAAyDQAAINgEADINAAAg2AQAMINAACDYBAAwg0AAININAACDSAQAMg0AAINIBAAyDQAAINgEADINAAAg2AQAMINAD/gyv0uT/+/ulwt/z695/E2d7/2IO/39AhhE5s62lDL4Pfb8k75gYNUEqgAQQaAIEGEGgABBpAoAEQaAAEGkCgARBoAIEGQKABEGiAalfDQzSsQSaENhtzxzXugY/8fsedre/XDRrg6wg0gEADINAAAg2AQAMINAACDYBAAwg0AAININAACDQAH9esx7UftnsIoafd+thZI3kN79isl8Hv1w0a4OsINIBAAyDQAAINgEADCDQAAg2AQAMINAACDSDQAAg0AAINUO1yBOM0TH02uP+vzVqYzL0MuEEDINAAAg2AQAMg0AACDYBAAwg0AAININAACDQAAg0g0AD8SdbsDnfw9F1oyC30sQfPCuIGDSDQAAg0AAININAACDSAQAMg0AAINIBAAyDQAAINgEADCDQATYbNjYamIGdpGK7ceob739rWx97/49Dm6tbHNqyYPv7z8ft1gwYQaAAEGkCgARBoAAQaQKABEGgAgQZAoAEQaACBBkCgAY5SsWbXMM92qoYht8c/dtZLPm7yze/XDRpAoAEQaAAEGkCgARBoAIEGQKABEGgAgQZAoAEEGgCBBhBoAJq811pOgV1bC5Pj9jOfPbHc5qovwg0aAIEGEGgABBoAgQYQaAAEGkCgARBoAIEGQKABEGgAgQbgT0qt2YVGtmZtd209bej/mvUMoa+s4RAe/+00vOezTqzhi3CDBigl0AACDYBAAwg0AAININAACDQAAg0g0AAINIBAAyDQAAg0QLWr4SFCa5ChFcRTxzNf5+6+Nry3416GQRoGeN2gAb6LQAMINAACDSDQAAg0gEADINAACDSAQAMg0AACDYBAAyDQANVSc6OnLkxuCc1R5s728YHWBge/uo/PyTa8CbOe1g0aoJRAAwg0AAININAACDSAQAMg0AAINIBAAyDQAAINgEAD8PFeaw163NC+VMOAWWhJbtwznPoyzDrbWT/2g0/MDRpAoAEQaACBBkCgAQQaAIEGQKABBBoAgQYQaAAEGgCBBhBoAPal5ka3piDvrwWGFia3hJ624RAe/9dCGoZJQ+OZs96xWbugDS+5GzRAKYEGEGgABBpAoAEQaACBBkCgARBoAIEGQKABBBoAgQbg43IEr9gS1bi1s5BTp9HGrRU2vAynvo1u0ADfRaABBBoAgQYQaAAEGkCgARBoAAQaQKABEGgAgQZAoAEQaIBqFXOjpy5tWnfc9fiCaMkz0PD9Nvx+3aABSgk0gEADINAAAg2AQAMINAACDYBAAwg0AAININAACDQAH++1VuJzG4agQrNVj6+dzTrbV2yt8PHjbTiEhlc39EKaFXSDBhBoAAQaQKABEGgAgQZAoAEQaACBBkCgAQQaAIEGQKABBBqA33KFPtew4WvaimnDFxF6hoaznTV+a0G05ItwgwYoJdAAAg2AQAMINAACDSDQAAg0AAININAACDSAQAMg0AB8XA0P0TCNlrA1cNWwH/b4PlxoP+zgfbiDFxMFxA0aQKABEGgAgQZAoAEEGgCBBkCgAQQaAIEGEGgABBoAgQYQaAB+y3utlfjcWQOADbugvKZNfYb+tdyC6Kw52VmvTegZ3KABSgk0gEADINAAAg2AQAMINAACDYBAAwg0AAININAACDQAH6k1u5BZs2QN/9rBTxvaZnt88m3cz2fcObhBAyDQAAINgEADINAAAg2AQAMINAACDSDQAAg0AAININAACDTA0VJzowfPUc46hAYNI7GnHu+ss234ymbNybpBA5QSaACBBkCgAQQaAIEGEGgABBoAgQYQaAAEGkCgARBoAAQaoFpqbpScrYXJWUuqW+7/awfvvja8DF6b3Nm6QQOUEmgAgQZAoAEEGgCBBhBoAAQaAIEGEGgABBpAoAEQaAA+rtDnNsxWzdIwOxd6hobVt8TTzlqS89q4QQMg0AACDYBAAyDQAAINgEADCDQAAg0g0AAINAACDSDQAAg0wHe4Gh7i1F3B0OZq7rjuP/DWM8w6h1mH4CdZ8v26QQN8F4EGEGgABBpAoAEQaACBBkCgARBoAIEGQKABBBoAgQbg45r1uA2TYAcPfd3/1w7eZnt8ey93trO+tVmzc27QAN9FoAEEGgCBBhBoAAQaQKABEGgABBpAoAEQaACBBkCgARBogGqXIzjbrIVJhxD1+Cxn6IvY+tjQ7mvobN2gAUoJNIBAAyDQAAINgEADCDQAAg2AQAMINAACDSDQAAg0AB/W7ObJjWw9vvo262lDD5A7hPt//PjuXe4ZZk0bukEDCDQAAg0g0AAINIBAAyDQAAg0gEADINAAAg2AQAMg0AACDcC+YXOjDSuIsw6hYVzx/gM3DHiGzFq5DE3ahl7drY+d1RA3aACBBkCgAQQaAIEGEGgABBoAgQYQaAAEGkCgARBoAAQaoFrFmt2soa+Dj+vx2bmGpw2tnc0aUWtYTHz8xBpeGzdogFICDSDQAAg0gEADINAAAg2AQAMg0AACDYBAAwg0AAINgEADVHuvtZwCgBs0AAININAACDSAQAMg0AAINIBAAyDQAAINgEADINAAAg2AQAMINAACDSDQAAg0AAININAACDSAQAMg0AAINIBAAyDQAAINgEADfKn/ANLGMDm1w4vgAAAAAElFTkSuQmCC';
 
 /* ก๊อปลิงก์ เบราว์เซอร์ในแอป LINE บางรุ่นไม่ให้ใช้คลิปบอร์ด มีทางสำรองให้ */
 async function copyPageUrl(){
@@ -1225,7 +1277,10 @@ function openMe(){
 function newLead(){
   me = null; LS.set('me', null); lastSig = ''; chosenStatus = '';
   ['f-name','f-phone'].forEach(id=> $(id).value = '');
-  $('f-brand-sweet').value = ''; $('f-brand-plain').value = '';
+  ['f-brand-sweet','f-brand-plain'].forEach(id=>{
+    brandPick[id] = '';
+    $(id).querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
+  });
   $('ep-box').style.display = 'none';
   if(!autoVenue) $('f-venue').value = '';
   $('f-consent').checked = false;
@@ -1351,7 +1406,7 @@ function rowHTML(r, i, outKey, units){
           <input type="number" inputmode="decimal" value="${r.qty}" data-k="qty" data-i="${i}">
           <select data-k="unit" data-i="${i}">${unitOpts(r.unit, r.units || units)}</select>
           <div class="buy">
-            <u>฿</u><input type="number" inputmode="decimal" value="${r.packPrice}" data-k="packPrice" data-i="${i}">
+            <u>฿</u><input type="number" inputmode="decimal" value="${r.packPrice || ''}" placeholder="ราคาที่ซื้อ" data-k="packPrice" data-i="${i}">
             <u>/</u><input type="number" inputmode="decimal" value="${r.packSize}" data-k="packSize" data-i="${i}">
           </div>
         </div>
@@ -1502,11 +1557,7 @@ async function saveResultImage(){
   const g=x.createLinearGradient(0,0,W,430);
   g.addColorStop(0,'#2A34A3'); g.addColorStop(.5,'#202985'); g.addColorStop(1,'#000C51');
   x.fillStyle=g; x.fillRect(0,0,W,430);
-  const lg=$('h-logo');
-  if(lg && lg.complete && lg.naturalWidth){
-    const lw=620, lh=lw*lg.naturalHeight/lg.naturalWidth;
-    x.drawImage(lg,(W-lw)/2,(430-lh)/2,lw,lh);
-  }
+  drawLogo(x, W, 38, 354);
 
   let y=430+86;
   x.textAlign='left'; x.fillStyle='#16182E'; x.font=F(700,52);
@@ -1833,7 +1884,8 @@ async function wipeEverything(){
 /* ===================================================================
    รายงานความคืบหน้า เทียบกับเป้า KPI ในแผนงาน
    =================================================================== */
-const KPI_DEF = {forms:20, switchAll:15, nonuser:5, switcherA:5, switcherB:5, coupon:15, stops:24};
+const KPI_DEF = {forms:20, switchAll:15, nonuser:5, switcherA:5, switcherB:5,
+                 coupon:15, cupBig:33, cupSmall:200, stops:23};
 const kpiOf = k => { const v = (CFG.kpi||{})[k]; return (v===undefined||v===null) ? KPI_DEF[k] : +v; };
 
 /* แถบเทียบเป้า ถึงเป้าแล้วเปลี่ยนเป็นเขียวพร้อมข้อความกำกับ ไม่ใช้สีบอกอย่างเดียว */
@@ -1863,6 +1915,9 @@ async function openReport(d){
 
 async function drawReport(){
   const day = $('rp-date').value || todayISO();
+  /* ตัวเลขแก้วแจกชิมกับคูปองมาจากบันทึกประจำวัน ไม่ใช่ข้อมูลที่แอปนับเอง */
+  let rec = {};
+  try{ rec = (await fetchDays()).find(d => d.date === day) || {}; }catch(e){}
   const L = leads.filter(l  => dayOf(l) === day);
   const T = trades.filter(t => dayOf(t) === day);
 
@@ -1883,7 +1938,10 @@ async function drawReport(){
     + meter('เปลี่ยนมาใช้ TEAPOT รวม',  T.length, kpiOf('switchAll') * stops, 'นับจากคนที่เอาของมาแลกจริง')
     + meter('Non-user เปลี่ยนครบ 2 ตัว', tBy('nonuser'),   kpiOf('nonuser')   * stops)
     + meter('Switcher A เปลี่ยนข้นหวาน', tBy('switcherA'), kpiOf('switcherA') * stops)
-    + meter('Switcher B เปลี่ยนข้นจืด',  tBy('switcherB'), kpiOf('switcherB') * stops);
+    + meter('Switcher B เปลี่ยนข้นจืด',  tBy('switcherB'), kpiOf('switcherB') * stops)
+    + meter('คูปองที่แจก',        num(rec['d-coupon']),   kpiOf('coupon')   * stops, 'จากบันทึกประจำวัน')
+    + meter('แจกชิม แก้วใหญ่',    num(rec['d-cup-big']),  kpiOf('cupBig')   * stops, 'จากบันทึกประจำวัน')
+    + meter('แจกชิม แก้วเล็ก',    num(rec['d-cup-small']), kpiOf('cupSmall') * stops, 'จากบันทึกประจำวัน');
 
   /* ใครมาวันนี้ แยกทุกกลุ่มรวมคนที่ใช้ครบคู่อยู่แล้ว */
   const ec = {};
@@ -1905,6 +1963,16 @@ async function drawReport(){
     + meter('Non-user',  trades.filter(t=>t.entry==='nonuser').length,   kpiOf('nonuser')   * allStops)
     + meter('Switcher A', trades.filter(t=>t.entry==='switcherA').length, kpiOf('switcherA') * allStops)
     + meter('Switcher B', trades.filter(t=>t.entry==='switcherB').length, kpiOf('switcherB') * allStops);
+}
+
+/* โลโก้แต่ละเวอร์ชันสัดส่วนไม่เท่ากัน กำหนดความสูงไว้ ความกว้างค่อยคิดตาม
+   ถ้ากำหนดความกว้างแบบเดิม พอเปลี่ยนโลโก้ทรงสูงจะทับข้อความใต้มัน */
+function drawLogo(x, W, topY, targetH){
+  const lg = document.getElementById('h-logo');
+  if(!(lg && lg.complete && lg.naturalWidth)) return 0;
+  const h = targetH, w = h * lg.naturalWidth / lg.naturalHeight;
+  x.drawImage(lg, (W-w)/2, topY, w, h);
+  return h;
 }
 
 /* ---------- เซฟสูตรเป็นรูป ----------
@@ -1956,11 +2024,7 @@ async function recipeImage(){
   const g=x.createLinearGradient(0,0,W,headH);
   g.addColorStop(0,'#2A34A3'); g.addColorStop(1,'#000C51');
   x.fillStyle=g; x.fillRect(0,0,W,headH);
-  const lg=$('h-logo');
-  if(lg && lg.complete && lg.naturalWidth){
-    const lw=330, lh=lw*lg.naturalHeight/lg.naturalWidth;
-    x.drawImage(lg,(W-lw)/2,40,lw,lh);
-  }
+  drawLogo(x, W, 40, 189);
   x.fillStyle='rgba(255,255,255,.85)'; x.font=F(500,28); x.textAlign='center';
   x.fillText('สูตรน้ำชงคู่ชง', W/2, 268);
 
@@ -2070,11 +2134,7 @@ async function dailyImage(theDay){
   const g=x.createLinearGradient(0,0,W,headH);
   g.addColorStop(0,'#2A34A3'); g.addColorStop(1,'#000C51');
   x.fillStyle=g; x.fillRect(0,0,W,headH);
-  const lg=$('h-logo');
-  if(lg && lg.complete && lg.naturalWidth){
-    const lw=350, lh=lw*lg.naturalHeight/lg.naturalWidth;
-    x.drawImage(lg,(W-lw)/2,36,lw,lh);
-  }
+  drawLogo(x, W, 36, 200);
   const dObj = new Date(day + 'T00:00:00');
   x.fillStyle='rgba(255,255,255,.85)'; x.font=F(500,30); x.textAlign='center';
   x.fillText('รายงานประจำวันที่ ' + (isNaN(dObj) ? day
@@ -2253,7 +2313,8 @@ async function saveTrade(){
    6. บันทึกประจำวัน
    =================================================================== */
 const DAYF = ['d-prov','d-amphoe','d-m-name','d-m-shops','d-e-name','d-e-shops',
-              'd-coupon','d-premium','d-coupon-note','d-premium-note','d-note'];
+              'd-coupon','d-premium','d-cup-big','d-cup-small',
+              'd-coupon-note','d-premium-note','d-note'];
 
 function parseFolders(txt){
   const s = String(txt||'').trim();
@@ -2808,6 +2869,13 @@ $('leadsheet').onclick = e=>{ if(e.target.id === 'leadsheet') dismissSheet(); };
 $('btn-del-filtered').onclick = ()=>{
   const rows = filtered();
   if(!rows.length) return toast('ไม่มีรายการให้ลบ');
+  /* ไม่ได้ตั้งตัวกรอง = กดทีเดียวลบทั้งทริป ให้พิมพ์ยืนยันเหมือนปุ่มล้างทั้งระบบ */
+  const noFilter = !['a-f-venue','a-f-status','a-f-from','a-f-to'].some(id => $(id).value);
+  if(noFilter && rows.length === leads.length){
+    if(prompt('ยังไม่ได้ตั้งตัวกรอง กดนี่คือลบรายชื่อทั้งหมด ' + rows.length
+      + ' รายการ\nพิมพ์คำว่า  ลบ  เพื่อยืนยัน') !== 'ลบ') return;
+    return removeLeads(rows);
+  }
   if(confirm('ลบ ' + rows.length + ' รายการที่แสดงอยู่ตอนนี้ออกถาวร?')) removeLeads(rows);
 };
 $('btn-wipe').onclick = ()=>{
@@ -2830,6 +2898,14 @@ initFirebase().then(async ok=>{
     console.info('ยังไม่ได้ใส่ค่า Firebase — ข้อมูลจะเก็บไว้ในเครื่องเท่านั้น');
   }
 });
+
+/* เปิดเว็บได้แม้เน็ตหลุด ตลาดนัดสัญญาณแย่เป็นเรื่องปกติ
+   ถ้าเบราว์เซอร์ไม่รองรับก็ข้ามไปเฉย ๆ เว็บยังทำงานปกติ */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
 
 /* ลงทะเบียนไว้แล้วให้ข้ามหน้าแรก ยกเว้นโหมดแท็บเล็ตที่บูธ (?kiosk=1) */
 if(kiosk){ me = null; LS.set('me', null); }

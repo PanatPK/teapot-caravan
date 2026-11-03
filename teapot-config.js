@@ -13,7 +13,7 @@ const TEAPOT_CONFIG = {
      เว็บจะเทียบกับเวอร์ชันที่บันทึกไว้บนเซิร์ฟเวอร์ ถ้าไฟล์ใหม่กว่า ไฟล์ชนะ
      อัปไฟล์แล้วขึ้นเลย ไม่ต้องเข้าหลังบ้านไปกดกู้ค่า
      ส่วนลิงก์โฟลเดอร์ Drive และลิงก์ LINE เพจ ที่กรอกไว้หน้างาน ยังอยู่ครบ */
-  contentVersion: 5,
+  contentVersion: 6,
 
   /* ---------- 1. แบรนด์ / หัวเว็บ ---------- */
   brand: {
@@ -135,6 +135,8 @@ const TEAPOT_CONFIG = {
     switcherA:   5,   // Switcher A เปลี่ยนข้นหวาน   (รวม 115 คน)
     switcherB:   5,   // Switcher B เปลี่ยนข้นจืด    (รวม 115 คน)
     coupon:     15,   // สลับมาคุ้ม + คูปอง ต่อจุด    (รวม 345 ชุด)
+    cupBig:     33,   // แจกชิมแก้วใหญ่ ต่อจุด        (รวม 759 แก้ว)
+    cupSmall:  200,   // แจกชิมแก้วเล็ก ต่อจุด        (รวม 4,600 แก้ว)
     stops:      23    // จำนวนจุดทั้งทริป
   },
 
@@ -150,10 +152,10 @@ const TEAPOT_CONFIG = {
      คิดแบบเดียวกับส่วนผสม คือซื้อมาเป็นแพ็ก ใส่ราคาทั้งแพ็กกับจำนวนที่ได้
      เช่น แก้วแพ็กละ 90 บาท ได้ 50 ใบ ระบบหารเป็นใบละ 1.80 บาทให้เอง        */
   packaging: [
-    { name: 'แก้วพลาสติก 22 oz', qty: 1, unit: 'ใบ',   packPrice: 90, packSize: 50  },
-    { name: 'ฝาแก้ว',            qty: 1, unit: 'ใบ',   packPrice: 30, packSize: 50  },
-    { name: 'หลอด',              qty: 1, unit: 'เส้น', packPrice: 25, packSize: 100 },
-    { name: 'ถุงหูหิ้ว',          qty: 1, unit: 'ใบ',   packPrice: 30, packSize: 100 }
+    { name: 'แก้วพลาสติก 22 oz', qty: 1, unit: 'ใบ',   packPrice: 0, packSize: 50  },
+    { name: 'ฝาแก้ว',            qty: 1, unit: 'ใบ',   packPrice: 0, packSize: 50  },
+    { name: 'หลอด',              qty: 1, unit: 'เส้น', packPrice: 0, packSize: 100 },
+    { name: 'ถุงหูหิ้ว',          qty: 1, unit: 'ใบ',   packPrice: 0, packSize: 100 }
   ],
 
   /* ---------- 7. สูตรน้ำชง ----------
@@ -183,11 +185,11 @@ const TEAPOT_CONFIG = {
         'ราดทีพอท ข้นจืด 20 กรัม ช้า ๆ บนผิวหน้าให้เป็นชั้นขาว เสิร์ฟทันที'
       ],
       ingredients: [
-        { name: 'ผงชาไทย',          qty: 15,  unit: 'กรัม', packPrice: 180, packSize: 1000 },
-        { name: 'ทีพอท ข้นหวาน',    qty: 25,  unit: 'กรัม', packPrice: 55,  packSize: 1000 },
-        { name: 'ทีพอท ข้นจืด',     qty: 20,  unit: 'กรัม', packPrice: 60,  packSize: 1000 },
-        { name: 'น้ำตาลทราย',       qty: 10,  unit: 'กรัม', packPrice: 25,  packSize: 1000 },
-        { name: 'น้ำแข็ง', qty: 250, unit: 'กรัม', packPrice: 25, packSize: 5000, units: ['กรัม','ถุง','กระสอบ','ถัง'] }
+        { name: 'ผงชาไทย',          qty: 15,  unit: 'กรัม', packPrice: 0, packSize: 1000 },
+        { name: 'ทีพอท ข้นหวาน',    qty: 25,  unit: 'กรัม', packPrice: 0,  packSize: 1000 },
+        { name: 'ทีพอท ข้นจืด',     qty: 20,  unit: 'กรัม', packPrice: 0,  packSize: 1000 },
+        { name: 'น้ำตาลทราย',       qty: 10,  unit: 'กรัม', packPrice: 0,  packSize: 1000 },
+        { name: 'น้ำแข็ง', qty: 250, unit: 'กรัม', packPrice: 0, packSize: 5000, units: ['กรัม','ถุง','กระสอบ','ถัง'] }
       ]
     },
     {
@@ -207,10 +209,10 @@ const TEAPOT_CONFIG = {
         'ราดทีพอท ข้นจืด 25 กรัม ปิดหน้า เสิร์ฟทันที'
       ],
       ingredients: [
-        { name: 'ผงชาใต้',          qty: 18,  unit: 'กรัม', packPrice: 160, packSize: 1000 },
-        { name: 'ทีพอท ข้นหวาน',    qty: 35,  unit: 'กรัม', packPrice: 55,  packSize: 1000 },
-        { name: 'ทีพอท ข้นจืด',     qty: 25,  unit: 'กรัม', packPrice: 60,  packSize: 1000 },
-        { name: 'น้ำแข็ง', qty: 220, unit: 'กรัม', packPrice: 25, packSize: 5000, units: ['กรัม','ถุง','กระสอบ','ถัง'] }
+        { name: 'ผงชาใต้',          qty: 18,  unit: 'กรัม', packPrice: 0, packSize: 1000 },
+        { name: 'ทีพอท ข้นหวาน',    qty: 35,  unit: 'กรัม', packPrice: 0,  packSize: 1000 },
+        { name: 'ทีพอท ข้นจืด',     qty: 25,  unit: 'กรัม', packPrice: 0,  packSize: 1000 },
+        { name: 'น้ำแข็ง', qty: 220, unit: 'กรัม', packPrice: 0, packSize: 5000, units: ['กรัม','ถุง','กระสอบ','ถัง'] }
       ]
     },
     {
@@ -229,10 +231,10 @@ const TEAPOT_CONFIG = {
         'ใส่น้ำแข็ง 250 กรัม เทส่วนผสมลงไป คนเบา ๆ 2 รอบ เสิร์ฟ'
       ],
       ingredients: [
-        { name: 'ผงชาไทย',          qty: 12,  unit: 'กรัม', packPrice: 180, packSize: 1000 },
-        { name: 'ทีพอท ข้นหวาน',    qty: 30,  unit: 'กรัม', packPrice: 55,  packSize: 1000 },
-        { name: 'ทีพอท ข้นจืด',     qty: 30,  unit: 'กรัม', packPrice: 60,  packSize: 1000 },
-        { name: 'น้ำแข็ง', qty: 250, unit: 'กรัม', packPrice: 25, packSize: 5000, units: ['กรัม','ถุง','กระสอบ','ถัง'] }
+        { name: 'ผงชาไทย',          qty: 12,  unit: 'กรัม', packPrice: 0, packSize: 1000 },
+        { name: 'ทีพอท ข้นหวาน',    qty: 30,  unit: 'กรัม', packPrice: 0,  packSize: 1000 },
+        { name: 'ทีพอท ข้นจืด',     qty: 30,  unit: 'กรัม', packPrice: 0,  packSize: 1000 },
+        { name: 'น้ำแข็ง', qty: 250, unit: 'กรัม', packPrice: 0, packSize: 5000, units: ['กรัม','ถุง','กระสอบ','ถัง'] }
       ]
     },
     {
@@ -250,11 +252,11 @@ const TEAPOT_CONFIG = {
         'ราดทีพอท ข้นจืด 25 กรัม บนผิวหน้า เสิร์ฟทันที'
       ],
       ingredients: [
-        { name: 'ผงโกโก้',          qty: 20,  unit: 'กรัม', packPrice: 220, packSize: 1000 },
-        { name: 'ทีพอท ข้นหวาน',    qty: 25,  unit: 'กรัม', packPrice: 55,  packSize: 1000 },
-        { name: 'ทีพอท ข้นจืด',     qty: 25,  unit: 'กรัม', packPrice: 60,  packSize: 1000 },
-        { name: 'น้ำตาลทราย',       qty: 8,   unit: 'กรัม', packPrice: 25,  packSize: 1000 },
-        { name: 'น้ำแข็ง', qty: 250, unit: 'กรัม', packPrice: 25, packSize: 5000, units: ['กรัม','ถุง','กระสอบ','ถัง'] }
+        { name: 'ผงโกโก้',          qty: 20,  unit: 'กรัม', packPrice: 0, packSize: 1000 },
+        { name: 'ทีพอท ข้นหวาน',    qty: 25,  unit: 'กรัม', packPrice: 0,  packSize: 1000 },
+        { name: 'ทีพอท ข้นจืด',     qty: 25,  unit: 'กรัม', packPrice: 0,  packSize: 1000 },
+        { name: 'น้ำตาลทราย',       qty: 8,   unit: 'กรัม', packPrice: 0,  packSize: 1000 },
+        { name: 'น้ำแข็ง', qty: 250, unit: 'กรัม', packPrice: 0, packSize: 5000, units: ['กรัม','ถุง','กระสอบ','ถัง'] }
       ]
     },
     {
@@ -272,10 +274,10 @@ const TEAPOT_CONFIG = {
         'เสิร์ฟพร้อมหลอด ให้ลูกค้าคนเอง'
       ],
       ingredients: [
-        { name: 'น้ำแดงสาลี่',      qty: 25,  unit: 'มล.',  packPrice: 45,  packSize: 710 },
-        { name: 'ทีพอท ข้นหวาน',    qty: 25,  unit: 'กรัม', packPrice: 55,  packSize: 1000 },
-        { name: 'ทีพอท ข้นจืด',     qty: 40,  unit: 'กรัม', packPrice: 60,  packSize: 1000 },
-        { name: 'น้ำแข็ง', qty: 250, unit: 'กรัม', packPrice: 25, packSize: 5000, units: ['กรัม','ถุง','กระสอบ','ถัง'] }
+        { name: 'น้ำแดงสาลี่',      qty: 25,  unit: 'มล.',  packPrice: 0,  packSize: 710 },
+        { name: 'ทีพอท ข้นหวาน',    qty: 25,  unit: 'กรัม', packPrice: 0,  packSize: 1000 },
+        { name: 'ทีพอท ข้นจืด',     qty: 40,  unit: 'กรัม', packPrice: 0,  packSize: 1000 },
+        { name: 'น้ำแข็ง', qty: 250, unit: 'กรัม', packPrice: 0, packSize: 5000, units: ['กรัม','ถุง','กระสอบ','ถัง'] }
       ]
     },
     {
@@ -294,10 +296,10 @@ const TEAPOT_CONFIG = {
         'ราดทีพอท ข้นจืด 30 กรัม ปิดหน้า เสิร์ฟทันที'
       ],
       ingredients: [
-        { name: 'ผงชาเขียว',        qty: 12,  unit: 'กรัม', packPrice: 250, packSize: 500 },
-        { name: 'ทีพอท ข้นหวาน',    qty: 25,  unit: 'กรัม', packPrice: 55,  packSize: 1000 },
-        { name: 'ทีพอท ข้นจืด',     qty: 30,  unit: 'กรัม', packPrice: 60,  packSize: 1000 },
-        { name: 'น้ำแข็ง', qty: 250, unit: 'กรัม', packPrice: 25, packSize: 5000, units: ['กรัม','ถุง','กระสอบ','ถัง'] }
+        { name: 'ผงชาเขียว',        qty: 12,  unit: 'กรัม', packPrice: 0, packSize: 500 },
+        { name: 'ทีพอท ข้นหวาน',    qty: 25,  unit: 'กรัม', packPrice: 0,  packSize: 1000 },
+        { name: 'ทีพอท ข้นจืด',     qty: 30,  unit: 'กรัม', packPrice: 0,  packSize: 1000 },
+        { name: 'น้ำแข็ง', qty: 250, unit: 'กรัม', packPrice: 0, packSize: 5000, units: ['กรัม','ถุง','กระสอบ','ถัง'] }
       ]
     }
   ]
