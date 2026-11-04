@@ -74,6 +74,28 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 .btn:disabled{opacity:.45}
 .btn.ghost{background:#fff;color:var(--navy);border:1.5px solid var(--navy)}
 .btn.sm{padding:10px;font-size:15px;margin-top:10px}
+
+/* ปุ่มสองอันต่อบรรทัด ใช้ในหลังบ้าน จะได้ไม่เป็นแถวปุ่มยาวเหยียด */
+.brow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.brow .btn{margin:0;width:100%;padding:11px 8px;font-size:14.5px}
+@media(max-width:340px){.brow{grid-template-columns:1fr}}
+
+/* รายการเครื่องมือ ชื่อซ้าย ปุ่มขวา บรรทัดเดียวจบ */
+.trow{display:flex;align-items:center;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+.trow:first-of-type{border-top:0;padding-top:2px}
+.trow:last-of-type{padding-bottom:2px}
+.trow .tt{flex:1 1 auto;min-width:0}
+.trow .tt b{display:block;font-size:15px;line-height:1.35}
+.trow .tt small{display:block;color:var(--muted);font-size:12px;line-height:1.5;margin-top:3px}
+.trow .tb{flex:0 0 auto;display:flex;gap:7px}
+.trow .tb .btn{margin:0;width:auto;padding:10px 13px;font-size:13.5px;white-space:nowrap}
+
+/* โซนลบ พับไว้ก่อน กันกดโดนตอนเลื่อนหน้าจอ */
+.dz{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+.dz summary{cursor:pointer;font-size:13.5px;color:var(--red);font-weight:600;list-style:none}
+.dz summary::-webkit-details-marker{display:none}
+.dz summary::before{content:'▸ ';font-size:11px}
+.dz[open] summary::before{content:'▾ '}
 .note{font-size:12.5px;color:var(--muted);text-align:center;margin-top:12px}
 .err-msg{color:var(--red);font-size:13px;margin-top:8px;display:none}
 .err-msg.on{display:block}
@@ -199,6 +221,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 .rowdel{border:0;background:#FBE9E7;color:#B03A2E;width:24px;height:24px;border-radius:7px;
   cursor:pointer;font-size:14px;line-height:1;padding:0}
 .danger{color:var(--red);border-color:var(--red)}
+.btn.ghost.danger{color:var(--red);border-color:var(--red)}
 .tag{display:inline-block;background:var(--blue-soft);color:var(--navy);border-radius:6px;padding:2px 7px;font-size:11px;white-space:nowrap}
 .delday{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:7px;
   width:26px;height:26px;line-height:1;font-size:13px;cursor:pointer;margin-left:6px}
@@ -542,39 +565,47 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         </div>
         <div class="scroll"><table class="tbl" id="a-table"></table></div>
         <p class="tot" id="a-more"></p>
-        <button class="btn" id="btn-csv">ดาวน์โหลด CSV</button>
-        <button class="btn sm" id="btn-sheet" style="display:none">ส่งเข้า Google Sheet ใหม่ทั้งหมด</button>
-        <button class="btn ghost sm danger" id="btn-sheet-clear" style="display:none">ล้างแถวใน Google Sheet</button>
+        <div class="brow">
+          <button class="btn" id="btn-csv">ดาวน์โหลด CSV</button>
+          <button class="btn" id="btn-daily">สรุปวันนี้เป็นรูป</button>
+        </div>
+        <div class="brow">
+          <button class="btn ghost" id="btn-refresh">โหลดข้อมูลใหม่</button>
+          <button class="btn ghost" id="btn-sheet" style="display:none">ซ่อมชีตให้ตรงกัน</button>
+        </div>
         <p class="tot" id="sheet-note" style="display:none"></p>
-        <button class="btn sm" id="btn-daily">สรุปวันนี้เป็นรูป</button>
-        <button class="btn ghost sm" id="btn-refresh">โหลดข้อมูลใหม่</button>
-        <button class="btn ghost sm" id="btn-del-filtered">ลบเฉพาะรายชื่อที่กรองอยู่</button>
-        <p class="tot">ลบแค่รายชื่อตามตัวกรองด้านบน ถ้าไม่ได้ตั้งตัวกรอง = ลบรายชื่อทั้งหมด
-          แต่ตัวเลขต้นทุน สถิติเปิดสูตร รายการแลกของ และบันทึกประจำวัน ยังอยู่ครบ</p>
-        <button class="btn ghost sm danger" id="btn-wipe">ล้างข้อมูลทดสอบทั้งระบบ</button>
-        <p class="tot">ล้างทุกอย่าง รายชื่อ ต้นทุน สถิติ รายการแลกของ และบันทึกประจำวัน
-          ใช้ครั้งเดียวก่อนเริ่มงานจริง ลบแล้วกู้คืนไม่ได้ โหลด CSV เก็บไว้ก่อน</p>
         <p class="tot" id="q-note"></p>
         <button class="btn ghost sm" id="btn-clearq" style="display:none">ล้างรายการค้าง</button>
+
+        <details class="dz">
+          <summary>ลบข้อมูล</summary>
+          <button class="btn ghost sm danger" id="btn-del-filtered">ลบรายชื่อที่กรองอยู่</button>
+          <p class="tot">ลบตามตัวกรองด้านบน ไม่ได้ตั้งตัวกรอง = ลบรายชื่อทั้งหมด
+            ต้นทุน สถิติ รายการแลกของ และบันทึกประจำวัน ยังอยู่ครบ</p>
+          <button class="btn ghost sm danger" id="btn-wipe">ล้างข้อมูลทดสอบทั้งระบบ</button>
+          <p class="tot">ลบทุกอย่างทั้งรายชื่อและบันทึกประจำวัน กู้คืนไม่ได้ โหลด CSV เก็บไว้ก่อน
+            ใช้ครั้งเดียวก่อนเริ่มงานจริง ชีตไม่ถูกแตะ กดซ่อมชีตต่อถ้าอยากให้ชีตว่างด้วย</p>
+        </details>
       </div>
 
       <div class="card">
-        <h2>โต๊ะแลกของ</h2>
-        <p class="sub">บันทึกว่าใครเอาอะไรมาแลก ได้อะไรกลับไป และได้พรีเมียมอะไร</p>
-        <button class="btn" id="btn-trade">เปิดหน้าโต๊ะแลกของ</button>
-      </div>
-
-      <div class="card">
-        <h2>บันทึกประจำวัน</h2>
-        <p class="sub">กรอกชื่อตลาด จำนวนร้าน คูปอง ของพรีเมียม และเปิดโฟลเดอร์อัปรูป</p>
-        <button class="btn" id="btn-day">เปิดหน้าบันทึกวันนี้</button>
-        <button class="btn sm" id="btn-report">ดูรายงานความคืบหน้า</button>
-      </div>
-
-      <div class="card">
-        <h2>แก้ไขเนื้อหา</h2>
-        <p class="sub">แก้สูตร ราคา ตารางจุด ยี่ห้อ และข้อความ โดยไม่ต้องแตะไฟล์</p>
-        <button class="btn" id="btn-settings">เปิดหน้าแก้ไข</button>
+        <h2>เครื่องมือหน้างาน</h2>
+        <div class="trow">
+          <div class="tt"><b>โต๊ะแลกของ</b>
+            <small>ใครเอาอะไรมาแลก ได้อะไรกลับไป</small></div>
+          <div class="tb"><button class="btn" id="btn-trade">เปิด</button></div>
+        </div>
+        <div class="trow">
+          <div class="tt"><b>บันทึกประจำวัน</b>
+            <small>ชื่อตลาด จำนวนร้าน คูปอง อัปรูป</small></div>
+          <div class="tb"><button class="btn" id="btn-day">บันทึก</button>
+            <button class="btn ghost" id="btn-report">รายงาน</button></div>
+        </div>
+        <div class="trow">
+          <div class="tt"><b>แก้ไขเนื้อหา</b>
+            <small>สูตร ราคา ตารางจุด ยี่ห้อ ข้อความ</small></div>
+          <div class="tb"><button class="btn" id="btn-settings">เปิด</button></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1772,13 +1803,12 @@ function renderAdmin(){
   /* ปุ่มส่งเข้าชีตโผล่เฉพาะตอนตั้งค่า sheetUrl ไว้แล้ว */
   if(sheetOn()){
     $('btn-sheet').style.display = 'block';
-    $('btn-sheet-clear').style.display = 'block';
     const qn = LS.get('sheetq',[]).length;
     const note = $('sheet-note');
     note.style.display = 'block';
     note.textContent = qn
-      ? 'มี ' + qn + ' วันที่ยังส่งเข้าชีตไม่สำเร็จ จะลองใหม่เมื่อเน็ตกลับมา หรือกดปุ่มด้านบนส่งใหม่ทั้งหมด'
-      : 'บันทึกประจำวันถูกส่งเข้า Google Sheet อัตโนมัติทุกครั้งที่กดบันทึก';
+      ? 'มี ' + qn + ' วันที่ยังส่งเข้าชีตไม่สำเร็จ จะลองใหม่เมื่อเน็ตกลับมา หรือกดปุ่มซ่อมชีตให้ตรงกัน'
+      : 'บันทึกประจำวันส่งเข้า Google Sheet ให้เองทุกครั้งที่กดบันทึก';
     flushSheet();
   }
   const qn = LS.get('queue',[]).length, rj = LS.get('rejected',[]).length;
@@ -2622,39 +2652,32 @@ window.addEventListener('online', flushSheet);
 /* ส่งใหม่ทั้งหมด ใช้ตอนเพิ่งตั้งชีตหรืออยากซ่อมให้ตรงกัน */
 /* ล้างแถวในชีต แยกปุ่มไว้ต่างหากจากปุ่มล้างข้อมูล
    เพราะชีตเป็นของที่ลูกค้าเปิดดูอยู่ ถ้าผูกติดกันแล้วเผลอกด ลูกค้าจะเห็นตารางว่างทันที */
-async function clearSheet(){
-  if(!sheetOn()) return toast('ยังไม่ได้ตั้งค่า sheetUrl');
-  if(prompt('ล้างแถวข้อมูลทั้งหมดใน Google Sheet\nหัวตารางยังอยู่ ข้อมูลในแอปไม่ถูกแตะ'
-    + '\n\nพิมพ์คำว่า  ลบ  เพื่อยืนยัน') !== 'ลบ') return;
-  const btn = $('btn-sheet-clear'); btn.disabled = true; btn.textContent = 'กำลังล้าง…';
-  try{
-    const res = await fetch(CFG.sheetUrl, {
-      method:'POST', redirect:'follow',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({ token: CFG.sheetToken || '', action:'clear' })
-    });
-    const j = JSON.parse(await res.text());
-    if(!j.ok) throw new Error(j.error || 'ชีตตอบกลับไม่สำเร็จ');
-    LS.set('sheetq',[]);
-    toast('ล้างแถวในชีตแล้ว');
-    renderAdmin();
-  }catch(e){ toast('ล้างชีตไม่สำเร็จ ' + (e.message||'')); }
-  btn.disabled = false; btn.textContent = 'ล้างแถวใน Google Sheet';
-}
-
-async function pushAllDays(){
+/* ซ่อมชีตให้ตรงกับแอป ล้างแถวเดิมแล้วเขียนใหม่ทั้งหมดในครั้งเดียว
+   รวมสองปุ่มเดิมเข้าด้วยกัน เพราะกดทีละอันแล้วชีตมักไม่ตรงกับแอปอยู่ดี
+   หัวตารางไม่หาย ข้อมูลในแอปไม่ถูกแตะ ลูกค้าเปิดดูชีตได้ตลอด */
+async function repairSheet(){
   if(!sheetOn()) return toast('ยังไม่ได้ตั้งค่า sheetUrl ในไฟล์ teapot-system.js');
-  const btn = $('btn-sheet'); btn.disabled = true; btn.textContent = 'กำลังส่ง…';
+  const btn = $('btn-sheet');
+  btn.disabled = true; btn.textContent = 'กำลังอ่านข้อมูล…';
+  let all = [];
+  try{ all = await fetchDays(); }
+  catch(e){ btn.disabled = false; btn.textContent = 'ซ่อมชีตให้ตรงกัน'; return toast('โหลดข้อมูลไม่สำเร็จ'); }
+
+  btn.disabled = false; btn.textContent = 'ซ่อมชีตให้ตรงกัน';
+  const ask = all.length
+    ? 'ล้างแถวเดิมในชีตทิ้ง แล้วเขียนใหม่จากข้อมูลในแอป ' + all.length + ' วัน'
+    : 'ตอนนี้ในแอปยังไม่มีบันทึกประจำวันเลย กดต่อ = ชีตจะว่าง เหลือแต่หัวตาราง';
+  if(!confirm('ซ่อมชีตให้ตรงกับแอป\n\n' + ask + '\nหัวตารางยังอยู่ ข้อมูลในแอปไม่ถูกแตะ')) return;
+
+  btn.disabled = true; btn.textContent = 'กำลังซ่อม…';
   try{
-    const all = await fetchDays();
-    if(!all.length) toast('ยังไม่มีบันทึกประจำวันให้ส่ง');
-    else{
-      const r = await postSheet(all.map(dayPayload));
-      LS.set('sheetq',[]);
-      toast('ส่งเข้าชีตแล้ว ' + (r.count || all.length) + ' วัน');
-    }
-  }catch(e){ toast('ส่งเข้าชีตไม่สำเร็จ ' + (e.message||'')); }
-  btn.disabled = false; btn.textContent = 'ส่งเข้า Google Sheet ใหม่ทั้งหมด';
+    await postGS({ action:'clear' });
+    if(all.length) await postSheet(all.map(dayPayload));
+    LS.set('sheetq', []);
+    toast(all.length ? 'ชีตตรงกับแอปแล้ว ' + all.length + ' วัน' : 'ล้างแถวในชีตแล้ว');
+    renderAdmin();
+  }catch(e){ toast('ซ่อมชีตไม่สำเร็จ ' + (e.message || '')); }
+  btn.disabled = false; btn.textContent = 'ซ่อมชีตให้ตรงกัน';
 }
 
 async function fetchDays(){
@@ -3152,8 +3175,7 @@ $('rp-back').onclick    = ()=>{ renderAdmin(); show('s-admin'); };
 $('rp-date').onchange   = drawReport;
 $('rp-img').onclick     = ()=> dailyImage($('rp-date').value || todayISO());
 $('btn-csv').onclick   = downloadCSV;
-$('btn-sheet').onclick       = pushAllDays;
-$('btn-sheet-clear').onclick = clearSheet;
+$('btn-sheet').onclick = repairSheet;
 $('a-table').onclick = e=>{
   const btn = e.target.closest('[data-row],[data-edit]');
   if(!btn) return;
