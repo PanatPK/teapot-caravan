@@ -93,6 +93,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
   padding:12px 14px;text-align:center}
 .urlbox code{display:block;font-size:13px;color:var(--navy);word-break:break-all;margin-top:4px;
   -webkit-user-select:all;user-select:all}
+.upbox{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
 .qrpair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .qrbox.wide{grid-column:1/-1}
 .qrbox{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
@@ -628,6 +629,13 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <a class="btn ghost sm" id="d-m-photo" target="_blank" style="margin:0">โฟลเดอร์รูป</a>
         <a class="btn ghost sm" id="d-m-video" target="_blank" style="margin:0">โฟลเดอร์วิดีโอ</a>
       </div>
+      <div class="upbox" id="d-m-upbox">
+        <button class="btn ghost" id="d-m-pick" style="margin:0">เลือกรูปอัปขึ้นไดรฟ์</button>
+        <input type="file" id="d-m-file" accept="image/*" multiple style="display:none">
+        <p class="tot" id="d-m-prog" style="display:none"></p>
+        <p class="foot">เลือกได้หลายรูปพร้อมกัน ระบบย่อรูปให้ก่อนส่ง เข้าโฟลเดอร์ เช้า ของวันนี้เอง
+          วิดีโอไฟล์ใหญ่เกินไป ให้กดปุ่มโฟลเดอร์วิดีโอแล้วลากใส่เอง</p>
+      </div>
     </div>
 
     <div class="card">
@@ -639,6 +647,13 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
       <div class="row" style="margin-top:12px">
         <a class="btn ghost sm" id="d-e-photo" target="_blank" style="margin:0">โฟลเดอร์รูป</a>
         <a class="btn ghost sm" id="d-e-video" target="_blank" style="margin:0">โฟลเดอร์วิดีโอ</a>
+      </div>
+      <div class="upbox" id="d-e-upbox">
+        <button class="btn ghost" id="d-e-pick" style="margin:0">เลือกรูปอัปขึ้นไดรฟ์</button>
+        <input type="file" id="d-e-file" accept="image/*" multiple style="display:none">
+        <p class="tot" id="d-e-prog" style="display:none"></p>
+        <p class="foot">เลือกได้หลายรูปพร้อมกัน ระบบย่อรูปให้ก่อนส่ง เข้าโฟลเดอร์ เย็น ของวันนี้เอง
+          วิดีโอไฟล์ใหญ่เกินไป ให้กดปุ่มโฟลเดอร์วิดีโอแล้วลากใส่เอง</p>
       </div>
     </div>
 
@@ -2396,6 +2411,12 @@ function dayTotal(){
 }
 
 function fillFolderLinks(date){
+  /* กล่องอัปรูปใช้ Apps Script ตัวเดียวกับที่ส่งชีต ยังไม่ตั้งก็ไม่ต้องโชว์ */
+  ['m','e'].forEach(r=>{
+    $('d-'+r+'-upbox').style.display = sheetOn() ? 'block' : 'none';
+    const pg = $('d-'+r+'-prog');
+    pg.style.display = 'none'; pg.textContent = '';
+  });
   const f = (CFG.driveFolders || {})[date] || {};
   [['d-m-photo', f.m_photo], ['d-m-video', f.m_video],
    ['d-e-photo', f.e_photo], ['d-e-video', f.e_video]].forEach(([id,url])=>{
@@ -2486,16 +2507,84 @@ function dayPayload(rec){
   };
 }
 
-async function postSheet(days){
+/* ยิงเข้า Apps Script ตัวเดียวกับที่ส่งชีต ใช้ text/plain กัน CORS preflight */
+async function postGS(payload){
   const res = await fetch(CFG.sheetUrl, {
     method:'POST', redirect:'follow',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify({ token: CFG.sheetToken || '', days })
+    body: JSON.stringify(Object.assign({ token: CFG.sheetToken || '' }, payload))
   });
   const txt = await res.text();
   let j = {}; try{ j = JSON.parse(txt); }catch(e){}
   if(!j.ok) throw new Error(j.error || 'ชีตตอบกลับไม่สำเร็จ');
   return j;
+}
+
+async function postSheet(days){ return postGS({ days }); }
+
+/* ---------- อัปรูปขึ้นไดรฟ์จากหน้าบันทึกประจำวัน ----------
+   สตาฟไม่ต้องมีสิทธิ์แก้ไขในไดรฟ์ Apps Script เป็นคนเขียนไฟล์ให้ในนามเจ้าของ
+   ลูกค้าจึงยังเป็นผู้อ่านอย่างเดียวเหมือนเดิม                              */
+
+/* ย่อรูปก่อนส่ง ด้านยาวสุด 1600 พอสำหรับรายงานและลงโซเชียล
+   ถ้าส่งไฟล์เต็มจากมือถือ เน็ตหน้างานจะค้างและไดรฟ์บวมเร็วมาก */
+function shrinkPhoto(file){
+  return new Promise((res, rej)=>{
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = ()=>{
+      URL.revokeObjectURL(url);
+      const MAX = 1600;
+      let w = img.naturalWidth || 1, h = img.naturalHeight || 1;
+      const k = Math.min(1, MAX / Math.max(w, h));
+      w = Math.max(1, Math.round(w*k)); h = Math.max(1, Math.round(h*k));
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      res(c.toDataURL('image/jpeg', .82).split(',')[1]);
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); rej(new Error('อ่านไฟล์ไม่ได้')); };
+    img.src = url;
+  });
+}
+
+/* ชื่อไฟล์ 24-11 142305-1.jpg เรียงตามเวลาที่ถ่ายส่งได้เลย */
+function photoName(iso, i){
+  const d = new Date(), p = n => String(n).padStart(2,'0');
+  return iso.slice(8,10) + '-' + iso.slice(5,7) + ' '
+       + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds())
+       + '-' + (i+1) + '.jpg';
+}
+
+async function uploadPhotos(round){
+  const inp = $('d-'+round+'-file');
+  const files = Array.from(inp.files || []).filter(f => String(f.type).indexOf('image/') === 0);
+  inp.value = '';
+  if(!files.length) return;
+  if(!sheetOn()) return toast('ยังไม่ได้ตั้งค่า sheetUrl ในไฟล์ teapot-system.js');
+
+  const iso  = $('d-date').value || todayISO();
+  const btn  = $('d-'+round+'-pick');
+  const prog = $('d-'+round+'-prog');
+  btn.disabled = true;
+  prog.style.display = 'block';
+
+  let done = 0, fail = 0;
+  for(let i = 0; i < files.length; i++){
+    prog.textContent = 'กำลังส่งรูปที่ ' + (i+1) + ' จาก ' + files.length + ' อย่าเพิ่งปิดหน้านี้';
+    try{
+      const data = await shrinkPhoto(files[i]);
+      await postGS({ action:'upload', iso, round,
+                     name: photoName(iso, i), mime:'image/jpeg', data });
+      done++;
+    }catch(e){ fail++; }
+  }
+
+  btn.disabled = false;
+  prog.textContent = fail
+    ? 'ขึ้นไดรฟ์แล้ว ' + done + ' รูป ไม่สำเร็จ ' + fail + ' รูป กดเลือกรูปที่ตกหล่นส่งใหม่ได้เลย'
+    : 'ขึ้นไดรฟ์แล้ว ' + done + ' รูป กดปุ่มโฟลเดอร์รูปด้านบนเพื่อเปิดดู';
+  if(done) toast('อัปรูปขึ้นไดรฟ์แล้ว ' + done + ' รูป');
 }
 
 /* ส่งวันเดียว เรียกตอนกดบันทึก */
@@ -2932,6 +3021,10 @@ $('day-back').onclick  = ()=> show('s-admin');
 $('d-date').onchange   = e=> openDay(e.target.value);
 $('d-m-shops').oninput = dayTotal;
 $('d-e-shops').oninput = dayTotal;
+['m','e'].forEach(r=>{
+  $('d-'+r+'-pick').onclick = ()=> $('d-'+r+'-file').click();
+  $('d-'+r+'-file').onchange = ()=> uploadPhotos(r);
+});
 $('d-save').onclick    = saveDay;
 $('d-csv').onclick     = dayReportCSV;
 $('d-refresh').onclick = renderTripReport;
