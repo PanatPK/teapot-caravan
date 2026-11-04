@@ -2623,6 +2623,18 @@ function photoName(iso, i){
        + '-' + (i+1) + '.jpg';
 }
 
+/* แปลสาเหตุที่อัปไม่ขึ้นเป็นภาษาคน ไม่งั้นเห็นแค่คำว่าไม่สำเร็จแล้วไล่ต้นตอไม่ถูก */
+function uploadWhy(e){
+  const m = String((e && e.message) || e || '');
+  if(/DriveApp|drive\.readonly|auth/i.test(m))
+    return 'Apps Script ยังไม่ได้สิทธิ์ Drive ให้ไปกด Run ที่ฟังก์ชัน authorizeDrive ก่อน แล้ว Deploy ใหม่';
+  if(/อ่านไฟล์ไม่ได้/.test(m))
+    return 'เปิดไฟล์รูปไม่ได้ ถ้าเป็นไฟล์ HEIC จากไอโฟน ให้ตั้งกล้องเป็น Most Compatible หรือส่งรูปที่ถ่ายใหม่';
+  if(/Failed to fetch|NetworkError|load failed/i.test(m))
+    return 'เน็ตหลุดระหว่างส่ง ลองใหม่อีกครั้ง';
+  return m.slice(0, 90) || 'ไม่ทราบสาเหตุ';
+}
+
 async function uploadPhotos(round){
   const inp = $('d-'+round+'-file');
   const files = Array.from(inp.files || []).filter(f => String(f.type).indexOf('image/') === 0);
@@ -2636,7 +2648,7 @@ async function uploadPhotos(round){
   btn.disabled = true;
   prog.style.display = 'block';
 
-  let done = 0, fail = 0;
+  let done = 0, fail = 0, why = '';
   for(let i = 0; i < files.length; i++){
     prog.textContent = 'กำลังส่งรูปที่ ' + (i+1) + ' จาก ' + files.length + ' อย่าเพิ่งปิดหน้านี้';
     try{
@@ -2644,12 +2656,12 @@ async function uploadPhotos(round){
       await postGS({ action:'upload', iso, round,
                      name: photoName(iso, i), mime:'image/jpeg', data });
       done++;
-    }catch(e){ fail++; }
+    }catch(e){ fail++; if(!why) why = uploadWhy(e); }
   }
 
   btn.disabled = false;
   prog.textContent = fail
-    ? 'ขึ้นไดรฟ์แล้ว ' + done + ' รูป ไม่สำเร็จ ' + fail + ' รูป กดเลือกรูปที่ตกหล่นส่งใหม่ได้เลย'
+    ? 'ขึ้นไดรฟ์แล้ว ' + done + ' รูป ไม่สำเร็จ ' + fail + ' รูป' + (why ? ' · ' + why : '')
     : 'ขึ้นไดรฟ์แล้ว ' + done + ' รูป กดปุ่มโฟลเดอร์รูปด้านบนเพื่อเปิดดู';
   if(done) toast('อัปรูปขึ้นไดรฟ์แล้ว ' + done + ' รูป');
 }
