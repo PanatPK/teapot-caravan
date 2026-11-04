@@ -63,8 +63,8 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
   min-height:46px;display:inline-flex;align-items:center;cursor:pointer;transition:.15s}
 .chip.sel{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
 /* ชิปยี่ห้อ ตัวอังกฤษเป็นตัวนำ ไทยตัวเล็กต่อท้าย กดครั้งเดียวจบ ไม่ต้องเปิดดรอปดาวน์ */
-.brands .chip{padding:11px 16px;font-size:15px;line-height:1.25;min-height:46px}
-.brands .chip i{font-style:normal;font-size:13px;opacity:.65;margin-left:5px}
+.brands .chip{padding:11px 15px;font-size:13.5px;line-height:1.25;min-height:46px}
+.brands .chip i{font-style:normal;font-size:14px;opacity:.8;margin-left:5px}
 .brands .chip.sel i{opacity:.8}
 .morebrand{border:1.5px dashed var(--line);background:#fff;color:var(--navy);border-radius:999px;
   padding:11px 18px;font:inherit;font-size:15px;font-weight:600;min-height:46px;cursor:pointer}
@@ -290,6 +290,9 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 .melist .r{font-size:15px}
 .melist .r span{color:var(--muted);flex:0 0 auto}
 .melist .r b{text-align:right;min-width:0;word-break:break-word}
+/* ส่วนผสมในหน้าสูตร บังคับบรรทัดเดียว ชื่อยาวให้ย่อ ตัวเลขกับหน่วยห้ามตก */
+#d-ings .r span{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#d-ings .r b{flex:0 0 auto;white-space:nowrap}
 .rowedit{border:0;background:var(--blue-soft);color:var(--navy);width:24px;height:24px;
   border-radius:7px;cursor:pointer;font-size:13px;line-height:1;padding:0;margin-right:4px}
 .sheet-in.form{text-align:left}
@@ -1160,7 +1163,7 @@ function fillBrands(id, arr){
   const more = document.createElement('button');
   more.type = 'button';
   more.className = 'morebrand';
-  more.textContent = 'ดูยี่ห้ออื่นอีก ' + rest.length + ' ยี่ห้อ';
+  more.textContent = 'ดูยี่ห้ออื่น';
   more.onclick = ()=>{ more.remove(); rest.forEach(v=> box.appendChild(mk(v))); };
   box.appendChild(more);
 }
@@ -1494,7 +1497,7 @@ function loadCalc(id, fresh){
 
 const UNITS        = ['กรัม','มล.'];              /* ส่วนผสมทั่วไป */
 const UNITS_CUSTOM = ['กรัม','มล.','ชิ้น'];        /* รายการที่ลูกค้าเพิ่มเอง */
-const PACK_UNITS   = ['ใบ','ชิ้น','เส้น'];          /* บรรจุภัณฑ์ */
+const PACK_UNITS   = ['ใบ','ชิ้น','หลอด'];          /* บรรจุภัณฑ์ */
 function unitOpts(u, set){
   const base = set && set.length ? set : UNITS;
   const list = base.includes(u) ? base.slice() : [u||base[0], ...base];
