@@ -806,7 +806,8 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 
     <div class="card">
       <h2>สูตรน้ำชง</h2>
-      <p class="sub">กดชื่อสูตรเพื่อเปิดดูและแก้ไข</p>
+      <p class="sub">กดชื่อสูตรเพื่อเปิดดูและแก้ไข สูตรที่ยังไม่ได้ใส่ส่วนผสมและวิธีทำ
+        จะยังไม่ขึ้นในเมนูฝั่งลูกค้า กรอกเสร็จแล้วขึ้นเองทันที</p>
       <div id="set-recipes"></div>
       <button class="addbtn" id="set-add-recipe">+ เพิ่มสูตร</button>
     </div>
@@ -1278,6 +1279,12 @@ async function submitRegister(){
 /* ===================================================================
    2. RECIPE LIST
    =================================================================== */
+/* สูตรที่พร้อมโชว์ = มีส่วนผสมหรือวิธีทำอย่างน้อยอย่างหนึ่ง
+   สูตรเปล่าที่สร้างค้างไว้จะไม่โผล่ในเมนูลูกค้าและในดรอปดาวน์คิดต้นทุน
+   แต่ยังเห็นในหน้าแก้ไขเนื้อหา กรอกเสร็จเมื่อไหร่ขึ้นเองทันที */
+const liveRecipes = () => (CFG.recipes || []).filter(r =>
+  (r.ingredients && r.ingredients.length) || (r.steps && r.steps.length));
+
 function gotoRecipes(){
   const g = $('greet');
   g.innerHTML = (me
@@ -1308,7 +1315,7 @@ function gotoRecipes(){
   buildRecipePicker();
 
   const list = $('recipe-list'); list.innerHTML='';
-  const rs = CFG.recipes || [];
+  const rs = liveRecipes();
   if(!rs.length){
     list.innerHTML = `<div class="offline">ยังไม่พบสูตรในไฟล์ <b>teapot-config.js</b><br>
       ตรวจว่าไฟล์อยู่โฟลเดอร์เดียวกับหน้าเว็บ และชื่อไฟล์ไม่มี .txt ต่อท้าย</div>`;
@@ -1457,7 +1464,7 @@ function openRecipe(id){
 /* เครื่องคิดต้นทุนอันเดียวบนหน้าเมนู สลับสูตรด้วยดรอปดาวน์
    ราคาที่เคยกรอกถูกจำไว้ใน pricebook สลับสูตรแล้วไม่ต้องกรอกใหม่ */
 function buildRecipePicker(){
-  const sel = $('c-recipe'), rs = CFG.recipes || [];
+  const sel = $('c-recipe'), rs = liveRecipes();
   sel.innerHTML = rs.map(r=>`<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
   if(!rs.length) return;
   const keep = cur && rs.some(r=>r.id===cur.id) ? cur.id : rs[0].id;
