@@ -12,12 +12,12 @@ const TEAPOT_SYSTEM = {
      Firebase Console > Project settings > Your apps > Web app > SDK setup
      ถ้ายังไม่ใส่ เว็บจะทำงานได้ปกติแต่เก็บข้อมูลไว้ในเครื่องอย่างเดียว   */
   firebase: {
-      apiKey: "AIzaSyB6T-lQHXiIeafgPBwLqLQa0odllYNh87w",
-  authDomain: "teapot-caravan.firebaseapp.com",
-  projectId: "teapot-caravan",
-  storageBucket: "teapot-caravan.firebasestorage.app",
-  messagingSenderId: "426547707687",
-  appId: "1:426547707687:web:6c6ad1109cbc79ceaa3302"
+    apiKey: '',
+    authDomain: '',
+    projectId: '',
+    storageBucket: '',
+    messagingSenderId: '',
+    appId: ''
   },
 
   /* ---------- ชื่อ collection ใน Firestore ----------
@@ -30,6 +30,13 @@ const TEAPOT_SYSTEM = {
     days:     'teapot_days',      // บันทึกประจำวันของสตาฟ
     trades:   'teapot_trades'     // รายการแลกของ
   },
+
+  /* ---------- ส่งบันทึกประจำวันเข้า Google Sheet ----------
+     เว้นว่าง = ปิดฟีเจอร์ ระบบจะใช้ปุ่มดาวน์โหลด CSV อย่างเดียวเหมือนเดิม
+     วิธีเอา URL มาใส่ อ่านหัวไฟล์ teapot-sheet-sync.gs
+     sheetToken ต้องตรงกับ TOKEN ในไฟล์ .gs เป๊ะ ๆ                        */
+  sheetUrl:   '',
+  sheetToken: 'teapot-2026',
 
   /* ---------- รหัสสำรองเข้าหลังบ้าน ----------
      ใช้เฉพาะตอนยังไม่ได้ต่อ Firebase ถ้าต่อแล้วระบบจะใช้อีเมล+รหัสผ่านแทน */

@@ -432,7 +432,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
     <div class="card">
       <img class="shot" id="d-img" alt="" style="display:none">
       <h2 id="d-name"></h2>
-      <p class="sub" id="d-note"></p>
+      <p class="sub" id="d-rnote"></p>
     </div>
 
     <div class="card">
@@ -525,6 +525,8 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <div class="scroll"><table class="tbl" id="a-table"></table></div>
         <p class="tot" id="a-more"></p>
         <button class="btn" id="btn-csv">ดาวน์โหลด CSV</button>
+        <button class="btn sm" id="btn-sheet" style="display:none">ส่งเข้า Google Sheet ใหม่ทั้งหมด</button>
+        <p class="tot" id="sheet-note" style="display:none"></p>
         <button class="btn sm" id="btn-daily">สรุปวันนี้เป็นรูป</button>
         <button class="btn ghost sm" id="btn-refresh">โหลดข้อมูลใหม่</button>
         <button class="btn ghost sm" id="btn-del-filtered">ลบเฉพาะรายชื่อที่กรองอยู่</button>
@@ -779,7 +781,7 @@ const EDITABLE = ['brand','schedule','venues','statusOptions','shopTypeOptions',
                   'recipes','lineUrl','lineLabel','fbUrl','fbLabel','driveFolders',
                   'brandOptions','entryPoints','tradeIn','tradeOut','premiumItems','kpi'];
 /* ค่าจากไฟล์ระบบทับไฟล์เนื้อหาเสมอ อัปไฟล์เนื้อหาใหม่จึงลบ firebase ทิ้งไม่ได้ */
-const SYS_KEYS = ['firebase','collections','adminPin'];
+const SYS_KEYS = ['firebase','collections','adminPin','sheetUrl','sheetToken'];
 let CFG = Object.assign({}, FILE_CFG);
 SYS_KEYS.forEach(k=>{ if(SYS_CFG[k] !== undefined) CFG[k] = SYS_CFG[k]; });
 const $  = id => document.getElementById(id);
@@ -1323,7 +1325,7 @@ function openRecipe(id){
 
   $('d-title').textContent = viewR.name;
   $('d-name').textContent  = viewR.name + (viewR.cup ? ' · แก้ว ' + viewR.cup : '');
-  $('d-note').textContent  = viewR.note || '';
+  $('d-rnote').textContent = viewR.note || '';
   $('d-ings').innerHTML    = (viewR.ingredients||[]).map(i=>
     `<div class="r"><span>${esc(i.name)}</span><b>${esc(i.qty)} ${esc(i.unit||'')}</b></div>`).join('')
     || '<p class="sub" style="margin:0">ยังไม่ได้ใส่ส่วนผสมในสูตรนี้</p>';
@@ -1696,6 +1698,17 @@ function bars(el, counts, opts){
 }
 
 function renderAdmin(){
+  /* ปุ่มส่งเข้าชีตโผล่เฉพาะตอนตั้งค่า sheetUrl ไว้แล้ว */
+  if(sheetOn()){
+    $('btn-sheet').style.display = 'block';
+    const qn = LS.get('sheetq',[]).length;
+    const note = $('sheet-note');
+    note.style.display = 'block';
+    note.textContent = qn
+      ? 'มี ' + qn + ' วันที่ยังส่งเข้าชีตไม่สำเร็จ จะลองใหม่เมื่อเน็ตกลับมา หรือกดปุ่มด้านบนส่งใหม่ทั้งหมด'
+      : 'บันทึกประจำวันถูกส่งเข้า Google Sheet อัตโนมัติทุกครั้งที่กดบันทึก';
+    flushSheet();
+  }
   const qn = LS.get('queue',[]).length, rj = LS.get('rejected',[]).length;
   $('q-note').textContent = (qn || rj)
     ? `ในเครื่องนี้มี ${qn} รายการรอส่ง และ ${rj} รายการที่ฐานข้อมูลปฏิเสธ (ส่วนใหญ่เป็นข้อมูลทดสอบรูปแบบเก่า)`
@@ -2381,7 +2394,12 @@ async function saveDay(){
   const btn = $('d-save'); btn.disabled = true; btn.textContent = 'กำลังบันทึก…';
   try{
     if(db) await FS.setDoc(FS.doc(db, COL.days, d), rec);
-    toast('บันทึกวันที่ ' + d + ' แล้ว');
+    let msg = 'บันทึกวันที่ ' + d + ' แล้ว';
+    if(sheetOn()){
+      const okSheet = await pushDay(rec);
+      msg += okSheet ? ' และส่งเข้าชีตแล้ว' : ' ชีตส่งไม่ผ่าน เก็บไว้ส่งทีหลัง';
+    }
+    toast(msg);
     await renderTripReport();
   }catch(e){
     toast(e.code === 'permission-denied'
@@ -2389,6 +2407,86 @@ async function saveDay(){
       : 'บันทึกไม่สำเร็จ ' + (e.code||''));
   }
   btn.disabled = false; btn.textContent = 'บันทึกวันนี้';
+}
+
+/* ---------- ส่งบันทึกประจำวันเข้า Google Sheet ----------
+   ยิงไปที่ Apps Script web app ที่ deploy ไว้ ใช้ text/plain เพื่อไม่ให้เบราว์เซอร์
+   ยิง preflight ก่อน ซึ่ง Apps Script ไม่ตอบ
+   ส่งไม่ผ่านเก็บเข้าคิว แล้วลองใหม่ตอนเน็ตกลับมา สตาฟไม่ต้องทำอะไรเพิ่ม */
+const sheetOn = () => !!(CFG.sheetUrl && String(CFG.sheetUrl).trim());
+
+function dayPayload(rec){
+  const f = (CFG.driveFolders || {})[rec.date] || {};
+  return {
+    iso:      rec.date,
+    dateText: thaiDate(rec.date),
+    prov:     rec['d-prov']   || '',
+    amphoe:   rec['d-amphoe'] || '',
+    mName:    rec['d-m-name'] || '',
+    mShops:   num(rec['d-m-shops']),
+    eName:    rec['d-e-name'] || '',
+    eShops:   num(rec['d-e-shops']),
+    coupon:   num(rec['d-coupon']),
+    premium:  num(rec['d-premium']),
+    link:     f.day || '',
+    note:     rec['d-note'] || ''
+  };
+}
+
+async function postSheet(days){
+  const res = await fetch(CFG.sheetUrl, {
+    method:'POST', redirect:'follow',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({ token: CFG.sheetToken || '', days })
+  });
+  const txt = await res.text();
+  let j = {}; try{ j = JSON.parse(txt); }catch(e){}
+  if(!j.ok) throw new Error(j.error || 'ชีตตอบกลับไม่สำเร็จ');
+  return j;
+}
+
+/* ส่งวันเดียว เรียกตอนกดบันทึก */
+async function pushDay(rec){
+  if(!sheetOn()) return null;
+  try{
+    await postSheet([dayPayload(rec)]);
+    const q = LS.get('sheetq',[]).filter(d => d !== rec.date);
+    LS.set('sheetq', q);
+    return true;
+  }catch(e){
+    const q = LS.get('sheetq',[]);
+    if(!q.includes(rec.date)){ q.push(rec.date); LS.set('sheetq', q); }
+    return false;
+  }
+}
+
+/* ส่งวันที่ค้างในคิว เรียกตอนเปิดหลังบ้านและตอนเน็ตกลับมา */
+async function flushSheet(){
+  if(!sheetOn()) return;
+  const q = LS.get('sheetq',[]);
+  if(!q.length) return;
+  const all = await fetchDays();
+  const send = all.filter(d => q.includes(d.date)).map(dayPayload);
+  if(!send.length){ LS.set('sheetq',[]); return; }
+  try{ await postSheet(send); LS.set('sheetq',[]); toast('ส่งข้อมูลที่ค้างเข้าชีตแล้ว'); }
+  catch(e){}
+}
+window.addEventListener('online', flushSheet);
+
+/* ส่งใหม่ทั้งหมด ใช้ตอนเพิ่งตั้งชีตหรืออยากซ่อมให้ตรงกัน */
+async function pushAllDays(){
+  if(!sheetOn()) return toast('ยังไม่ได้ตั้งค่า sheetUrl ในไฟล์ teapot-system.js');
+  const btn = $('btn-sheet'); btn.disabled = true; btn.textContent = 'กำลังส่ง…';
+  try{
+    const all = await fetchDays();
+    if(!all.length) toast('ยังไม่มีบันทึกประจำวันให้ส่ง');
+    else{
+      const r = await postSheet(all.map(dayPayload));
+      LS.set('sheetq',[]);
+      toast('ส่งเข้าชีตแล้ว ' + (r.count || all.length) + ' วัน');
+    }
+  }catch(e){ toast('ส่งเข้าชีตไม่สำเร็จ ' + (e.message||'')); }
+  btn.disabled = false; btn.textContent = 'ส่งเข้า Google Sheet ใหม่ทั้งหมด';
 }
 
 async function fetchDays(){
@@ -2853,7 +2951,8 @@ $('btn-report').onclick = ()=> openReport(todayISO());
 $('rp-back').onclick    = ()=>{ renderAdmin(); show('s-admin'); };
 $('rp-date').onchange   = drawReport;
 $('rp-img').onclick     = ()=> dailyImage($('rp-date').value || todayISO());
-$('btn-csv').onclick = downloadCSV;
+$('btn-csv').onclick   = downloadCSV;
+$('btn-sheet').onclick = pushAllDays;
 $('a-table').onclick = e=>{
   const btn = e.target.closest('[data-row],[data-edit]');
   if(!btn) return;
