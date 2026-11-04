@@ -35,7 +35,7 @@ const TEAPOT_SYSTEM = {
      เว้นว่าง = ปิดฟีเจอร์ ระบบจะใช้ปุ่มดาวน์โหลด CSV อย่างเดียวเหมือนเดิม
      วิธีเอา URL มาใส่ อ่านหัวไฟล์ teapot-sheet-sync.gs
      sheetToken ต้องตรงกับ TOKEN ในไฟล์ .gs เป๊ะ ๆ                        */
-  sheetUrl:   '',
+  sheetUrl:   'https://script.google.com/macros/s/AKfycbxXijV_sXtWzMBgfT7FwsvE1eKOlsEShS_cVRmDFDvOKVFyKffvwl0XSh3oCIsHDA2dtw/exec',
   sheetToken: 'teapot-2026',
 
   /* ---------- รหัสสำรองเข้าหลังบ้าน ----------
