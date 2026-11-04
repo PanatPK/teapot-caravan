@@ -526,6 +526,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <p class="tot" id="a-more"></p>
         <button class="btn" id="btn-csv">ดาวน์โหลด CSV</button>
         <button class="btn sm" id="btn-sheet" style="display:none">ส่งเข้า Google Sheet ใหม่ทั้งหมด</button>
+        <button class="btn ghost sm danger" id="btn-sheet-clear" style="display:none">ล้างแถวใน Google Sheet</button>
         <p class="tot" id="sheet-note" style="display:none"></p>
         <button class="btn sm" id="btn-daily">สรุปวันนี้เป็นรูป</button>
         <button class="btn ghost sm" id="btn-refresh">โหลดข้อมูลใหม่</button>
@@ -887,6 +888,7 @@ const hasVal = v => v !== undefined && v !== null && v !== ''
 
 const FILE_VER = +(FILE_CFG.contentVersion || 0);
 let cfgSource = 'file', cfgSavedAt = '', cfgRemoteVer = 0, cfgHasRemote = false;
+let cfgEdited = [];   /* หัวข้อที่ถูกแก้จากหลังบ้าน ไฟล์ใหม่จะไม่ทับ */
 
 async function loadRemoteConfig(){
   if(!db) return false;
@@ -902,8 +904,14 @@ async function loadRemoteConfig(){
        อัปแล้วขึ้นเลย ไม่ต้องเข้าหลังบ้านมากดกู้ค่า
        แต่ลิงก์โฟลเดอร์ Drive กับลิงก์ LINE เพจ ยังใช้ของเซิร์ฟเวอร์ต่อ ไม่หาย */
     if(FILE_VER > cfgRemoteVer){
+      /* ไฟล์ใหม่กว่า ให้ไฟล์ชนะ ยกเว้นหัวข้อที่หน้างานลงมือแก้เองไว้
+         ถ้าไม่กันไว้ สูตรที่สตาฟแก้หน้างานจะหายทุกครั้งที่อัปไฟล์ */
       cfgSource = 'file';
-      KEEP_REMOTE.forEach(k=>{ if(hasVal(d[k])) CFG[k] = d[k]; });
+      cfgEdited = Array.isArray(d.editedKeys) ? d.editedKeys : [];
+      KEEP_REMOTE.concat(cfgEdited).forEach(k=>{
+        if(EDITABLE.indexOf(k) < 0 && KEEP_REMOTE.indexOf(k) < 0) return;
+        if(hasVal(d[k])) CFG[k] = d[k];
+      });
     }else{
       cfgSource = 'remote';
       EDITABLE.forEach(k=>{ if(d[k] !== undefined) CFG[k] = d[k]; });
@@ -917,8 +925,15 @@ async function loadRemoteConfig(){
 
 async function saveRemoteConfig(obj){
   if(!db) throw new Error('ยังไม่ได้ต่อ Firebase');
+  /* เทียบกับไฟล์ว่าหัวข้อไหนต่างจริง เก็บรายชื่อไว้กันไฟล์รุ่นหน้ามาทับ
+     กดปุ่มดึงเนื้อหาจากไฟล์แล้วบันทึก = รายชื่อนี้ว่าง ไฟล์กลับมาคุมเหมือนเดิม */
+  const same = (a,b)=>{ try{ return JSON.stringify(a) === JSON.stringify(b); }catch(e){ return false; } };
+  const edited = Object.keys(obj).filter(k =>
+    EDITABLE.indexOf(k) >= 0 && KEEP_REMOTE.indexOf(k) < 0 && !same(obj[k], FILE_CFG[k]));
   await FS.setDoc(FS.doc(db, COL.settings, 'config'),
-    Object.assign({}, obj, { contentVersion: FILE_VER, updatedAt: new Date().toISOString() }));
+    Object.assign({}, obj, { contentVersion: FILE_VER, editedKeys: edited,
+                             updatedAt: new Date().toISOString() }));
+  cfgEdited = edited;
   cfgSource = 'remote'; cfgRemoteVer = FILE_VER; cfgSavedAt = new Date().toISOString();
 }
 
@@ -1701,6 +1716,7 @@ function renderAdmin(){
   /* ปุ่มส่งเข้าชีตโผล่เฉพาะตอนตั้งค่า sheetUrl ไว้แล้ว */
   if(sheetOn()){
     $('btn-sheet').style.display = 'block';
+    $('btn-sheet-clear').style.display = 'block';
     const qn = LS.get('sheetq',[]).length;
     const note = $('sheet-note');
     note.style.display = 'block';
@@ -2474,6 +2490,28 @@ async function flushSheet(){
 window.addEventListener('online', flushSheet);
 
 /* ส่งใหม่ทั้งหมด ใช้ตอนเพิ่งตั้งชีตหรืออยากซ่อมให้ตรงกัน */
+/* ล้างแถวในชีต แยกปุ่มไว้ต่างหากจากปุ่มล้างข้อมูล
+   เพราะชีตเป็นของที่ลูกค้าเปิดดูอยู่ ถ้าผูกติดกันแล้วเผลอกด ลูกค้าจะเห็นตารางว่างทันที */
+async function clearSheet(){
+  if(!sheetOn()) return toast('ยังไม่ได้ตั้งค่า sheetUrl');
+  if(prompt('ล้างแถวข้อมูลทั้งหมดใน Google Sheet\nหัวตารางยังอยู่ ข้อมูลในแอปไม่ถูกแตะ'
+    + '\n\nพิมพ์คำว่า  ลบ  เพื่อยืนยัน') !== 'ลบ') return;
+  const btn = $('btn-sheet-clear'); btn.disabled = true; btn.textContent = 'กำลังล้าง…';
+  try{
+    const res = await fetch(CFG.sheetUrl, {
+      method:'POST', redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ token: CFG.sheetToken || '', action:'clear' })
+    });
+    const j = JSON.parse(await res.text());
+    if(!j.ok) throw new Error(j.error || 'ชีตตอบกลับไม่สำเร็จ');
+    LS.set('sheetq',[]);
+    toast('ล้างแถวในชีตแล้ว');
+    renderAdmin();
+  }catch(e){ toast('ล้างชีตไม่สำเร็จ ' + (e.message||'')); }
+  btn.disabled = false; btn.textContent = 'ล้างแถวใน Google Sheet';
+}
+
 async function pushAllDays(){
   if(!sheetOn()) return toast('ยังไม่ได้ตั้งค่า sheetUrl ในไฟล์ teapot-system.js');
   const btn = $('btn-sheet'); btn.disabled = true; btn.textContent = 'กำลังส่ง…';
@@ -2952,7 +2990,8 @@ $('rp-back').onclick    = ()=>{ renderAdmin(); show('s-admin'); };
 $('rp-date').onchange   = drawReport;
 $('rp-img').onclick     = ()=> dailyImage($('rp-date').value || todayISO());
 $('btn-csv').onclick   = downloadCSV;
-$('btn-sheet').onclick = pushAllDays;
+$('btn-sheet').onclick       = pushAllDays;
+$('btn-sheet-clear').onclick = clearSheet;
 $('a-table').onclick = e=>{
   const btn = e.target.closest('[data-row],[data-edit]');
   if(!btn) return;

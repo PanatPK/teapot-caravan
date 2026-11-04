@@ -2,7 +2,7 @@
    เป้าหมายเดียว เปิดเว็บได้ตอนเน็ตหลุดที่ตลาดนัด
    ใช้ network-first ทุกไฟล์ ได้ของใหม่เสมอเมื่อเน็ตมา และมีของเก่าสำรองเมื่อเน็ตหาย
    เปลี่ยน CACHE เป็นเลขใหม่ทุกครั้งที่อัปไฟล์ ตัวเก่าจะถูกลบให้เอง */
-const CACHE = 'teapot-v7';
+const CACHE = 'teapot-v8';
 const CORE  = ['./', './index.html', './teapot-system.js', './teapot-config.js',
                './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
