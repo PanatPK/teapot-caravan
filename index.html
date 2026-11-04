@@ -200,6 +200,9 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
   cursor:pointer;font-size:14px;line-height:1;padding:0}
 .danger{color:var(--red);border-color:var(--red)}
 .tag{display:inline-block;background:var(--blue-soft);color:var(--navy);border-radius:6px;padding:2px 7px;font-size:11px;white-space:nowrap}
+.delday{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:7px;
+  width:26px;height:26px;line-height:1;font-size:13px;cursor:pointer;margin-left:6px}
+.delday:hover{border-color:var(--red);color:var(--red)}
 .filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .filters select,.filters input{padding:9px 11px;font-size:14px}
 .bars{margin-top:6px}
@@ -690,7 +693,8 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 
     <div class="card">
       <h2>รายงานทั้งทริป</h2>
-      <p class="sub">สรุปทุกวันที่บันทึกไว้ เลื่อนตารางไปทางขวาเพื่อดูคอลัมน์ที่เหลือ</p>
+      <p class="sub">สรุปทุกวันที่บันทึกไว้ กดที่แถวเพื่อดูรายชื่อของวันนั้น
+        เลื่อนตารางไปทางขวาสุดจะเจอปุ่ม ✕ ไว้ลบบันทึกของวันนั้นทิ้ง</p>
       <div class="stats" style="margin-top:0">
         <div class="stat"><small>ร้านค้ารวม</small><b id="r-shops">0</b></div>
         <div class="stat"><small>วันที่บันทึกแล้ว</small><b id="r-days">0</b></div>
@@ -2670,6 +2674,32 @@ async function fetchDays(){
 }
 
 let dayCache = {};
+/* ลบบันทึกของวันเดียว ลบในฐานข้อมูล ในเครื่อง และลบแถวในชีตให้ด้วย
+   ไม่แตะรายชื่อผู้ลงทะเบียนและรูปในไดรฟ์ของวันนั้น */
+async function deleteDay(date){
+  if(!date) return;
+  if(!confirm('ลบบันทึกประจำวันของ ' + thaiDate(date) + ' ออกถาวร\n\n'
+    + 'รายชื่อผู้ลงทะเบียนและรูปในไดรฟ์ของวันนี้ยังอยู่ครบ\n'
+    + 'แถวในชีตจะถูกลบให้ด้วย')) return;
+  toast('กำลังลบ…');
+  try{
+    if(db) await FS.deleteDoc(FS.doc(db, COL.days, date));
+    try{ localStorage.removeItem('teapot_day_' + date); }catch(e){}
+    LS.set('sheetq', LS.get('sheetq',[]).filter(d => d !== date));
+    if(sheetOn()){
+      try{ await postGS({ action:'delDay', iso:date }); }
+      catch(e){ toast('ลบในแอปแล้ว แต่ลบแถวในชีตไม่สำเร็จ กดปุ่มส่งเข้าชีตใหม่ทั้งหมดเพื่อซ่อม'); }
+    }
+    await renderTripReport();
+    if($('d-date').value === date) openDay(date);
+    toast('ลบบันทึกของ ' + thaiDate(date) + ' แล้ว');
+  }catch(e){
+    toast(e.code === 'permission-denied'
+      ? 'รูลยังไม่อนุญาตให้ลบ ต้องแก้ allow delete เป็น isAdmin()'
+      : 'ลบไม่สำเร็จ ' + (e.code || ''));
+  }
+}
+
 async function renderTripReport(){
   const days = await fetchDays();
   dayCache = {}; days.forEach(v=>{ if(v.date) dayCache[v.date] = v; });
@@ -2695,7 +2725,7 @@ async function renderTripReport(){
         <td><b>${(v['d-m-shops']||0)+(v['d-e-shops']||0)}</b></td>
         <td>${v['d-coupon']||0}</td>
         <td>${v['d-premium']||0}</td>
-        <td>${n ? '<span class="tag">ดู '+n+' ราย</span>' : ''}</td>
+        <td style="white-space:nowrap">${n ? '<span class="tag">ดู '+n+' ราย</span>' : ''}<button class="delday" data-del="${esc(v.date)}" title="ลบบันทึกของวันนี้">✕</button></td>
       </tr>`;
     }).join('')
       + `<tr><td colspan="3"><b>รวมทั้งหมด</b></td><td><b>${sum('d-m-shops')}</b></td>
@@ -2707,6 +2737,8 @@ async function renderTripReport(){
   /* กดที่แถวเพื่อดูว่ารอบไหนมีใครบ้าง แลกอะไร ได้พรีเมียมอะไร */
   $('d-report').onclick = e=>{
     if(e.target.closest('.copybtn')) return;
+    const del = e.target.closest('.delday');
+    if(del){ deleteDay(del.dataset.del); return; }
     const tr = e.target.closest('.drow');
     if(!tr) return;
     const nx = tr.nextElementSibling;
