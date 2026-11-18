@@ -778,8 +778,11 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
       <input id="set-fb" type="url" placeholder="https://www.facebook.com/teapotthailand">
       <label>ข้อความบนปุ่ม Facebook</label>
       <input id="set-fblb" type="text" placeholder="กดถูกใจเพจ TEAPOT">
-      <label>ลิงก์โฟลเดอร์ Drive <span class="opt">(วางทั้งก้อนจาก teapot-folders.json)</span></label>
-      <textarea id="set-folders" rows="4" placeholder='{ "2026-11-21": { "day": "...", "m_photo": "..." } }'></textarea>
+      <label>ลิงก์โฟลเดอร์ Drive</label>
+      <p class="tot" style="margin:0 0 8px">ปกติไม่ต้องแตะช่องนี้ ระบบถามลิงก์จาก Drive ให้เอง
+        ตอนเปิดหน้าบันทึกประจำวัน กดปุ่มด้านล่างถ้าอยากสร้างล่วงหน้าให้ครบทุกวัน</p>
+      <button class="btn ghost sm" id="set-mkfolders">สร้างโฟลเดอร์ Drive ตามตาราง</button>
+      <textarea id="set-folders" rows="3" placeholder='ระบบเติมให้เอง'></textarea>
     </div>
 
     <div class="card">
@@ -2484,6 +2487,28 @@ function dayTotal(){
   $('d-total').textContent = num($('d-m-shops').value) + num($('d-e-shops').value);
 }
 
+/* ลิงก์โฟลเดอร์ของวันนั้น เอาจากแคชที่เพิ่งถามมาก่อน ไม่มีค่อยใช้ของที่ตั้งไว้ในหลังบ้าน
+   เน็ตหลุดก็ยังมีลิงก์ให้กด เพราะแคชอยู่ในเครื่อง */
+const foldersOf = iso => (LS.get('dfolders',{})[iso]) || (CFG.driveFolders||{})[iso] || {};
+
+/* ชื่อจุดของวันนั้นจากตารางเดินทาง ใช้ตั้งชื่อโฟลเดอร์ให้ตรงกับตารางเสมอ */
+function dayLabel(iso){
+  return (CFG.schedule||[]).filter(s=>s.date===iso).map(s=>s.venue).filter(Boolean).join(' + ');
+}
+
+/* ถามโฟลเดอร์ของวันนั้นจาก Apps Script ยังไม่มีก็สร้างให้ ชื่อจุดเปลี่ยนก็เปลี่ยนชื่อให้
+   ทำเบื้องหลัง ไม่หน่วงหน้าจอ ได้มาแล้วค่อยเติมลิงก์ลงปุ่ม */
+async function ensureFolders(iso){
+  if(!sheetOn() || !iso) return;
+  try{
+    const r = await postGS({ action:'folders', iso, label: dayLabel(iso) });
+    const f = (r.folders || {})[iso];
+    if(!f) return;
+    const c = LS.get('dfolders',{}); c[iso] = f; LS.set('dfolders', c);
+    if($('d-date').value === iso) fillFolderLinks(iso);
+  }catch(e){ /* เน็ตไม่มา ใช้ของที่แคชไว้ไปก่อน */ }
+}
+
 function fillFolderLinks(date){
   /* กล่องอัปรูปใช้ Apps Script ตัวเดียวกับที่ส่งชีต ยังไม่ตั้งก็ไม่ต้องโชว์ */
   ['m','e'].forEach(r=>{
@@ -2491,7 +2516,7 @@ function fillFolderLinks(date){
     const pg = $('d-'+r+'-prog');
     pg.style.display = 'none'; pg.textContent = '';
   });
-  const f = (CFG.driveFolders || {})[date] || {};
+  const f = foldersOf(date);
   [['d-m-photo', f.m_photo], ['d-m-video', f.m_video],
    ['d-e-photo', f.e_photo], ['d-e-video', f.e_video]].forEach(([id,url])=>{
     const a = $(id);
@@ -2525,6 +2550,7 @@ async function openDay(date){
   const inDay = leads.filter(l => dayOf(l) === d).length;
   $('d-hint').textContent = 'ลงทะเบียนผ่านเว็บวันนี้ ' + inDay + ' คน (ตัวเลขร้านค้าให้นับจากหน้างานจริง)';
   fillFolderLinks(d);
+  ensureFolders(d);          // ไม่ await ปล่อยให้วิ่งเบื้องหลัง หน้าจอขึ้นทันที
   dayTotal();
   show('s-day');
   renderTripReport();
@@ -2564,7 +2590,7 @@ async function saveDay(){
 const sheetOn = () => !!(CFG.sheetUrl && String(CFG.sheetUrl).trim());
 
 function dayPayload(rec){
-  const f = (CFG.driveFolders || {})[rec.date] || {};
+  const f = foldersOf(rec.date);
   return {
     iso:      rec.date,
     dateText: thaiDate(rec.date),
@@ -2945,6 +2971,33 @@ function srcLine(){
   return `ยังไม่เคยบันทึกบนเซิร์ฟเวอร์ ใช้เนื้อหาจากไฟล์ teapot-config.js เวอร์ชัน ${FILE_VER}`;
 }
 
+/* สร้างหรืออัปเดตโฟลเดอร์ให้ครบทุกวันในตารางรวดเดียว
+   ใช้ตารางที่กำลังแก้อยู่ในหน้านี้ ไม่ใช่ของเก่าที่บันทึกไว้ */
+async function buildAllFolders(){
+  if(!sheetOn()) return toast('ยังไม่ได้ตั้งค่า sheetUrl ในไฟล์ teapot-system.js');
+  const sched = (ed.schedule || []).filter(s=>s.date);
+  const dates = [...new Set(sched.map(s=>s.date))].sort();
+  if(!dates.length) return toast('ยังไม่มีตารางจุด');
+  if(!confirm('สร้างหรืออัปเดตโฟลเดอร์ใน Drive ให้ครบ ' + dates.length + ' วัน\n\n'
+    + 'วันไหนมีอยู่แล้วแต่ชื่อจุดเปลี่ยน จะเปลี่ยนชื่อโฟลเดอร์เดิมให้\n'
+    + 'รูปที่อัปไว้ไม่หาย ลิงก์เดิมใช้ได้เหมือนเดิม')) return;
+
+  const btn = $('set-mkfolders');
+  btn.disabled = true; btn.textContent = 'กำลังสร้าง อาจใช้เวลาสักครู่…';
+  try{
+    const days = dates.map(iso=>({
+      iso, label: sched.filter(s=>s.date===iso).map(s=>s.venue).filter(Boolean).join(' + ')
+    }));
+    const r = await postGS({ action:'folders', days });
+    const got = r.folders || {};
+    ed.driveFolders = Object.assign({}, ed.driveFolders, got);
+    $('set-folders').value = Object.keys(ed.driveFolders).length ? JSON.stringify(ed.driveFolders) : '';
+    LS.set('dfolders', Object.assign(LS.get('dfolders',{}), got));
+    toast('เสร็จแล้ว ' + Object.keys(got).length + ' วัน อย่าลืมกดบันทึกเพื่อเก็บลิงก์ไว้');
+  }catch(e){ toast('สร้างโฟลเดอร์ไม่สำเร็จ ' + (e.message || '')); }
+  btn.disabled = false; btn.textContent = 'สร้างโฟลเดอร์ Drive ตามตาราง';
+}
+
 function openSettings(fromFile){
   /* กู้ค่าจากไฟล์ = เอาเนื้อหาจากไฟล์ แต่ลิงก์โฟลเดอร์กับลิงก์ LINE เพจ
      ที่ทีมงานกรอกไว้ยังอยู่ ไม่ต้องมานั่งวางใหม่ทุกครั้ง                   */
@@ -3137,6 +3190,7 @@ $('d-csv').onclick     = dayReportCSV;
 $('d-refresh').onclick = renderTripReport;
 $('btn-settings').onclick = ()=> openSettings(false);
 $('set-back').onclick     = ()=> show('s-admin');
+$('set-mkfolders').onclick = buildAllFolders;
 $('set-add-sched').onclick = ()=>{ ed.schedule.push({date:'',venue:''}); drawSched(); };
 $('set-add-pack').onclick  = ()=>{ ed.packaging.push({name:'',qty:1,unit:'ใบ',packPrice:0,packSize:1}); drawPack(); };
 $('set-add-recipe').onclick = ()=>{
