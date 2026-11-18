@@ -510,8 +510,11 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
       <h2>เข้าสู่ระบบทีมงาน</h2>
       <p class="sub" id="gate-sub">ใช้บัญชีที่สร้างไว้ใน Firebase</p>
       <div id="email-field">
-        <label>อีเมล</label>
-        <input id="f-email" type="email" autocomplete="username" placeholder="example@gmail.com">
+        <label>ชื่อผู้ใช้</label>
+        <input id="f-email" type="text" inputmode="email" autocapitalize="off" autocorrect="off"
+               spellcheck="false" autocomplete="username" placeholder="เช่น toon">
+        <p class="tot" style="margin-top:6px">พิมพ์แค่ชื่อสั้น ๆ พอ ระบบเติมส่วนที่เหลือให้เอง
+          ใครมีอีเมลเต็มอยู่แล้วก็พิมพ์ทั้งอีเมลได้เหมือนเดิม</p>
       </div>
       <label>รหัสผ่าน</label>
       <input id="f-pass" type="password" autocomplete="current-password">
@@ -3247,6 +3250,15 @@ function openAdmin(){
   loadAdmin();
 }
 
+/* Firebase บังคับว่าบัญชีต้องเป็นรูปแบบอีเมล แต่ไม่ได้ส่งเมลไปหาจริง
+   เลยให้สตาฟพิมพ์แค่ชื่อสั้น ๆ แล้วเติมท้ายให้เอง ไม่ต้องพิมพ์ยาว ๆ หน้างาน
+   ใครพิมพ์อีเมลเต็มมาเองก็ใช้ได้ บัญชีเก่าที่เป็นอีเมลอื่นจึงยังเข้าได้เหมือนเดิม */
+const TEAM_DOMAIN = 'teapot.team';
+const loginId = v => {
+  const t = String(v || '').trim().toLowerCase();
+  return (!t || t.indexOf('@') >= 0) ? t : (t + '@' + TEAM_DOMAIN);
+};
+
 $('btn-pin').onclick = async ()=>{
   const err = $('pin-err');
   if(!auth){                         // ยังไม่ได้ต่อ Firebase (ทดสอบในเครื่อง) ใช้ PIN สำรอง
@@ -3256,11 +3268,13 @@ $('btn-pin').onclick = async ()=>{
   }
   const btn = $('btn-pin'); btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ…';
   try{
-    await AU.signInWithEmailAndPassword(auth, $('f-email').value.trim(), $('f-pass').value);
+    await AU.signInWithEmailAndPassword(auth, loginId($('f-email').value), $('f-pass').value);
     openAdmin();
   }catch(e){
-    const m = {'auth/invalid-credential':'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
-               'auth/invalid-email':'รูปแบบอีเมลไม่ถูกต้อง',
+    const m = {'auth/invalid-credential':'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง',
+               'auth/user-not-found':'ไม่พบชื่อผู้ใช้นี้',
+               'auth/wrong-password':'รหัสผ่านไม่ถูกต้อง',
+               'auth/invalid-email':'ชื่อผู้ใช้มีอักขระที่ใช้ไม่ได้ ใช้ตัวอักษรอังกฤษกับตัวเลขพอ',
                'auth/too-many-requests':'ลองผิดหลายครั้งเกินไป รอสักครู่แล้วลองใหม่',
                'auth/network-request-failed':'ต่อเน็ตไม่ได้'}[e.code];
     err.textContent = m || ('เข้าสู่ระบบไม่สำเร็จ ' + (e.code||''));
