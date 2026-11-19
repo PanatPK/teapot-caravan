@@ -577,6 +577,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <div class="filters">
           <select id="a-f-venue"><option value="">ทุกจุด</option></select>
           <select id="a-f-status"><option value="">ทุกสถานะ</option></select>
+          <select id="a-f-entry"><option value="">ทุกกลุ่ม</option></select>
           <input id="a-f-from" type="date">
           <input id="a-f-to" type="date">
         </div>
@@ -668,6 +669,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <div class="f"><label style="margin-top:0">อำเภอ</label><input id="d-amphoe" type="text"></div>
       </div>
       <p class="tot" id="d-hint"></p>
+      <p class="offline" id="d-warn" style="display:none;margin-top:10px"></p>
     </div>
 
     <div class="card">
@@ -711,7 +713,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
     <div class="card">
       <h2>ของที่แจก</h2>
       <div class="row">
-        <div class="f"><label style="margin-top:0">คูปอง (ใบ)</label>
+        <div class="f" id="coupon-box"><label style="margin-top:0">คูปอง (ใบ)</label>
           <input id="d-coupon" type="number" inputmode="numeric" min="0" value="0"></div>
         <div class="f"><label style="margin-top:0">พรีเมียม (ชิ้น)</label>
           <input id="d-premium" type="number" inputmode="numeric" min="0" value="0"></div>
@@ -723,8 +725,10 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
           <input id="d-cup-small" type="number" inputmode="numeric" min="0" value="0"></div>
       </div>
 
-      <label>ร้านค้าที่ระบุในคูปอง</label>
-      <textarea id="d-coupon-note" rows="3" placeholder="- ร้านบุญดานันท์ (กานดา บรรจุภัณฑ์)&#10;จำนวน 10 ใบ"></textarea>
+      <div id="coupon-note-box">
+        <label>ร้านค้าที่ระบุในคูปอง</label>
+        <textarea id="d-coupon-note" rows="3" placeholder="- ร้านบุญดานันท์ (กานดา บรรจุภัณฑ์)&#10;จำนวน 10 ใบ"></textarea>
+      </div>
 
       <label>รายละเอียดพรีเมียมที่แจก</label>
       <textarea id="d-premium-note" rows="5" placeholder="พ่อค้าแม่ค้า (ร่วมกิจกรรม)&#10;ผ้ากันเปื้อน 5 ผืน&#10;นมข้นจืด 6 กล่อง&#10;&#10;ช่วงเล่นเกมตอบคำถาม&#10;แก้วเล็ก 5 ใบ"></textarea>
@@ -1794,14 +1798,21 @@ function fillFilters(){
   $('a-f-venue').innerHTML = '<option value="">ทุกจุด</option>' + vs.map(v=>`<option>${esc(v)}</option>`).join('');
   const ss = [...new Set(leads.map(l=>l.status).filter(Boolean))];
   $('a-f-status').innerHTML = '<option value="">ทุกสถานะ</option>' + ss.map(v=>`<option>${esc(v)}</option>`).join('');
+
+  /* กรองตามกลุ่ม Entry Point ใช้คีย์เป็น value ชื่อที่โชว์เอาจากหน้าตั้งค่า
+     เรียงตามลำดับในไฟล์ ไม่ใช่ตามที่เจอในข้อมูล จะได้อยู่ที่เดิมทุกวัน */
+  const EP = CFG.entryPoints || {};
+  $('a-f-entry').innerHTML = '<option value="">ทุกกลุ่ม</option>'
+    + Object.keys(EP).map(k=>`<option value="${esc(k)}">${esc(EP[k].name || k)}</option>`).join('');
 }
 
 function filtered(){
-  const v = $('a-f-venue').value, s = $('a-f-status').value;
+  const v = $('a-f-venue').value, s = $('a-f-status').value, g = $('a-f-entry').value;
   const from = $('a-f-from').value, to = $('a-f-to').value;
   return leads.filter(l=>{
     if(v && l.venue !== v) return false;
     if(s && l.status !== s) return false;
+    if(g && l.entry !== g) return false;
     const d = dayOf(l);
     if(from && d < from) return false;
     if(to && d > to) return false;
@@ -2099,7 +2110,7 @@ async function drawReport(){
     + meter('Non-user เปลี่ยนครบ 2 ตัว', tBy('nonuser'),   kpiOf('nonuser')   * stops)
     + meter('Switcher A เปลี่ยนข้นหวาน', tBy('switcherA'), kpiOf('switcherA') * stops)
     + meter('Switcher B เปลี่ยนข้นจืด',  tBy('switcherB'), kpiOf('switcherB') * stops)
-    + meter('คูปองที่แจก',        num(rec['d-coupon']),   kpiOf('coupon')   * stops, 'จากบันทึกประจำวัน')
+    + (couponOn() ? meter('คูปองที่แจก', num(rec['d-coupon']), kpiOf('coupon') * stops, 'จากบันทึกประจำวัน') : '')
     + meter('แจกชิม แก้วใหญ่',    num(rec['d-cup-big']),  kpiOf('cupBig')   * stops, 'จากบันทึกประจำวัน')
     + meter('แจกชิม แก้วเล็ก',    num(rec['d-cup-small']), kpiOf('cupSmall') * stops, 'จากบันทึกประจำวัน');
 
@@ -2511,7 +2522,15 @@ async function ensureFolders(iso){
   }catch(e){ /* เน็ตไม่มา ใช้ของที่แคชไว้ไปก่อน */ }
 }
 
+/* รอบไหนไม่แจกคูปอง ตั้ง useCoupon: false ในไฟล์เนื้อหา ช่องคูปองจะหายไปจากหน้ากรอก
+   และแถบเป้าคูปองจะไม่ขึ้นในรายงาน คอลัมน์ในชีตยังอยู่เหมือนเดิมเพื่อไม่ให้รูปแบบรายงานเปลี่ยน
+   ปีหน้ากลับมาแจกก็แค่เปลี่ยนเป็น true */
+const couponOn = () => CFG.useCoupon !== false;
+
 function fillFolderLinks(date){
+  ['coupon-box','coupon-note-box'].forEach(id=>{
+    const el = $(id); if(el) el.style.display = couponOn() ? '' : 'none';
+  });
   /* กล่องอัปรูปใช้ Apps Script ตัวเดียวกับที่ส่งชีต ยังไม่ตั้งก็ไม่ต้องโชว์ */
   ['m','e'].forEach(r=>{
     $('d-'+r+'-upbox').style.display = sheetOn() ? 'block' : 'none';
@@ -2549,8 +2568,19 @@ async function openDay(date){
     if(sched.length > 1){ $('d-m-name').value = sched[0].venue; $('d-e-name').value = sched[1].venue; }
     else $('d-e-name').value = sched[0].venue;
   }
-  const inDay = leads.filter(l => dayOf(l) === d).length;
-  $('d-hint').textContent = 'ลงทะเบียนผ่านเว็บวันนี้ ' + inDay + ' คน (ตัวเลขร้านค้าให้นับจากหน้างานจริง)';
+  const inDay = dayLeads(d).length, trDay = dayTrades(d).length;
+  $('d-hint').textContent = 'ลงทะเบียนผ่านเว็บวันนี้ ' + inDay + ' คน · บันทึกแลกของแล้ว '
+    + trDay + ' ราย (ตัวเลขร้านค้าให้นับจากหน้างานจริง)';
+
+  /* ตัวเลข KPI นับจากโต๊ะแลกของอย่างเดียว ถ้าคืนไหนคิวยาวแล้วลืมกดบันทึก
+     ตัวเลข Switcher จะขึ้นศูนย์ทั้งที่งานเดินจริง เตือนตั้งแต่คืนนั้นจะยังแก้ทัน */
+  const warn = $('d-warn');
+  if(inDay >= 5 && trDay * 3 < inDay){
+    warn.style.display = 'block';
+    warn.textContent = 'วันนี้มีคนลงทะเบียน ' + inDay + ' คน แต่บันทึกการแลกของไว้แค่ ' + trDay
+      + ' ราย ตัวเลข Switcher ในรายงานจะนับจากโต๊ะแลกของเท่านั้น '
+      + 'ถ้ามีคนแลกมากกว่านี้ ให้ไปเพิ่มที่หน้าโต๊ะแลกของก่อนปิดวัน';
+  }else warn.style.display = 'none';
   fillFolderLinks(d);
   ensureFolders(d);          // ไม่ await ปล่อยให้วิ่งเบื้องหลัง หน้าจอขึ้นทันที
   dayTotal();
@@ -2605,9 +2635,24 @@ function dayPayload(rec){
     coupon:   num(rec['d-coupon']),
     premium:  num(rec['d-premium']),
     link:     f.day || '',
-    note:     rec['d-note'] || ''
+    note:     rec['d-note'] || '',
+
+    /* ตัวเลขชุด KPI คำนวณจากข้อมูลที่มีอยู่แล้ว สตาฟไม่ต้องกรอกเพิ่ม
+       กลุ่มทั้งสี่นับจากคนที่ "แลกของจริง" ให้ตรงกับนิยาม KPI ในแผนงาน
+       ไม่ใช่นับคนที่แค่กรอกฟอร์ม บวกสี่กลุ่มแล้วต้องเท่ากับ แลกของจริง */
+    regs:      dayLeads(rec.date).length,
+    trades:    dayTrades(rec.date).length,
+    nonuser:   dayTrades(rec.date).filter(t=>t.entry==='nonuser').length,
+    switcherA: dayTrades(rec.date).filter(t=>t.entry==='switcherA').length,
+    switcherB: dayTrades(rec.date).filter(t=>t.entry==='switcherB').length,
+    loyal:     dayTrades(rec.date).filter(t=>t.entry==='loyal').length,
+    cupBig:    num(rec['d-cup-big']),
+    cupSmall:  num(rec['d-cup-small'])
   };
 }
+
+const dayLeads  = iso => leads.filter(l => dayOf(l) === iso);
+const dayTrades = iso => trades.filter(t => dayOf(t) === iso);
 
 /* ยิงเข้า Apps Script ตัวเดียวกับที่ส่งชีต ใช้ text/plain กัน CORS preflight */
 async function postGS(payload){
@@ -3311,7 +3356,7 @@ $('btn-del-filtered').onclick = ()=>{
   const rows = filtered();
   if(!rows.length) return toast('ไม่มีรายการให้ลบ');
   /* ไม่ได้ตั้งตัวกรอง = กดทีเดียวลบทั้งทริป ให้พิมพ์ยืนยันเหมือนปุ่มล้างทั้งระบบ */
-  const noFilter = !['a-f-venue','a-f-status','a-f-from','a-f-to'].some(id => $(id).value);
+  const noFilter = !['a-f-venue','a-f-status','a-f-entry','a-f-from','a-f-to'].some(id => $(id).value);
   if(noFilter && rows.length === leads.length){
     if(prompt('ยังไม่ได้ตั้งตัวกรอง กดนี่คือลบรายชื่อทั้งหมด ' + rows.length
       + ' รายการ\nพิมพ์คำว่า  ลบ  เพื่อยืนยัน') !== 'ลบ') return;
@@ -3329,7 +3374,7 @@ $('btn-clearq').onclick = ()=>{
   const b = $('offl'); if(b) b.remove();
   toast('ล้างรายการค้างแล้ว'); renderAdmin();
 };
-['a-f-venue','a-f-status','a-f-from','a-f-to'].forEach(id=> $(id).onchange = renderAdmin);
+['a-f-venue','a-f-status','a-f-entry','a-f-from','a-f-to'].forEach(id=> $(id).onchange = renderAdmin);
 
 initFirebase().then(async ok=>{
   if(ok){ flushQueue(); await loadRemoteConfig(); }
