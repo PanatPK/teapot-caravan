@@ -86,6 +86,16 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
   padding:15px;font:inherit;font-size:17px;font-weight:600;cursor:pointer;margin-top:18px;transition:.15s}
 .btn:active{transform:scale(.99)}
 a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
+/* จุดสีบอกว่าช่องไหนต้องกรอกเอง ช่องไหนระบบใส่ให้แล้ว สตาฟใหม่จะได้ไม่ต้องถาม */
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;
+  vertical-align:1px;flex:0 0 auto}
+.dot.need{background:#E8720C}
+.dot.auto{background:#3A46C8}
+.dot.opt{background:#AFB5C9}
+.guide{background:#F4F6FC;border:1px solid var(--line);border-radius:12px;
+  padding:12px 14px;margin-bottom:16px;font-size:14px;line-height:1.75;color:var(--muted)}
+.guide b{color:var(--ink);font-weight:600}
+.guide .gl{display:block}
 .btn:disabled{opacity:.45}
 .btn.ghost{background:#fff;color:var(--navy);border:1.5px solid var(--navy)}
 .btn.sm{padding:10px;font-size:15px;margin-top:10px}
@@ -660,14 +670,19 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
 
     <div class="card" id="tr-form" style="display:none">
       <h2 id="tr-who"></h2>
-      <p class="sub" id="tr-offer"></p>
-      <label>นำมาแลก</label>
+      <p class="sub"><span class="dot auto"></span><span id="tr-offer"></span></p>
+      <div class="guide" style="margin-bottom:14px">
+        <span class="gl"><span class="dot need"></span><b>ส้ม</b> ต้องเลือกทุกคน</span>
+        <span class="gl"><span class="dot opt"></span><b>เทา</b> มีก็ใส่ ไม่มีก็ข้ามได้</span>
+        <span class="gl"><span class="dot auto"></span><b>น้ำเงิน</b> ระบบรู้อยู่แล้วจากตอนลงทะเบียน</span>
+      </div>
+      <label><span class="dot need"></span>นำมาแลก</label>
       <select id="tr-brought"></select>
-      <label>ยี่ห้อที่นำมา</label>
+      <label><span class="dot opt"></span>ยี่ห้อที่นำมา</label>
       <input id="tr-brand" type="text" placeholder="เช่น Falcon">
-      <label>ของที่ให้ไป</label>
+      <label><span class="dot need"></span>ของที่ให้ไป</label>
       <select id="tr-given"></select>
-      <label>ของพรีเมียม</label>
+      <label><span class="dot opt"></span>ของพรีเมียม</label>
       <select id="tr-premium"></select>
       <button class="btn" id="tr-save">บันทึกการแลก</button>
       <button class="btn ghost sm" id="tr-cancel">ยกเลิก</button>
@@ -679,12 +694,18 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
 <section id="s-day" class="screen">
   <div class="topbar"><button id="day-back">‹ กลับ</button><div class="t">บันทึกประจำวัน</div></div>
   <div class="wrap">
+    <div class="guide">
+      <span class="gl"><span class="dot need"></span><b>ส้ม</b> ต้องกรอกเองทุกวัน</span>
+      <span class="gl"><span class="dot opt"></span><b>เทา</b> มีก็กรอก ไม่มีก็เว้นว่างได้</span>
+      <span class="gl"><span class="dot auto"></span><b>น้ำเงิน</b> ระบบใส่ให้แล้ว ปกติไม่ต้องแก้</span>
+    </div>
+
     <div class="card">
-      <label>วันที่</label>
+      <label><span class="dot auto"></span>วันที่</label>
       <input id="d-date" type="date">
       <div class="row" style="margin-top:12px">
-        <div class="f"><label style="margin-top:0">จังหวัด</label><input id="d-prov" type="text"></div>
-        <div class="f"><label style="margin-top:0">อำเภอ</label><input id="d-amphoe" type="text"></div>
+        <div class="f"><label style="margin-top:0"><span class="dot need"></span>จังหวัด</label><input id="d-prov" type="text"></div>
+        <div class="f"><label style="margin-top:0"><span class="dot need"></span>อำเภอ</label><input id="d-amphoe" type="text"></div>
       </div>
       <p class="tot" id="d-hint"></p>
       <p class="offline" id="d-warn" style="display:none;margin-top:10px"></p>
@@ -694,11 +715,12 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
 
     <div class="card">
       <h2>รอบเช้า 08:00 – 11:00</h2>
-      <label>ชื่อตลาด <span class="opt">(เว้นว่าง = ไม่มีรอบเช้า)</span></label>
+      <label><span class="dot auto"></span>ชื่อตลาด <span class="opt">(ระบบเติมจากตารางให้ แก้ได้ถ้าย้ายจุด เว้นว่าง = ไม่มีรอบเช้า)</span></label>
       <input id="d-m-name" type="text" placeholder="เช่น ตลาดเช้าทุ่งสง">
-      <label>ร้านค้าที่ร่วมกิจกรรม</label>
+      <label><span class="dot need"></span>ร้านค้าที่ร่วมกิจกรรม</label>
       <input id="d-m-shops" type="number" inputmode="numeric" min="0" value="0">
-      <div class="row" style="margin-top:12px">
+      <p class="foot" style="margin:16px 0 6px;text-align:left"><span class="dot auto"></span>โฟลเดอร์ไดรฟ์ของรอบเช้า ระบบสร้างและตั้งชื่อให้เอง กดเพื่อเปิดดู</p>
+      <div class="row" style="margin-top:0">
         <a class="btn ghost sm" id="d-m-photo" target="_blank" style="margin:0">โฟลเดอร์รูป</a>
         <a class="btn ghost sm" id="d-m-video" target="_blank" style="margin:0">โฟลเดอร์วิดีโอ</a>
       </div>
@@ -713,11 +735,12 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
 
     <div class="card">
       <h2>รอบเย็น 16:00 – 21:00</h2>
-      <label>ชื่อตลาด</label>
+      <label><span class="dot auto"></span>ชื่อตลาด <span class="opt">(ระบบเติมจากตารางให้ แก้ได้ถ้าย้ายจุด เว้นว่าง = ไม่มีรอบเย็น)</span></label>
       <input id="d-e-name" type="text" placeholder="เช่น ตลาดโต้รุ่งทุ่งสง">
-      <label>ร้านค้าที่ร่วมกิจกรรม</label>
+      <label><span class="dot need"></span>ร้านค้าที่ร่วมกิจกรรม</label>
       <input id="d-e-shops" type="number" inputmode="numeric" min="0" value="0">
-      <div class="row" style="margin-top:12px">
+      <p class="foot" style="margin:16px 0 6px;text-align:left"><span class="dot auto"></span>โฟลเดอร์ไดรฟ์ของรอบเย็น ระบบสร้างและตั้งชื่อให้เอง กดเพื่อเปิดดู</p>
+      <div class="row" style="margin-top:0">
         <a class="btn ghost sm" id="d-e-photo" target="_blank" style="margin:0">โฟลเดอร์รูป</a>
         <a class="btn ghost sm" id="d-e-video" target="_blank" style="margin:0">โฟลเดอร์วิดีโอ</a>
       </div>
@@ -733,38 +756,38 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
     <div class="card">
       <h2>ของที่แจก</h2>
       <div class="row">
-        <div class="f" id="coupon-box"><label style="margin-top:0">คูปอง (ใบ)</label>
+        <div class="f" id="coupon-box"><label style="margin-top:0"><span class="dot need"></span>คูปอง (ใบ)</label>
           <input id="d-coupon" type="number" inputmode="numeric" min="0" value="0"></div>
-        <div class="f"><label style="margin-top:0">พรีเมียม (ชิ้น)</label>
+        <div class="f"><label style="margin-top:0"><span class="dot need"></span>พรีเมียม (ชิ้น)</label>
           <input id="d-premium" type="number" inputmode="numeric" min="0" value="0"></div>
       </div>
       <div class="row" style="margin-top:12px">
-        <div class="f"><label style="margin-top:0">แก้วใหญ่ที่แจกชิม</label>
+        <div class="f"><label style="margin-top:0"><span class="dot need"></span>แก้วใหญ่ที่แจกชิม</label>
           <input id="d-cup-big" type="number" inputmode="numeric" min="0" value="0"></div>
-        <div class="f"><label style="margin-top:0">แก้วเล็กที่แจกชิม</label>
+        <div class="f"><label style="margin-top:0"><span class="dot need"></span>แก้วเล็กที่แจกชิม</label>
           <input id="d-cup-small" type="number" inputmode="numeric" min="0" value="0"></div>
       </div>
 
       <div id="coupon-note-box">
-        <label>ร้านค้าที่ระบุในคูปอง</label>
+        <label><span class="dot opt"></span>ร้านค้าที่ระบุในคูปอง</label>
         <textarea id="d-coupon-note" rows="3" placeholder="- ร้านบุญดานันท์ (กานดา บรรจุภัณฑ์)&#10;จำนวน 10 ใบ"></textarea>
       </div>
 
-      <label>รายละเอียดพรีเมียมที่แจก</label>
+      <label><span class="dot opt"></span>รายละเอียดพรีเมียมที่แจก</label>
       <textarea id="d-premium-note" rows="5" placeholder="พ่อค้าแม่ค้า (ร่วมกิจกรรม)&#10;ผ้ากันเปื้อน 5 ผืน&#10;นมข้นจืด 6 กล่อง&#10;&#10;ช่วงเล่นเกมตอบคำถาม&#10;แก้วเล็ก 5 ใบ"></textarea>
 
-      <label>หมายเหตุ</label>
+      <label><span class="dot opt"></span>หมายเหตุ</label>
       <textarea id="d-note" rows="3"></textarea>
     </div>
 
     <div class="card">
-      <div class="sumline big"><span>รวมร้านค้าทั้งวัน</span><b id="d-total">0</b></div>
+      <div class="sumline big"><span><span class="dot auto"></span>รวมร้านค้าทั้งวัน</span><b id="d-total">0</b></div>
     </div>
 
     <button class="btn" id="d-save">บันทึกวันนี้</button>
 
     <div class="card">
-      <h2>รายงานทั้งทริป</h2>
+      <h2><span class="dot auto"></span>รายงานทั้งทริป</h2>
       <p class="sub">สรุปทุกวันที่บันทึกไว้ กดที่แถวเพื่อดูรายชื่อของวันนั้น
         เลื่อนตารางไปทางขวาสุดจะเจอปุ่ม ✕ ไว้ลบบันทึกของวันนั้นทิ้ง</p>
       <div class="stats" style="margin-top:0">
