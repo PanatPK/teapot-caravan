@@ -85,6 +85,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
 .btn{display:block;width:100%;background:var(--navy);color:#fff;border:0;border-radius:12px;
   padding:15px;font:inherit;font-size:17px;font-weight:600;cursor:pointer;margin-top:18px;transition:.15s}
 .btn:active{transform:scale(.99)}
+a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
 .btn:disabled{opacity:.45}
 .btn.ghost{background:#fff;color:var(--navy);border:1.5px solid var(--navy)}
 .btn.sm{padding:10px;font-size:15px;margin-top:10px}
@@ -634,6 +635,12 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
             <small>สูตร ราคา ตารางจุด ยี่ห้อ ข้อความ</small></div>
           <div class="tb"><button class="btn" id="btn-settings">เปิด</button></div>
         </div>
+        <div class="trow" id="sheet-row" style="display:none">
+          <div class="tt"><b>ชีตรวมทั้งทริป</b>
+            <small>ไฟล์ Google Sheet ที่ระบบส่งบันทึกประจำวันเข้าไป</small></div>
+          <div class="tb"><a class="btn" id="a-sheet-link" target="_blank" rel="noopener"
+            style="margin:0">เปิดชีต</a></div>
+        </div>
       </div>
     </div>
   </div>
@@ -680,6 +687,8 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
       </div>
       <p class="tot" id="d-hint"></p>
       <p class="offline" id="d-warn" style="display:none;margin-top:10px"></p>
+      <a class="btn ghost sm" id="d-sheet-link" target="_blank" rel="noopener"
+         style="display:none;margin-top:12px">เปิดไฟล์ชีต Google</a>
     </div>
 
     <div class="card">
@@ -881,7 +890,7 @@ const EDITABLE = ['brand','schedule','venues','statusOptions','shopTypeOptions',
                   'recipes','lineUrl','lineLabel','fbUrl','fbLabel','driveFolders',
                   'brandOptions','entryPoints','tradeIn','tradeOut','premiumItems','kpi'];
 /* ค่าจากไฟล์ระบบทับไฟล์เนื้อหาเสมอ อัปไฟล์เนื้อหาใหม่จึงลบ firebase ทิ้งไม่ได้ */
-const SYS_KEYS = ['firebase','collections','adminPin','sheetUrl','sheetToken'];
+const SYS_KEYS = ['firebase','collections','adminPin','sheetUrl','sheetToken','sheetDocUrl'];
 let CFG = Object.assign({}, FILE_CFG);
 SYS_KEYS.forEach(k=>{ if(SYS_CFG[k] !== undefined) CFG[k] = SYS_CFG[k]; });
 const $  = id => document.getElementById(id);
@@ -2538,6 +2547,7 @@ async function ensureFolders(iso){
 const couponOn = () => CFG.useCoupon !== false;
 
 function fillFolderLinks(date){
+  wireSheetLinks();
   ['coupon-box','coupon-note-box'].forEach(id=>{
     const el = $(id); if(el) el.style.display = couponOn() ? '' : 'none';
   });
@@ -3297,6 +3307,19 @@ $('open-calc').onclick      = openCalc;
 $('calc-back').onclick      = gotoRecipes;
 ['f-sell','f-cupsday','f-days'].forEach(id=> $(id).oninput = calc);
 
+/* ---------- ปุ่มเปิดไฟล์ชีต ----------
+   ลิงก์มาจาก sheetDocUrl ในไฟล์ teapot-system.js ไม่ได้ตั้งไว้ก็ซ่อนปุ่มทั้งสองที่
+   มีสองจุด หน้าบันทึกประจำวันกับหน้าหลังบ้าน จะได้ไม่ต้องเดินอ้อม */
+function wireSheetLinks(){
+  const url = (CFG.sheetDocUrl || '').trim();
+  const a1 = $('d-sheet-link'), a2 = $('a-sheet-link'), row = $('sheet-row');
+  [[a1, a1], [a2, row]].forEach(([link, box])=>{
+    if(!link || !box) return;
+    if(url){ link.href = url; box.style.display = link === box ? 'inline-block' : 'flex'; }
+    else   { link.removeAttribute('href'); box.style.display = 'none'; }
+  });
+}
+
 /* ---------- พับหัวข้อในหลังบ้าน ----------
    เปิดเข้ามาเห็นแค่ชื่อหัวข้อเรียงกัน กดหัวข้อไหนค่อยกางอันนั้น
    จำไว้ในเครื่อง ใครชอบกางอันไหนค้างไว้ เปิดมาครั้งหน้าก็ยังกางอยู่
@@ -3327,6 +3350,7 @@ function openAdmin(){
   $('pin-gate').style.display='none';
   $('admin-body').style.display='block';
   initFolds();
+  wireSheetLinks();
   $('pin-err').classList.remove('on');
   $('btn-logout').style.display = auth ? 'block' : 'none';
   loadAdmin();
