@@ -457,7 +457,8 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
 
     <div class="card">
       <h2>วันนี้ได้ตามเป้ามั้ย</h2>
-      <p class="sub" style="margin-bottom:14px">เป้าต่อจุดตามแผนงาน หน้า KPI</p>
+      <p class="sub" style="margin-bottom:14px">ตัวเลขใหญ่คือเป้ารวมของวันนี้ วันไหนลงหลายจุดจะคูณตามจำนวนจุด
+        เป้าต่อจุดดูที่บรรทัดใต้แถบ อ้างจากหน้า KPI ในแผนงาน</p>
       <div id="rp-meters"></div>
     </div>
 
@@ -2123,15 +2124,21 @@ async function drawReport(){
   const tBy = k => T.filter(t => t.entry === k).length;
   const stops = where.length || 1;   /* วันไหนสองรอบ เป้าคูณสอง */
 
+  /* ตัวเลขใหญ่ในแถบเป็นเป้ารวมของวันนั้น วันไหนลงสองจุดก็คูณสอง
+     บรรทัดล่างเลยต้องบอกเป้าต่อจุดกำกับไว้ทุกแถว จะได้ไม่งงว่าทำไม 33 กลายเป็น 66 */
+  const per = (n, unit) => 'เป้า ' + n + ' ' + unit + 'ต่อจุด'
+    + (stops > 1 ? '  วันนี้ลง ' + stops + ' จุด เป็น ' + (n * stops) + ' ' + unit : '');
+
   $('rp-meters').innerHTML =
-      meter('กรอกแบบฟอร์มรับสูตร',      L.length, kpiOf('forms')     * stops, 'เป้า ' + kpiOf('forms') + ' คนต่อจุด')
-    + meter('เปลี่ยนมาใช้ TEAPOT รวม',  T.length, kpiOf('switchAll') * stops, 'นับจากคนที่เอาของมาแลกจริง')
-    + meter('Non-user เปลี่ยนครบ 2 ตัว', tBy('nonuser'),   kpiOf('nonuser')   * stops)
-    + meter('Switcher A เปลี่ยนข้นหวาน', tBy('switcherA'), kpiOf('switcherA') * stops)
-    + meter('Switcher B เปลี่ยนข้นจืด',  tBy('switcherB'), kpiOf('switcherB') * stops)
-    + (couponOn() ? meter('คูปองที่แจก', num(rec['d-coupon']), kpiOf('coupon') * stops, 'จากบันทึกประจำวัน') : '')
-    + meter('แจกชิม แก้วใหญ่',    num(rec['d-cup-big']),  kpiOf('cupBig')   * stops, 'จากบันทึกประจำวัน')
-    + meter('แจกชิม แก้วเล็ก',    num(rec['d-cup-small']), kpiOf('cupSmall') * stops, 'จากบันทึกประจำวัน');
+      meter('กรอกแบบฟอร์มรับสูตร',      L.length, kpiOf('forms')     * stops, per(kpiOf('forms'),'คน'))
+    + meter('เปลี่ยนมาใช้ TEAPOT รวม',  T.length, kpiOf('switchAll') * stops,
+            per(kpiOf('switchAll'),'คน') + '  นับจากคนที่เอาของมาแลกจริง')
+    + meter('Non-user เปลี่ยนครบ 2 ตัว', tBy('nonuser'),   kpiOf('nonuser')   * stops, per(kpiOf('nonuser'),'คน'))
+    + meter('Switcher A เปลี่ยนข้นหวาน', tBy('switcherA'), kpiOf('switcherA') * stops, per(kpiOf('switcherA'),'คน'))
+    + meter('Switcher B เปลี่ยนข้นจืด',  tBy('switcherB'), kpiOf('switcherB') * stops, per(kpiOf('switcherB'),'คน'))
+    + (couponOn() ? meter('คูปองที่แจก', num(rec['d-coupon']), kpiOf('coupon') * stops, per(kpiOf('coupon'),'ใบ')) : '')
+    + meter('แจกชิม แก้วใหญ่',    num(rec['d-cup-big']),  kpiOf('cupBig')   * stops, per(kpiOf('cupBig'),'แก้ว'))
+    + meter('แจกชิม แก้วเล็ก',    num(rec['d-cup-small']), kpiOf('cupSmall') * stops, per(kpiOf('cupSmall'),'แก้ว'));
 
   /* ใครมาวันนี้ แยกทุกกลุ่มรวมคนที่ใช้ครบคู่อยู่แล้ว */
   const ec = {};
