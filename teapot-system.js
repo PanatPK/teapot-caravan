@@ -38,6 +38,11 @@ const TEAPOT_SYSTEM = {
   sheetUrl:   'https://script.google.com/macros/s/AKfycbxXijV_sXtWzMBgfT7FwsvE1eKOlsEShS_cVRmDFDvOKVFyKffvwl0XSh3oCIsHDA2dtw/exec',
   sheetToken: 'teapot-2026',
 
+  /* ---------- ลิงก์ไฟล์ชีตสำหรับกดเปิดดู ----------
+     คนละอันกับ sheetUrl ข้างบน อันบนไว้ให้ระบบยิงข้อมูลเข้า อันนี้ไว้ให้คนกดเปิด
+     เอามาจากช่องที่อยู่ตอนเปิดไฟล์ชีต เว้นว่าง = ซ่อนปุ่มเปิดชีตไปเลย        */
+  sheetDocUrl: 'https://docs.google.com/spreadsheets/d/1D0zc2H5kMZPIzxBD0Wc0Zmc0SiaL9AQ-j3Q9WSvlBVA/edit',
+
   /* ---------- รหัสสำรองเข้าหลังบ้าน ----------
      ใช้เฉพาะตอนยังไม่ได้ต่อ Firebase ถ้าต่อแล้วระบบจะใช้อีเมล+รหัสผ่านแทน */
   adminPin: '2569'
