@@ -47,6 +47,16 @@ body{
 .card{background:var(--white);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:18px;margin-top:16px}
 .card h2{margin:0 0 4px;font-size:18px;font-weight:700}
 .card .sub{margin:0 0 16px;font-size:14.5px;color:var(--muted)}
+/* หัวข้อพับได้ในหลังบ้าน เปิดเข้ามาเห็นแค่ชื่อหัวข้อ กดอันไหนค่อยกางอันนั้น */
+.card.fold{padding:4px 18px}
+.card.fold>h2{cursor:pointer;display:flex;align-items:center;gap:10px;margin:0;padding:15px 0;
+  font-size:17px;user-select:none;-webkit-user-select:none}
+.card.fold>h2::after{content:'▾';margin-left:auto;font-size:15px;color:var(--muted);
+  transition:transform .18s;line-height:1}
+.card.fold.open>h2::after{transform:rotate(180deg)}
+.card.fold>.foldbody{display:none}
+.card.fold.open>.foldbody{display:block;padding-bottom:18px}
+.card.fold.open>h2{border-bottom:1px solid var(--line);margin-bottom:14px}
 label{display:block;font-size:15px;font-weight:600;margin:16px 0 7px}
 label .opt{font-weight:400;color:var(--muted)}
 textarea{resize:vertical;min-height:80px;line-height:1.5}
@@ -531,25 +541,25 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <div class="stat"><small>คิดต้นทุนแล้ว</small><b id="a-calcs">0</b></div>
       </div>
 
-      <div class="card" id="qr-card">
+      <div class="card fold" id="qr-card" data-fold="qr">
         <h2>QR สำหรับพิมพ์</h2>
         <p class="sub" style="margin-bottom:14px">กดค้างที่รูปเพื่อบันทึกลงเครื่อง
           แล้วส่งให้โรงพิมพ์ได้เลย</p>
         <div class="qrpair" id="qr-pair"></div>
       </div>
 
-      <div class="card">
+      <div class="card fold" data-fold="venue">
         <h2>ยอดต่อจุด</h2>
         <div class="bars" id="a-venue-bars"></div>
       </div>
 
-      <div class="card">
+      <div class="card fold" data-fold="entry">
         <h2>กลุ่มเป้าหมาย (Entry Point)</h2>
         <p class="sub">แยกจากยี่ห้อที่กรอกในแบบฟอร์ม ตรงกับ KPI เปลี่ยนจากคู่แข่ง</p>
         <div class="bars" id="a-entry"></div>
       </div>
 
-      <div class="card">
+      <div class="card fold" data-fold="brand">
         <h2>ยี่ห้อที่ใช้อยู่</h2>
         <p class="sub" style="margin-bottom:10px">ข้นหวาน</p>
         <div class="bars" id="a-brand-sweet"></div>
@@ -557,14 +567,14 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <div class="bars" id="a-brand-use"></div>
       </div>
 
-      <div class="card">
+      <div class="card fold" data-fold="trade">
         <h2>ของที่แลกไป</h2>
         <div class="scroll"><table class="tbl" id="a-trade"></table></div>
         <p class="sub" style="margin:18px 0 10px">ของพรีเมียมที่แจกไป</p>
         <div class="bars" id="a-premium"></div>
       </div>
 
-      <div class="card">
+      <div class="card fold" data-fold="recipe">
         <h2>สูตรที่คนสนใจ</h2>
         <div class="bars" id="a-recipe-bars"></div>
         <div class="sumline" style="margin-top:10px;border-top:1px solid var(--line);padding-top:12px">
@@ -572,7 +582,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         <div class="sumline"><span>ราคาขายเฉลี่ยที่ตั้ง</span><b id="a-avgprice">—</b></div>
       </div>
 
-      <div class="card">
+      <div class="card fold" data-fold="list">
         <h2>รายชื่อ</h2>
         <div class="filters">
           <select id="a-f-venue"><option value="">ทุกจุด</option></select>
@@ -606,7 +616,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
         </details>
       </div>
 
-      <div class="card">
+      <div class="card fold" data-fold="tools">
         <h2>เครื่องมือหน้างาน</h2>
         <div class="trow">
           <div class="tt"><b>โต๊ะแลกของ</b>
@@ -770,7 +780,7 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
     <div class="offline" id="set-warn" style="display:none"></div>
     <p class="sub" id="set-src" style="margin:0 0 14px"></p>
 
-    <div class="card">
+    <div class="card fold" data-fold="s-msg">
       <h2>ข้อความหน้าแรก</h2>
       <label>คำโปรยใต้โลโก้</label>
       <input id="set-sub" type="text">
@@ -791,14 +801,14 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
       <textarea id="set-folders" rows="3" placeholder='ระบบเติมให้เอง'></textarea>
     </div>
 
-    <div class="card">
+    <div class="card fold" data-fold="s-sched">
       <h2>ตารางจุดออกบูธ</h2>
       <p class="sub">ระบบใช้วันที่กับเวลาเลือกจุดให้อัตโนมัติ วันไหนมีจุดเดียวเว้นช่องเวลาไว้ได้</p>
       <div id="set-sched"></div>
       <button class="addbtn" id="set-add-sched">+ เพิ่มจุด</button>
     </div>
 
-    <div class="card">
+    <div class="card fold" data-fold="s-brand">
       <h2>ยี่ห้อที่ให้เลือก</h2>
       <p class="sub">บรรทัดละหนึ่งยี่ห้อ ต้องมีบรรทัดที่มีคำว่า "อื่น" ไว้เสมอ</p>
       <label>ข้นหวาน</label>
@@ -807,13 +817,13 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
       <textarea id="set-bplain" rows="7"></textarea>
     </div>
 
-    <div class="card">
+    <div class="card fold" data-fold="s-pack">
       <h2>บรรจุภัณฑ์</h2>
       <div id="set-pack"></div>
       <button class="addbtn" id="set-add-pack">+ เพิ่มรายการ</button>
     </div>
 
-    <div class="card">
+    <div class="card fold" data-fold="s-recipe">
       <h2>สูตรน้ำชง</h2>
       <p class="sub">กดชื่อสูตรเพื่อเปิดดูและแก้ไข สูตรที่ยังไม่ได้ใส่ส่วนผสมและวิธีทำ
         จะยังไม่ขึ้นในเมนูฝั่งลูกค้า กรอกเสร็จแล้วขึ้นเองทันที</p>
@@ -3083,6 +3093,7 @@ function openSettings(fromFile){
   $('set-bplain').value = (ed.brandOptions.plain||[]).join('\n');
   openRecipeIdx = -1;
   drawSched(); drawPack(); drawRecipes();
+  initFolds();
   show('s-settings');
 }
 
@@ -3286,9 +3297,36 @@ $('open-calc').onclick      = openCalc;
 $('calc-back').onclick      = gotoRecipes;
 ['f-sell','f-cupsday','f-days'].forEach(id=> $(id).oninput = calc);
 
+/* ---------- พับหัวข้อในหลังบ้าน ----------
+   เปิดเข้ามาเห็นแค่ชื่อหัวข้อเรียงกัน กดหัวข้อไหนค่อยกางอันนั้น
+   จำไว้ในเครื่อง ใครชอบกางอันไหนค้างไว้ เปิดมาครั้งหน้าก็ยังกางอยู่
+   ครั้งแรกกางแค่เครื่องมือหน้างาน เพราะเป็นอันที่สตาฟกดบ่อยสุด */
+function initFolds(){
+  let open = LS.get('folds', null);
+  if(!open){ open = { tools:true }; LS.set('folds', open); }
+  document.querySelectorAll('.card.fold').forEach(card=>{
+    if(card.dataset.ready) return;
+    card.dataset.ready = '1';
+    const key  = card.dataset.fold || '';
+    const h2   = card.querySelector('h2');
+    const body = document.createElement('div');
+    body.className = 'foldbody';
+    while(h2.nextSibling) body.appendChild(h2.nextSibling);
+    card.appendChild(body);
+    if(open[key]) card.classList.add('open');
+    h2.onclick = ()=>{
+      card.classList.toggle('open');
+      const o = LS.get('folds', {});
+      o[key] = card.classList.contains('open');
+      LS.set('folds', o);
+    };
+  });
+}
+
 function openAdmin(){
   $('pin-gate').style.display='none';
   $('admin-body').style.display='block';
+  initFolds();
   $('pin-err').classList.remove('on');
   $('btn-logout').style.display = auth ? 'block' : 'none';
   loadAdmin();
