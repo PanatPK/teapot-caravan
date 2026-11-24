@@ -719,6 +719,19 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
       <input id="d-m-name" type="text" placeholder="เช่น ตลาดเช้าทุ่งสง">
       <label><span class="dot need"></span>ร้านค้าที่ร่วมกิจกรรม</label>
       <input id="d-m-shops" type="number" inputmode="numeric" min="0" value="0">
+      <div class="row" style="margin-top:12px">
+        <div class="f"><label style="margin-top:0"><span class="dot need"></span>แก้วใหญ่ที่แจกชิม</label>
+          <input id="d-m-cup-big" type="number" inputmode="numeric" min="0" value="0"></div>
+        <div class="f"><label style="margin-top:0"><span class="dot need"></span>แก้วเล็กที่แจกชิม</label>
+          <input id="d-m-cup-small" type="number" inputmode="numeric" min="0" value="0"></div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <div class="f"><label style="margin-top:0"><span class="dot need"></span>พรีเมียมที่แจก (ชิ้น)</label>
+          <input id="d-m-premium" type="number" inputmode="numeric" min="0" value="0"></div>
+        <div class="f coupon-box"><label style="margin-top:0"><span class="dot need"></span>คูปอง (ใบ)</label>
+          <input id="d-m-coupon" type="number" inputmode="numeric" min="0" value="0"></div>
+      </div>
+      <p class="foot" style="margin:10px 0 0;text-align:left">กรอกเฉพาะยอดของรอบเช้า ระบบบวกเป็นยอดรวมทั้งวันให้เอง</p>
       <p class="foot" style="margin:16px 0 6px;text-align:left"><span class="dot auto"></span>โฟลเดอร์ไดรฟ์ของรอบเช้า ระบบสร้างและตั้งชื่อให้เอง กดเพื่อเปิดดู</p>
       <div class="row" style="margin-top:0">
         <a class="btn ghost sm" id="d-m-photo" target="_blank" style="margin:0">โฟลเดอร์รูป</a>
@@ -739,6 +752,19 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
       <input id="d-e-name" type="text" placeholder="เช่น ตลาดโต้รุ่งทุ่งสง">
       <label><span class="dot need"></span>ร้านค้าที่ร่วมกิจกรรม</label>
       <input id="d-e-shops" type="number" inputmode="numeric" min="0" value="0">
+      <div class="row" style="margin-top:12px">
+        <div class="f"><label style="margin-top:0"><span class="dot need"></span>แก้วใหญ่ที่แจกชิม</label>
+          <input id="d-e-cup-big" type="number" inputmode="numeric" min="0" value="0"></div>
+        <div class="f"><label style="margin-top:0"><span class="dot need"></span>แก้วเล็กที่แจกชิม</label>
+          <input id="d-e-cup-small" type="number" inputmode="numeric" min="0" value="0"></div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <div class="f"><label style="margin-top:0"><span class="dot need"></span>พรีเมียมที่แจก (ชิ้น)</label>
+          <input id="d-e-premium" type="number" inputmode="numeric" min="0" value="0"></div>
+        <div class="f coupon-box"><label style="margin-top:0"><span class="dot need"></span>คูปอง (ใบ)</label>
+          <input id="d-e-coupon" type="number" inputmode="numeric" min="0" value="0"></div>
+      </div>
+      <p class="foot" style="margin:10px 0 0;text-align:left">กรอกเฉพาะยอดของรอบเย็น ระบบบวกเป็นยอดรวมทั้งวันให้เอง</p>
       <p class="foot" style="margin:16px 0 6px;text-align:left"><span class="dot auto"></span>โฟลเดอร์ไดรฟ์ของรอบเย็น ระบบสร้างและตั้งชื่อให้เอง กดเพื่อเปิดดู</p>
       <div class="row" style="margin-top:0">
         <a class="btn ghost sm" id="d-e-photo" target="_blank" style="margin:0">โฟลเดอร์รูป</a>
@@ -754,19 +780,12 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
     </div>
 
     <div class="card">
-      <h2>ของที่แจก</h2>
-      <div class="row">
-        <div class="f" id="coupon-box"><label style="margin-top:0"><span class="dot need"></span>คูปอง (ใบ)</label>
-          <input id="d-coupon" type="number" inputmode="numeric" min="0" value="0"></div>
-        <div class="f"><label style="margin-top:0"><span class="dot need"></span>พรีเมียม (ชิ้น)</label>
-          <input id="d-premium" type="number" inputmode="numeric" min="0" value="0"></div>
-      </div>
-      <div class="row" style="margin-top:12px">
-        <div class="f"><label style="margin-top:0"><span class="dot need"></span>แก้วใหญ่ที่แจกชิม</label>
-          <input id="d-cup-big" type="number" inputmode="numeric" min="0" value="0"></div>
-        <div class="f"><label style="margin-top:0"><span class="dot need"></span>แก้วเล็กที่แจกชิม</label>
-          <input id="d-cup-small" type="number" inputmode="numeric" min="0" value="0"></div>
-      </div>
+      <h2>รวมของที่แจกทั้งวัน</h2>
+      <p class="sub">บวกจากรอบเช้ากับรอบเย็นให้เอง ตัวเลขชุดนี้คือที่ส่งเข้าชีต</p>
+      <div class="sumline"><span><span class="dot auto"></span>แก้วใหญ่</span><b id="d-sum-cup-big">0</b></div>
+      <div class="sumline"><span><span class="dot auto"></span>แก้วเล็ก</span><b id="d-sum-cup-small">0</b></div>
+      <div class="sumline"><span><span class="dot auto"></span>พรีเมียม (ชิ้น)</span><b id="d-sum-premium">0</b></div>
+      <div class="sumline coupon-box"><span><span class="dot auto"></span>คูปอง (ใบ)</span><b id="d-sum-coupon">0</b></div>
 
       <div id="coupon-note-box">
         <label><span class="dot opt"></span>ร้านค้าที่ระบุในคูปอง</label>
@@ -2159,9 +2178,9 @@ async function drawReport(){
     + meter('Non-user เปลี่ยนครบ 2 ตัว', tBy('nonuser'),   kpiOf('nonuser')   * stops, per(kpiOf('nonuser'),'คน'))
     + meter('Switcher A เปลี่ยนข้นหวาน', tBy('switcherA'), kpiOf('switcherA') * stops, per(kpiOf('switcherA'),'คน'))
     + meter('Switcher B เปลี่ยนข้นจืด',  tBy('switcherB'), kpiOf('switcherB') * stops, per(kpiOf('switcherB'),'คน'))
-    + (couponOn() ? meter('คูปองที่แจก', num(rec['d-coupon']), kpiOf('coupon') * stops, per(kpiOf('coupon'),'ใบ')) : '')
-    + meter('แจกชิม แก้วใหญ่',    num(rec['d-cup-big']),  kpiOf('cupBig')   * stops, per(kpiOf('cupBig'),'แก้ว'))
-    + meter('แจกชิม แก้วเล็ก',    num(rec['d-cup-small']), kpiOf('cupSmall') * stops, per(kpiOf('cupSmall'),'แก้ว'));
+    + (couponOn() ? meter('คูปองที่แจก', dayNum(rec,'coupon'), kpiOf('coupon') * stops, per(kpiOf('coupon'),'ใบ')) : '')
+    + meter('แจกชิม แก้วใหญ่',    dayNum(rec,'cup-big'),   kpiOf('cupBig')   * stops, per(kpiOf('cupBig'),'แก้ว'))
+    + meter('แจกชิม แก้วเล็ก',    dayNum(rec,'cup-small'), kpiOf('cupSmall') * stops, per(kpiOf('cupSmall'),'แก้ว'));
 
   /* ใครมาวันนี้ แยกทุกกลุ่มรวมคนที่ใช้ครบคู่อยู่แล้ว */
   const ec = {};
@@ -2532,9 +2551,22 @@ async function saveTrade(){
 /* ===================================================================
    6. บันทึกประจำวัน
    =================================================================== */
-const DAYF = ['d-prov','d-amphoe','d-m-name','d-m-shops','d-e-name','d-e-shops',
-              'd-coupon','d-premium','d-cup-big','d-cup-small',
-              'd-coupon-note','d-premium-note','d-note'];
+/* ยอดที่แยกเช้า-เย็น สี่ตัวนี้กรอกแยกรอบ ระบบบวกเป็นยอดวันให้เอง */
+const ROUNDF = ['shops','cup-big','cup-small','premium','coupon'];
+const DAYF = ['d-prov','d-amphoe','d-m-name','d-e-name']
+  .concat(ROUNDF.map(k=>'d-m-'+k), ROUNDF.map(k=>'d-e-'+k),
+          ['d-coupon-note','d-premium-note','d-note']);
+const NUMF = new Set(DAYF.filter(id=> ROUNDF.some(k=> id === 'd-m-'+k || id === 'd-e-'+k)));
+
+/* ยอดรวมทั้งวันของช่องที่แยกรอบ
+   เรคคอร์ดเก่าที่เคยเก็บเป็นช่องเดียว (d-cup-big ฯลฯ) ยังอ่านได้เหมือนเดิม
+   ไม่ต้องไปไล่แก้ของที่บันทึกไว้แล้ว */
+function dayNum(rec, base){
+  if(!rec) return 0;
+  const m = rec['d-m-'+base], e = rec['d-e-'+base];
+  if(m !== undefined || e !== undefined) return num(m) + num(e);
+  return num(rec['d-'+base]);
+}
 
 function parseFolders(txt){
   const s = String(txt||'').trim();
@@ -2545,8 +2577,26 @@ function parseFolders(txt){
 
 function todayISO(){ return localDay(); }
 
+/* เติมค่าลงฟอร์ม พร้อมย้ายของเก่าที่เคยเก็บเป็นช่องเดียวมาไว้ที่รอบเช้า
+   ยอดรวมทั้งวันจะได้เท่าเดิม ไม่ต้องไปนั่งกรอกใหม่ */
+function fillDayFields(v){
+  DAYF.forEach(id=>{ const el = $(id); if(el && v[id] !== undefined) el.value = v[id]; });
+  ROUNDF.forEach(k=>{
+    if(k === 'shops') return;
+    if(v['d-m-'+k] === undefined && v['d-e-'+k] === undefined && v['d-'+k] !== undefined){
+      const el = $('d-m-'+k); if(el) el.value = v['d-'+k];
+    }
+  });
+}
+
 function dayTotal(){
-  $('d-total').textContent = num($('d-m-shops').value) + num($('d-e-shops').value);
+  const r = {};
+  DAYF.forEach(id=>{ const el = $(id); if(el) r[id] = NUMF.has(id) ? num(el.value) : el.value; });
+  $('d-total').textContent = dayNum(r, 'shops');
+  [['cup-big','d-sum-cup-big'], ['cup-small','d-sum-cup-small'],
+   ['premium','d-sum-premium'], ['coupon','d-sum-coupon']].forEach(([k,id])=>{
+    const el = $(id); if(el) el.textContent = dayNum(r, k);
+  });
 }
 
 /* ลิงก์โฟลเดอร์ของวันนั้น เอาจากแคชที่เพิ่งถามมาก่อน ไม่มีค่อยใช้ของที่ตั้งไว้ในหลังบ้าน
@@ -2578,9 +2628,9 @@ const couponOn = () => CFG.useCoupon !== false;
 
 function fillFolderLinks(date){
   wireSheetLinks();
-  ['coupon-box','coupon-note-box'].forEach(id=>{
-    const el = $(id); if(el) el.style.display = couponOn() ? '' : 'none';
-  });
+  const cOn = couponOn();
+  document.querySelectorAll('.coupon-box').forEach(el=>{ el.style.display = cOn ? '' : 'none'; });
+  const cn = $('coupon-note-box'); if(cn) cn.style.display = cOn ? '' : 'none';
   /* กล่องอัปรูปใช้ Apps Script ตัวเดียวกับที่ส่งชีต ยังไม่ตั้งก็ไม่ต้องโชว์ */
   ['m','e'].forEach(r=>{
     $('d-'+r+'-upbox').style.display = sheetOn() ? 'block' : 'none';
@@ -2599,18 +2649,18 @@ function fillFolderLinks(date){
 async function openDay(date){
   const d = date || todayISO();
   $('d-date').value = d;
-  DAYF.forEach(id=> $(id).value = (id.endsWith('shops')||id==='d-coupon'||id==='d-premium') ? 0 : '');
+  DAYF.forEach(id=>{ const el = $(id); if(el) el.value = NUMF.has(id) ? 0 : ''; });
   if(db){
     try{
       const snap = await FS.getDoc(FS.doc(db, COL.days, d));
       if(snap.exists()){
         const v = snap.data();
-        DAYF.forEach(id=>{ if(v[id] !== undefined) $(id).value = v[id]; });
+        fillDayFields(v);
       }
     }catch(e){ console.warn(e); }
   }else{
     const v = LS.get('day_'+d, null);
-    if(v) DAYF.forEach(id=>{ if(v[id] !== undefined) $(id).value = v[id]; });
+    if(v) fillDayFields(v);
   }
   /* เติมจังหวัดกับชื่อตลาดจากตารางเดินทางถ้ายังว่าง */
   const sched = (CFG.schedule||[]).filter(s=>s.date === d);
@@ -2642,8 +2692,8 @@ async function saveDay(){
   const d = $('d-date').value || todayISO();
   const rec = { date:d, updatedAt:new Date().toISOString() };
   DAYF.forEach(id=>{
-    const v = $(id).value;
-    rec[id] = (id.endsWith('shops')||id==='d-coupon'||id==='d-premium') ? num(v) : v.trim();
+    const el = $(id); if(!el) return;
+    rec[id] = NUMF.has(id) ? num(el.value) : el.value.trim();
   });
   rec.totalShops = rec['d-m-shops'] + rec['d-e-shops'];
   LS.set('day_'+d, rec);
@@ -2682,8 +2732,8 @@ function dayPayload(rec){
     mShops:   num(rec['d-m-shops']),
     eName:    rec['d-e-name'] || '',
     eShops:   num(rec['d-e-shops']),
-    coupon:   num(rec['d-coupon']),
-    premium:  num(rec['d-premium']),
+    coupon:   dayNum(rec, 'coupon'),
+    premium:  dayNum(rec, 'premium'),
     link:     f.day || '',
     note:     rec['d-note'] || '',
 
@@ -2696,8 +2746,8 @@ function dayPayload(rec){
     switcherA: dayTrades(rec.date).filter(t=>t.entry==='switcherA').length,
     switcherB: dayTrades(rec.date).filter(t=>t.entry==='switcherB').length,
     loyal:     dayTrades(rec.date).filter(t=>t.entry==='loyal').length,
-    cupBig:    num(rec['d-cup-big']),
-    cupSmall:  num(rec['d-cup-small'])
+    cupBig:    dayNum(rec, 'cup-big'),
+    cupSmall:  dayNum(rec, 'cup-small')
   };
 }
 
@@ -2901,12 +2951,14 @@ async function deleteDay(date){
 async function renderTripReport(){
   const days = await fetchDays();
   dayCache = {}; days.forEach(v=>{ if(v.date) dayCache[v.date] = v; });
-  const sum = k => days.reduce((s,v)=>s+(v[k]||0),0);
-  const shops = sum('d-m-shops') + sum('d-e-shops');
+  const sum  = k => days.reduce((s,v)=>s+(v[k]||0),0);
+  /* ยอดที่แยกรอบ ใช้ dayNum บวกเช้ากับเย็นให้ก่อน แล้วค่อยรวมทุกวัน */
+  const sumD = k => days.reduce((s,v)=>s+dayNum(v,k),0);
+  const shops = sumD('shops');
   $('r-days').textContent    = days.length;
   $('r-shops').textContent   = shops;
-  $('r-coupon').textContent  = sum('d-coupon');
-  $('r-premium').textContent = sum('d-premium');
+  $('r-coupon').textContent  = sumD('coupon');
+  $('r-premium').textContent = sumD('premium');
 
   $('d-report').innerHTML =
     `<thead><tr><th>วันที่</th><th>จังหวัด</th><th>ตลาดเช้า</th><th>เช้า</th>
@@ -2920,15 +2972,15 @@ async function renderTripReport(){
         <td>${v['d-m-shops']||'-'}</td>
         <td>${esc(v['d-e-name']||'—')}</td>
         <td>${v['d-e-shops']||'-'}</td>
-        <td><b>${(v['d-m-shops']||0)+(v['d-e-shops']||0)}</b></td>
-        <td>${v['d-coupon']||0}</td>
-        <td>${v['d-premium']||0}</td>
+        <td><b>${dayNum(v,'shops')}</b></td>
+        <td>${dayNum(v,'coupon')}</td>
+        <td>${dayNum(v,'premium')}</td>
         <td style="white-space:nowrap">${n ? '<span class="tag">ดู '+n+' ราย</span>' : ''}<button class="delday" data-del="${esc(v.date)}" title="ลบบันทึกของวันนี้">✕</button></td>
       </tr>`;
     }).join('')
       + `<tr><td colspan="3"><b>รวมทั้งหมด</b></td><td><b>${sum('d-m-shops')}</b></td>
            <td></td><td><b>${sum('d-e-shops')}</b></td><td><b>${shops}</b></td>
-           <td><b>${sum('d-coupon')}</b></td><td><b>${sum('d-premium')}</b></td><td></td></tr>`
+           <td><b>${sumD('coupon')}</b></td><td><b>${sumD('premium')}</b></td><td></td></tr>`
       : `<tr><td colspan="10" style="color:var(--muted);padding:16px 8px">ยังไม่มีวันที่บันทึกไว้</td></tr>`) +
     `</tbody>`;
 
@@ -3032,12 +3084,13 @@ async function dayReportCSV(){
     thaiDate(v.date), v['d-prov'], v['d-amphoe'],
     v['d-m-name'] || '❌ ไม่มีรอบเช้า', v['d-m-shops'] || '-',
     v['d-e-name'] || '❌ ไม่มีรอบเย็น', v['d-e-shops'] || '-',
-    '', (v['d-m-shops']||0) + (v['d-e-shops']||0),
-    v['d-coupon'], v['d-premium'], (f[v.date]||{}).day || '', v['d-note']
+    '', dayNum(v,'shops'),
+    dayNum(v,'coupon'), dayNum(v,'premium'), (f[v.date]||{}).day || '', v['d-note']
   ].map(q).join(','));
-  const sum = k => days.reduce((s,v)=>s+(v[k]||0),0);
+  const sum  = k => days.reduce((s,v)=>s+(v[k]||0),0);
+  const sumD = k => days.reduce((s,v)=>s+dayNum(v,k),0);
   body.push([ '✅ รวมทั้งหมด','','','', sum('d-m-shops'), '', sum('d-e-shops'), '',
-    sum('d-m-shops')+sum('d-e-shops'), sum('d-coupon'), sum('d-premium'), '', '' ].map(q).join(','));
+    sumD('shops'), sumD('coupon'), sumD('premium'), '', '' ].map(q).join(','));
   const csv = '﻿' + [head.map(q).join(','), ...body].join('\r\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
@@ -3277,8 +3330,9 @@ $('tr-save').onclick   = saveTrade;
 $('btn-day').onclick   = ()=> openDay(null);
 $('day-back').onclick  = ()=> show('s-admin');
 $('d-date').onchange   = e=> openDay(e.target.value);
-$('d-m-shops').oninput = dayTotal;
-$('d-e-shops').oninput = dayTotal;
+ROUNDF.forEach(k=> ['m','e'].forEach(r=>{
+  const el = $('d-' + r + '-' + k); if(el) el.oninput = dayTotal;
+}));
 ['m','e'].forEach(r=>{
   $('d-'+r+'-pick').onclick = ()=> $('d-'+r+'-file').click();
   $('d-'+r+'-file').onchange = ()=> uploadPhotos(r);
