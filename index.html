@@ -617,6 +617,7 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
         </div>
         <div class="brow">
           <button class="btn ghost" id="btn-refresh">โหลดข้อมูลใหม่</button>
+          <button class="btn ghost" id="btn-autosync" style="display:none">ส่งยอดวันนี้เข้าชีตเดี๋ยวนี้</button>
           <button class="btn ghost" id="btn-sheet" style="display:none">ซ่อมชีตให้ตรงกัน</button>
         </div>
         <p class="tot" id="sheet-note" style="display:none"></p>
@@ -798,7 +799,7 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
         <textarea id="d-coupon-note" rows="3" placeholder="- ร้านบุญดานันท์ (กานดา บรรจุภัณฑ์)&#10;จำนวน 10 ใบ"></textarea>
       </div>
 
-      <label><span class="dot opt"></span>รายละเอียดพรีเมียมที่แจก</label>
+      <label><span class="dot need"></span>รายละเอียดของที่แจก <span class="opt">(ลงชีตช่องถัดจากยอดรวมร้านค้า)</span></label>
       <textarea id="d-premium-note" rows="5" placeholder="พ่อค้าแม่ค้า (ร่วมกิจกรรม)&#10;ผ้ากันเปื้อน 5 ผืน&#10;นมข้นจืด 6 กล่อง&#10;&#10;ช่วงเล่นเกมตอบคำถาม&#10;แก้วเล็ก 5 ใบ"></textarea>
 
       <label><span class="dot opt"></span>หมายเหตุ</label>
@@ -1915,6 +1916,8 @@ async function loadAdmin(){
   }
   leads.sort((a,b)=> (b.createdAt||'').localeCompare(a.createdAt||''));
   fillFilters(); renderAdmin();
+  /* ยอดจากการสแกนขึ้นชีตเองทุกครั้งที่เปิดหรือรีเฟรชหลังบ้าน */
+  pushAuto(localDay());
 }
 
 function fillFilters(){
@@ -1983,12 +1986,14 @@ function renderAdmin(){
   /* ปุ่มส่งเข้าชีตโผล่เฉพาะตอนตั้งค่า sheetUrl ไว้แล้ว */
   if(sheetOn()){
     $('btn-sheet').style.display = 'block';
+    $('btn-autosync').style.display = 'block';
     const qn = LS.get('sheetq',[]).length;
     const note = $('sheet-note');
     note.style.display = 'block';
     note.textContent = qn
       ? 'มี ' + qn + ' วันที่ยังส่งเข้าชีตไม่สำเร็จ จะลองใหม่เมื่อเน็ตกลับมา หรือกดปุ่มซ่อมชีตให้ตรงกัน'
-      : 'บันทึกประจำวันส่งเข้า Google Sheet ให้เองทุกครั้งที่กดบันทึก';
+      : 'ยอดลงทะเบียนและยอดแลกของขึ้นชีตเองทุกครั้งที่เปิดหรือรีเฟรชหน้านี้ '
+        + 'ส่วนชื่อตลาด จำนวนร้าน และแก้วชิม ขึ้นตอนกดบันทึกในหน้าบันทึกประจำวัน';
     flushSheet();
   }
   const qn = LS.get('queue',[]).length, rj = LS.get('rejected',[]).length;
@@ -2619,7 +2624,7 @@ async function saveTrade(){
     toast('บันทึกการแลกของ ' + rec.leadName + ' แล้ว');
     $('tr-form').style.display = 'none';
     $('tr-brand').value = ''; trLead = null;
-    drawTradeList(); renderAdmin();
+    drawTradeList(); renderAdmin(); pushAuto(rec.day);
   }catch(e){
     toast(e.code === 'permission-denied'
       ? 'รูลยังไม่อนุญาต ต้องเพิ่ม teapot_trades'
@@ -2812,7 +2817,9 @@ function dayPayload(rec){
     mShops:   num(rec['d-m-shops']),
     eName:    rec['d-e-name'] || '',
     eShops:   num(rec['d-e-shops']),
-    coupon:   dayNum(rec, 'coupon'),
+    /* ช่อง J ในชีตเปลี่ยนจากจำนวนคูปอง เป็นข้อความว่าแจกอะไรไปเท่าไหร่
+       ส่วนช่อง K ถัดไปเป็นยอดรวมจำนวนชิ้นเหมือนเดิม                       */
+    giveNote: (rec['d-premium-note'] || '').trim(),
     premium:  dayNum(rec, 'premium'),
     link:     f.day || '',
     note:     rec['d-note'] || '',
@@ -2829,6 +2836,36 @@ function dayPayload(rec){
     cupBig:    dayNum(rec, 'cup-big'),
     cupSmall:  dayNum(rec, 'cup-small')
   };
+}
+
+/* ชุดตัวเลขที่ส่งขึ้นชีตได้ทันทีโดยไม่แตะช่องที่สตาฟกรอก */
+function autoPayload(iso){
+  const T2 = dayTrades(iso);
+  return {
+    iso, dateText: thaiDate(iso),
+    regs:      dayLeads(iso).length,
+    trades:    T2.length,
+    nonuser:   T2.filter(t=>t.entry==='nonuser').length,
+    switcherA: T2.filter(t=>t.entry==='switcherA').length,
+    switcherB: T2.filter(t=>t.entry==='switcherB').length,
+    loyal:     T2.filter(t=>t.entry==='loyal').length
+  };
+}
+
+/* ส่งยอดอัตโนมัติขึ้นชีต หน่วงไว้นิดนึงกันยิงรัวตอนกดหลายครั้งติดกัน
+   เงียบ ๆ ไม่ขึ้น toast ให้รำคาญ ส่งไม่ผ่านก็ไม่เป็นไร เดี๋ยวรอบหน้าส่งใหม่ */
+let autoT, autoLast = 0;
+function pushAuto(iso, now){
+  if(!sheetOn() || !db) return;            /* ต้องอ่านข้อมูลจากเซิร์ฟเวอร์ได้ก่อน */
+  const day = iso || localDay();
+  clearTimeout(autoT);
+  const run = async ()=>{
+    autoLast = Date.now();
+    try{ await postGS({ action:'auto', day: autoPayload(day) }); }
+    catch(e){ console.warn('auto sync', e); }
+  };
+  if(now) return run();
+  autoT = setTimeout(run, 4000);
 }
 
 const dayLeads  = iso => leads.filter(l => dayOf(l) === iso);
@@ -3158,19 +3195,19 @@ async function dayReportCSV(){
   /* คอลัมน์ว่างหลังช่องร้านค้าเย็น มีในชีตเดิม ต้องเว้นไว้ให้ตรง */
   const head = ['วันที่','จังหวัด','อำเภอ','ตลาดเช้า (08:00–11:00)','ร้านค้าเช้าที่ร่วมกิจกรรม (จำนวน)',
     'ตลาดเย็น (16:00–21:00)','ร้านค้าเย็นที่ร่วมกิจกรรม (จำนวน)','','รวมร้านค้าที่ร่วมกิจกรรม ทั้งวัน',
-    'คูปอง ที่แจก (ใบ)','สรุปของพรีเมี่ยม ที่แจก (ชิ้น)','Link รูปภาพ','หมายเหตุ'];
+    'รายละเอียดของที่แจก','สรุปของพรีเมี่ยม ที่แจก (ชิ้น)','Link รูปภาพ','หมายเหตุ'];
   const q = s => `"${String(s==null?'':s).replace(/"/g,'""')}"`;
   const body = days.map(v=>[
     thaiDate(v.date), v['d-prov'], v['d-amphoe'],
     v['d-m-name'] || '❌ ไม่มีรอบเช้า', v['d-m-shops'] || '-',
     v['d-e-name'] || '❌ ไม่มีรอบเย็น', v['d-e-shops'] || '-',
     '', dayNum(v,'shops'),
-    dayNum(v,'coupon'), dayNum(v,'premium'), (f[v.date]||{}).day || '', v['d-note']
+    v['d-premium-note'] || '', dayNum(v,'premium'), (f[v.date]||{}).day || '', v['d-note']
   ].map(q).join(','));
   const sum  = k => days.reduce((s,v)=>s+(v[k]||0),0);
   const sumD = k => days.reduce((s,v)=>s+dayNum(v,k),0);
   body.push([ '✅ รวมทั้งหมด','','','', sum('d-m-shops'), '', sum('d-e-shops'), '',
-    sumD('shops'), sumD('coupon'), sumD('premium'), '', '' ].map(q).join(','));
+    sumD('shops'), '', sumD('premium'), '', '' ].map(q).join(','));
   const csv = '﻿' + [head.map(q).join(','), ...body].join('\r\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
@@ -3610,6 +3647,13 @@ $('rp-date').onchange   = drawReport;
 $('rp-img').onclick     = ()=> dailyImage($('rp-date').value || todayISO());
 $('btn-csv').onclick   = downloadCSV;
 $('btn-sheet').onclick = repairSheet;
+$('btn-autosync').onclick = async ()=>{
+  const b2 = $('btn-autosync');
+  b2.disabled = true; b2.textContent = 'กำลังส่ง…';
+  try{ await pushAuto(localDay(), true); toast('ส่งยอดวันนี้เข้าชีตแล้ว'); }
+  catch(e){ toast('ส่งไม่สำเร็จ ' + (e.message||'')); }
+  b2.disabled = false; b2.textContent = 'ส่งยอดวันนี้เข้าชีตเดี๋ยวนี้';
+};
 $('a-table').onclick = e=>{
   const btn = e.target.closest('[data-row],[data-edit]');
   if(!btn) return;
@@ -3639,6 +3683,24 @@ $('btn-wipe').onclick = ()=>{
     wipeEverything();
 };
 $('btn-refresh').onclick = loadAdmin;
+
+/* เครื่องที่เปิดหน้าหลังบ้านค้างไว้ที่บูธ ยอดในชีตจะขยับเองทุก 5 นาที
+   ไม่ต้องมีใครกดอะไร สลับไปแท็บอื่นหรือออกจากหน้าหลังบ้านก็หยุดเอง */
+async function quietSync(){
+  if(document.hidden || !db || !sheetOn()) return;
+  if(!$('s-admin').classList.contains('on') && !$('s-trade').classList.contains('on')) return;
+  try{
+    const grab = async col => {
+      const snap = await FS.getDocs(FS.collection(db, col));
+      return snap.docs.map(d=>Object.assign({_id:d.id}, d.data()));
+    };
+    [leads, trades] = await Promise.all([grab(COL.leads), grab(COL.trades)]);
+    leads.sort((a,b)=> (b.createdAt||'').localeCompare(a.createdAt||''));
+    if($('s-admin').classList.contains('on')) renderAdmin();
+    await pushAuto(localDay(), true);
+  }catch(e){ console.warn('quietSync', e); }
+}
+setInterval(quietSync, 300000);
 $('btn-clearq').onclick = ()=>{
   LS.set('queue', []); LS.set('rejected', []);
   const b = $('offl'); if(b) b.remove();
