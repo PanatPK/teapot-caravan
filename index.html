@@ -2697,6 +2697,14 @@ function provinceOf(venue){
   return i > 0 ? t.slice(0, i).trim() : '';
 }
 
+/* เอาเฉพาะชื่อตลาดหลังขีด จังหวัดมีช่องของตัวเองในชีตอยู่แล้ว ไม่ต้องซ้ำ
+   ชื่อที่ไม่มีขีดคั่น คืนทั้งก้อนไปเลย สตาฟพิมพ์เองมาแบบไหนก็ได้แบบนั้น */
+function marketOf(venue){
+  const t = String(venue || '').trim();
+  const i = t.search(/[—–-]/);
+  return i > 0 ? t.slice(i + 1).trim() : t;
+}
+
 /* ชื่อจุดของวันนั้นจากตารางเดินทาง ใช้ตั้งชื่อโฟลเดอร์ให้ตรงกับตารางเสมอ */
 function dayLabel(iso){
   return (CFG.schedule||[]).filter(s=>s.date===iso).map(s=>s.venue).filter(Boolean).join(' + ');
@@ -2760,8 +2768,10 @@ async function openDay(date){
      เติมให้เฉพาะช่องที่ยังไม่มีค่า พิมพ์ทับได้เสมอ หน้างานย้ายจุดก็แก้ได้ */
   const sched = (CFG.schedule||[]).filter(s=>s.date === d);
   if(sched.length && !$('d-e-name').value && !$('d-m-name').value){
-    if(sched.length > 1){ $('d-m-name').value = sched[0].venue; $('d-e-name').value = sched[1].venue; }
-    else $('d-e-name').value = sched[0].venue;
+    if(sched.length > 1){
+      $('d-m-name').value = marketOf(sched[0].venue);
+      $('d-e-name').value = marketOf(sched[1].venue);
+    }else $('d-e-name').value = marketOf(sched[0].venue);
   }
   if(sched.length){
     if(!$('d-prov').value){
@@ -2833,9 +2843,9 @@ function dayPayload(rec){
     dateText: thaiDate(rec.date),
     prov:     rec['d-prov']   || '',
     amphoe:   rec['d-amphoe'] || '',
-    mName:    rec['d-m-name'] || '',
+    mName:    marketOf(rec['d-m-name'] || ''),
     mShops:   num(rec['d-m-shops']),
-    eName:    rec['d-e-name'] || '',
+    eName:    marketOf(rec['d-e-name'] || ''),
     eShops:   num(rec['d-e-shops']),
     /* ช่อง J ในชีตเปลี่ยนจากจำนวนคูปอง เป็นข้อความว่าแจกอะไรไปเท่าไหร่
        ส่วนช่อง K ถัดไปเป็นยอดรวมจำนวนชิ้นเหมือนเดิม                       */
@@ -3118,26 +3128,26 @@ async function renderTripReport(){
 
   $('d-report').innerHTML =
     `<thead><tr><th>วันที่</th><th>จังหวัด</th><th>ตลาดเช้า</th><th>เช้า</th>
-      <th>ตลาดเย็น</th><th>เย็น</th><th>รวม</th><th>คูปอง</th><th>พรีเมียม</th><th></th></tr></thead><tbody>` +
+      <th>ตลาดเย็น</th><th>เย็น</th><th>รวม</th>${couponOn() ? '<th>คูปอง</th>' : ''}<th>พรีเมียม</th><th></th></tr></thead><tbody>` +
     (days.length ? days.map(v=>{
       const n = leads.filter(l=> dayOf(l) === v.date).length;
       return `<tr class="drow" data-day="${esc(v.date)}">
         <td>${esc(thaiDate(v.date))}</td>
         <td>${esc(v['d-prov']||'')}</td>
-        <td>${esc(v['d-m-name']||'—')}</td>
+        <td>${esc(marketOf(v['d-m-name'])||'—')}</td>
         <td>${v['d-m-shops']||'-'}</td>
-        <td>${esc(v['d-e-name']||'—')}</td>
+        <td>${esc(marketOf(v['d-e-name'])||'—')}</td>
         <td>${v['d-e-shops']||'-'}</td>
         <td><b>${dayNum(v,'shops')}</b></td>
-        <td>${dayNum(v,'coupon')}</td>
+        ${couponOn() ? `<td>${dayNum(v,'coupon')}</td>` : ''}
         <td>${dayNum(v,'premium')}</td>
         <td style="white-space:nowrap">${n ? '<span class="tag">ดู '+n+' ราย</span>' : ''}<button class="delday" data-del="${esc(v.date)}" title="ลบบันทึกของวันนี้">✕</button></td>
       </tr>`;
     }).join('')
       + `<tr><td colspan="3"><b>รวมทั้งหมด</b></td><td><b>${sum('d-m-shops')}</b></td>
            <td></td><td><b>${sum('d-e-shops')}</b></td><td><b>${shops}</b></td>
-           <td><b>${sumD('coupon')}</b></td><td><b>${sumD('premium')}</b></td><td></td></tr>`
-      : `<tr><td colspan="10" style="color:var(--muted);padding:16px 8px">ยังไม่มีวันที่บันทึกไว้</td></tr>`) +
+           ${couponOn() ? `<td><b>${sumD('coupon')}</b></td>` : ''}<td><b>${sumD('premium')}</b></td><td></td></tr>`
+      : `<tr><td colspan="${couponOn()?10:9}" style="color:var(--muted);padding:16px 8px">ยังไม่มีวันที่บันทึกไว้</td></tr>`) +
     `</tbody>`;
 
   /* กดที่แถวเพื่อดูว่ารอบไหนมีใครบ้าง แลกอะไร ได้พรีเมียมอะไร */
@@ -3238,8 +3248,8 @@ async function dayReportCSV(){
   const q = s => `"${String(s==null?'':s).replace(/"/g,'""')}"`;
   const body = days.map(v=>[
     thaiDate(v.date), v['d-prov'], v['d-amphoe'],
-    v['d-m-name'] || '❌ ไม่มีรอบเช้า', v['d-m-shops'] || '-',
-    v['d-e-name'] || '❌ ไม่มีรอบเย็น', v['d-e-shops'] || '-',
+    marketOf(v['d-m-name']) || '❌ ไม่มีรอบเช้า', v['d-m-shops'] || '-',
+    marketOf(v['d-e-name']) || '❌ ไม่มีรอบเย็น', v['d-e-shops'] || '-',
     '', dayNum(v,'shops'),
     v['d-premium-note'] || '', dayNum(v,'premium'), (f[v.date]||{}).day || '', v['d-note']
   ].map(q).join(','));
