@@ -617,7 +617,7 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
         </div>
         <div class="brow">
           <button class="btn ghost" id="btn-refresh">โหลดข้อมูลใหม่</button>
-          <button class="btn ghost" id="btn-autosync" style="display:none">ส่งยอดวันนี้เข้าชีตเดี๋ยวนี้</button>
+          <button class="btn ghost" id="btn-autosync" style="display:none">ส่งยอดทุกวันเข้าชีต</button>
           <button class="btn ghost" id="btn-sheet" style="display:none">ซ่อมชีตให้ตรงกัน</button>
         </div>
         <p class="tot" id="sheet-note" style="display:none"></p>
@@ -1992,7 +1992,8 @@ function renderAdmin(){
     note.style.display = 'block';
     note.textContent = qn
       ? 'มี ' + qn + ' วันที่ยังส่งเข้าชีตไม่สำเร็จ จะลองใหม่เมื่อเน็ตกลับมา หรือกดปุ่มซ่อมชีตให้ตรงกัน'
-      : 'ยอดลงทะเบียนและยอดแลกของขึ้นชีตเองทุกครั้งที่เปิดหรือรีเฟรชหน้านี้ '
+      : 'ยอดลงทะเบียนและยอดแลกของของวันนี้ขึ้นชีตเองทุกครั้งที่เปิดหรือรีเฟรชหน้านี้ '
+        + 'ปุ่มส่งยอดทุกวันไว้ตามเก็บวันก่อนหน้าที่ยังไม่ขึ้น '
         + 'ส่วนชื่อตลาด จำนวนร้าน และแก้วชิม ขึ้นตอนกดบันทึกในหน้าบันทึกประจำวัน';
     flushSheet();
   }
@@ -2854,6 +2855,25 @@ function autoPayload(iso){
 
 /* ส่งยอดอัตโนมัติขึ้นชีต หน่วงไว้นิดนึงกันยิงรัวตอนกดหลายครั้งติดกัน
    เงียบ ๆ ไม่ขึ้น toast ให้รำคาญ ส่งไม่ผ่านก็ไม่เป็นไร เดี๋ยวรอบหน้าส่งใหม่ */
+/* ทุกวันที่มีคนลงทะเบียนหรือมีคนมาแลกของ เรียงจากเก่าไปใหม่
+   ใช้ตอนกดปุ่มส่งยอด จะได้เก็บวันที่สตาฟลืมกดบันทึกประจำวันไว้ด้วย */
+function daysWithData(){
+  const set = new Set();
+  leads.forEach(l=>{ const d = dayOf(l); if(d) set.add(d); });
+  trades.forEach(t=>{ const d = dayOf(t); if(d) set.add(d); });
+  set.add(localDay());
+  return [...set].sort();
+}
+
+/* ส่งทุกวันที่มีข้อมูลขึ้นชีตรวดเดียว คืนจำนวนวันที่ส่งไป */
+async function pushAutoAll(){
+  if(!sheetOn() || !db) return 0;
+  const list = daysWithData();
+  if(!list.length) return 0;
+  await postGS({ action:'auto', days: list.map(autoPayload) });
+  return list.length;
+}
+
 let autoT, autoLast = 0;
 function pushAuto(iso, now){
   if(!sheetOn() || !db) return;            /* ต้องอ่านข้อมูลจากเซิร์ฟเวอร์ได้ก่อน */
@@ -3650,9 +3670,11 @@ $('btn-sheet').onclick = repairSheet;
 $('btn-autosync').onclick = async ()=>{
   const b2 = $('btn-autosync');
   b2.disabled = true; b2.textContent = 'กำลังส่ง…';
-  try{ await pushAuto(localDay(), true); toast('ส่งยอดวันนี้เข้าชีตแล้ว'); }
-  catch(e){ toast('ส่งไม่สำเร็จ ' + (e.message||'')); }
-  b2.disabled = false; b2.textContent = 'ส่งยอดวันนี้เข้าชีตเดี๋ยวนี้';
+  try{
+    const n = await pushAutoAll();
+    toast(n ? 'ส่งยอดขึ้นชีตแล้ว ' + n + ' วัน' : 'ยังไม่มีข้อมูลให้ส่ง');
+  }catch(e){ toast('ส่งไม่สำเร็จ ' + (e.message||'')); }
+  b2.disabled = false; b2.textContent = 'ส่งยอดทุกวันเข้าชีต';
 };
 $('a-table').onclick = e=>{
   const btn = e.target.closest('[data-row],[data-edit]');
