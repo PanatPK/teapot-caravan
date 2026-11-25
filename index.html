@@ -2773,6 +2773,18 @@ async function openDay(date){
       $('d-e-name').value = marketOf(sched[1].venue);
     }else $('d-e-name').value = marketOf(sched[0].venue);
   }
+  /* บันทึกเก่าเคยเก็บชื่อยาว "ลำพูน — Kick Off" ตัดจังหวัดออกให้ตอนเปิดหน้า
+     ตัดเฉพาะกรณีที่คำหน้าขีดตรงกับจังหวัดในตารางจริง ๆ
+     ชื่อที่สตาฟพิมพ์เองแล้วบังเอิญมีขีดอยู่ข้างใน จะไม่โดนตัดทิ้ง */
+  if(sched.length){
+    const provs = sched.map(x=>provinceOf(x.venue)).filter(Boolean);
+    ['d-m-name','d-e-name'].forEach(id=>{
+      const el = $(id), v = (el.value||'').trim();
+      const hit = provs.find(pv => v.startsWith(pv) && /^[\s—–-]/.test(v.slice(pv.length)));
+      if(hit) el.value = v.slice(hit.length).replace(/^[\s—–-]+/, '').trim();
+    });
+  }
+
   if(sched.length){
     if(!$('d-prov').value){
       const pv = [...new Set(sched.map(x=>provinceOf(x.venue)).filter(Boolean))];
