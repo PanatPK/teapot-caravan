@@ -711,8 +711,8 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
       <label><span class="dot auto"></span>วันที่</label>
       <input id="d-date" type="date">
       <div class="row" style="margin-top:12px">
-        <div class="f"><label style="margin-top:0"><span class="dot need"></span>จังหวัด</label><input id="d-prov" type="text"></div>
-        <div class="f"><label style="margin-top:0"><span class="dot need"></span>อำเภอ</label><input id="d-amphoe" type="text"></div>
+        <div class="f"><label style="margin-top:0"><span class="dot auto"></span>จังหวัด</label><input id="d-prov" type="text"></div>
+        <div class="f"><label style="margin-top:0"><span class="dot auto"></span>อำเภอ</label><input id="d-amphoe" type="text"></div>
       </div>
       <p class="tot" id="d-hint"></p>
       <p class="offline" id="d-warn" style="display:none;margin-top:10px"></p>
@@ -862,7 +862,7 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
 
     <div class="card fold" data-fold="s-sched">
       <h2>ตารางจุดออกบูธ</h2>
-      <p class="sub">ใส่ชื่อจุด เลือกวันที่ แล้วเลือกรอบ วันไหนลงรอบเดียวเลือก ทั้งวัน วันไหนลงสองจุดให้ทำสองแถววันเดียวกัน แถวหนึ่งเช้า อีกแถวเย็น ระบบเรียงวันให้เองหลังเลือก</p>
+      <p class="sub">ใส่ชื่อจุด เลือกวันที่ แล้วเลือกรอบ วันไหนลงรอบเดียวเลือก ทั้งวัน วันไหนลงสองจุดให้ทำสองแถววันเดียวกัน แถวหนึ่งเช้า อีกแถวเย็น ระบบเรียงวันให้เองหลังเลือก ชื่อจุดพิมพ์เป็น จังหวัด — ชื่อตลาด ระบบจะแยกจังหวัดไปลงชีตให้เอง</p>
       <div id="set-sched"></div>
       <button class="addbtn" id="set-add-sched">+ เพิ่มจุด</button>
     </div>
@@ -2689,6 +2689,14 @@ function dayTotal(){
    เน็ตหลุดก็ยังมีลิงก์ให้กด เพราะแคชอยู่ในเครื่อง */
 const foldersOf = iso => (LS.get('dfolders',{})[iso]) || (CFG.driveFolders||{})[iso] || {};
 
+/* ชื่อจุดเก็บเป็น "จังหวัด — ชื่อตลาด" ตัดเอาเฉพาะจังหวัดข้างหน้ามาใช้
+   ไม่มีขีดคั่นก็คืนค่าว่าง ดีกว่าเดาผิดแล้วลงจังหวัดมั่วในชีต */
+function provinceOf(venue){
+  const t = String(venue || '');
+  const i = t.search(/[—–-]/);
+  return i > 0 ? t.slice(0, i).trim() : '';
+}
+
 /* ชื่อจุดของวันนั้นจากตารางเดินทาง ใช้ตั้งชื่อโฟลเดอร์ให้ตรงกับตารางเสมอ */
 function dayLabel(iso){
   return (CFG.schedule||[]).filter(s=>s.date===iso).map(s=>s.venue).filter(Boolean).join(' + ');
@@ -2748,11 +2756,22 @@ async function openDay(date){
     const v = LS.get('day_'+d, null);
     if(v) fillDayFields(v);
   }
-  /* เติมจังหวัดกับชื่อตลาดจากตารางเดินทางถ้ายังว่าง */
+  /* เติมจังหวัด อำเภอ และชื่อตลาดจากตารางเดินทางถ้ายังว่าง
+     เติมให้เฉพาะช่องที่ยังไม่มีค่า พิมพ์ทับได้เสมอ หน้างานย้ายจุดก็แก้ได้ */
   const sched = (CFG.schedule||[]).filter(s=>s.date === d);
   if(sched.length && !$('d-e-name').value && !$('d-m-name').value){
     if(sched.length > 1){ $('d-m-name').value = sched[0].venue; $('d-e-name').value = sched[1].venue; }
     else $('d-e-name').value = sched[0].venue;
+  }
+  if(sched.length){
+    if(!$('d-prov').value){
+      const pv = [...new Set(sched.map(x=>provinceOf(x.venue)).filter(Boolean))];
+      if(pv.length) $('d-prov').value = pv.join(' / ');
+    }
+    if(!$('d-amphoe').value){
+      const am = [...new Set(sched.map(x=>(x.amphoe||'').trim()).filter(Boolean))];
+      if(am.length) $('d-amphoe').value = am.join(' / ');
+    }
   }
   const inDay = dayLeads(d).length, trDay = dayTrades(d).length;
   $('d-hint').textContent = 'ลงทะเบียนผ่านเว็บวันนี้ ' + inDay + ' คน · บันทึกแลกของแล้ว '
@@ -3369,6 +3388,10 @@ function drawSched(){
       <div class="r2" style="grid-template-columns:1fr 92px">
         <input type="date" value="${esc(s.date||'')}" data-s="date" data-i="${i}">
         <select data-s="round" data-i="${i}">${opts}</select>
+      </div>
+      <div class="r3" style="grid-template-columns:1fr;margin-top:6px">
+        <input value="${esc(s.amphoe||'')}" data-s="amphoe" data-i="${i}"
+               placeholder="อำเภอ ใส่ครั้งเดียว แล้วหน้าบันทึกจะเติมให้เอง">
       </div>
     </div>`;
   }).join('') || '<p class="sub" style="margin:0">ยังไม่มีจุด</p>';
