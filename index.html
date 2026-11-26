@@ -670,8 +670,10 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
   <div class="wrap">
     <div class="card">
       <h2>เลือกคนที่มาแลก</h2>
-      <p class="sub">รายชื่อคนที่ลงทะเบียนวันนี้</p>
-      <input id="tr-search" type="search" placeholder="พิมพ์ชื่อหรือเบอร์เพื่อค้นหา">
+      <p class="sub">รายชื่อคนที่ลงทะเบียนวันนี้ ถ้าเขาลงทะเบียนวันก่อนหน้า ให้พิมพ์ชื่อหรือเบอร์ค้นหา</p>
+      <input id="tr-search" type="search" placeholder="พิมพ์ชื่อหรือเบอร์เพื่อค้นหา ค้นได้ทุกวัน">
+      <p class="tot" id="tr-count" style="margin:10px 0 0"></p>
+      <button class="btn ghost sm" id="tr-reload">โหลดรายชื่อใหม่</button>
       <div id="tr-list" style="margin-top:12px"></div>
     </div>
 
@@ -2566,24 +2568,36 @@ function openTrade(){
   show('s-trade');
 }
 
+/* รายชื่อในโต๊ะแลกของ
+   ไม่ค้นหา = โชว์คนที่ลงทะเบียนวันนี้ทั้งหมด ไม่ตัดจำนวนแล้ว
+   พิมพ์ค้นหา = ค้นข้ามวัน เผื่อคนลงทะเบียนเมื่อวานแล้ววันนี้ค่อยมาแลก
+   เรียงคนที่เพิ่งสแกนไว้บนสุด คิวหน้าบูธจะได้ไม่ต้องเลื่อนหา             */
 function drawTradeList(){
   const q = ($('tr-search').value || '').trim().toLowerCase();
   const today = todayISO();
   const done = new Set(trades.map(t=>t.leadId));
-  const list = leads
-    .filter(l => dayOf(l) === today)
-    .filter(l => !q || (l.name||'').toLowerCase().includes(q) || (l.phone||'').includes(q))
-    .slice(0, 60);
+  const match = l => !q || (l.name||'').toLowerCase().includes(q) || (l.phone||'').includes(q);
+  const pool  = q ? leads : leads.filter(l => dayOf(l) === today);
+  const list  = pool.filter(match).slice(0, 400);
+  const todayN = leads.filter(l => dayOf(l) === today).length;
+
+  $('tr-count').textContent = q
+    ? 'ค้นเจอ ' + list.length + ' คน จากทุกวัน'
+    : 'ลงทะเบียนวันนี้ ' + todayN + ' คน แลกแล้ว '
+      + leads.filter(l => dayOf(l) === today && done.has(l._id || l.localId)).length + ' คน'
+      + (list.length < todayN ? ' · แสดง ' + list.length + ' คนแรก' : '');
+
   $('tr-list').innerHTML = list.length
     ? list.map(l=>{
         const id = l._id || l.localId;
         const ep = ((CFG.entryPoints||{})[l.entry]||{}).name || '';
+        const dy = dayOf(l);
         return `<div class="rcard" data-lead="${esc(id)}" style="margin-bottom:8px">
           <div class="body"><b>${esc(l.name||'')}</b>
-            <small>${esc(l.phone||'')} · ${esc(ep)}${done.has(id) ? ' · แลกแล้ว' : ''}</small></div>
+            <small>${esc(l.phone||'')} · ${esc(ep)}${dy !== today ? ' · ' + esc(thaiDate(dy)) : ''}${done.has(id) ? ' · แลกแล้ว' : ''}</small></div>
           <div class="go">${done.has(id) ? '✓' : '›'}</div></div>`;
       }).join('')
-    : '<p class="sub" style="margin:0">ยังไม่มีคนลงทะเบียนวันนี้</p>';
+    : `<p class="sub" style="margin:0">${q ? 'ค้นหาไม่เจอ ลองพิมพ์เบอร์แทนชื่อ' : 'ยังไม่มีคนลงทะเบียนวันนี้'}</p>`;
   $('tr-list').onclick = e=>{
     const card = e.target.closest('[data-lead]');
     if(card) pickLead(card.dataset.lead);
@@ -3712,6 +3726,23 @@ $('rp-date').onchange   = drawReport;
 $('rp-img').onclick     = ()=> dailyImage($('rp-date').value || todayISO());
 $('btn-csv').onclick   = downloadCSV;
 $('btn-sheet').onclick = repairSheet;
+$('tr-reload').onclick = async ()=>{
+  const b3 = $('tr-reload');
+  b3.disabled = true; b3.textContent = 'กำลังโหลด…';
+  if(db){
+    try{
+      const grab = async col => {
+        const snap = await FS.getDocs(FS.collection(db, col));
+        return snap.docs.map(d=>Object.assign({_id:d.id}, d.data()));
+      };
+      [leads, trades] = await Promise.all([grab(COL.leads), grab(COL.trades)]);
+      leads.sort((a,b)=> (b.createdAt||'').localeCompare(a.createdAt||''));
+    }catch(e){ toast('โหลดไม่สำเร็จ ' + (e.code||'')); }
+  }
+  drawTradeList();
+  b3.disabled = false; b3.textContent = 'โหลดรายชื่อใหม่';
+};
+
 $('btn-autosync').onclick = async ()=>{
   const b2 = $('btn-autosync');
   b2.disabled = true; b2.textContent = 'กำลังส่ง…';
