@@ -2165,11 +2165,9 @@ function renderAdmin(){
   const tOut = {}, pmc = {}, tIn = {}, inBrand = {};
   trades.forEach(t=>{
     listOf(t,'given')  .forEach(v=> tOut[v] = (tOut[v]||0)+1);
-    listOf(t,'premium').forEach(v=> pmc[v]  = (pmc[v]||0)+1);
+    realPremium(t)     .forEach(v=> pmc[v]  = (pmc[v]||0)+1);
     listOf(t,'brought').forEach(v=> tIn[v]  = (tIn[v]||0)+1);
-    /* ยี่ห้อที่นำมาอาจมีสองยี่ห้อคั่นด้วย / แยกนับทีละยี่ห้อ */
-    String(t.brand||'').split('/').map(x=>x.trim()).filter(Boolean)
-      .forEach(v=> inBrand[v] = (inBrand[v]||0)+1);
+    brandsIn(t.brand).forEach(v=> inBrand[v] = (inBrand[v]||0)+1);
   });
   const te = Object.entries(tOut).sort((a,b)=>b[1]-a[1]);
   const tt = te.reduce((s,e)=>s+e[1],0);
@@ -2429,8 +2427,7 @@ async function drawReport(){
 
   /* ยี่ห้อเดิมของคนที่มาแลก = ยี่ห้อที่เราชิงมาได้ */
   const fc = {};
-  T.forEach(t => String(t.brand||'').split('/').map(x=>x.trim()).filter(Boolean)
-      .forEach(b=> fc[b] = (fc[b]||0) + 1));
+  T.forEach(t => brandsIn(t.brand).forEach(b=> fc[b] = (fc[b]||0) + 1));
   bars($('rp-from'), fc);
 
   /* ทั้งทริป */
@@ -2793,6 +2790,38 @@ function setMulti(boxId, picked){
 
 /* รายการแลกเก่าเก็บเป็นข้อความเดี่ยว ตัวใหม่เก็บเป็นลิสต์
    อ่านผ่านตัวนี้ทุกที่ รายงานเก่ากับใหม่จึงนับรวมกันได้ ไม่ต้องล้างข้อมูล */
+/* ---------- รวมยี่ห้อที่พิมพ์เองเข้ากับยี่ห้อในระบบ ----------
+   สตาฟพิมพ์ falcon ตัวเล็ก ระบบมี FALCON (ฟอลคอน) อยู่แล้ว ถ้านับแยกจะกลายเป็นสองแถว
+   เทียบทั้งชื่อเต็ม ชื่อหน้าวงเล็บ และคำอ่านไทยในวงเล็บ เจอตรงไหนก็ยุบเป็นชื่อมาตรฐาน
+   ไม่ตรงอะไรเลยคืนตามที่พิมพ์ จะได้ไม่ไปกลืนยี่ห้อใหม่ที่ระบบยังไม่รู้จัก */
+let brandMapCache = null, brandMapFrom = null;
+function brandMap(){
+  const src = JSON.stringify(CFG.brandOptions || {});
+  if(brandMapCache && brandMapFrom === src) return brandMapCache;
+  const key = v => String(v||'').toLowerCase().replace(/\s+/g,' ').trim();
+  const map = {};
+  const BR = CFG.brandOptions || {};
+  [].concat(BR.sweet || [], BR.plain || []).forEach(v=>{
+    const full = String(v).trim();
+    map[key(full)] = full;
+    const m = full.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+    if(m){ map[key(m[1])] = full; map[key(m[2])] = full; }
+  });
+  brandMapCache = map; brandMapFrom = src;
+  return map;
+}
+function normBrand(v){
+  const t = String(v || '').trim();
+  if(!t) return '';
+  const k = t.toLowerCase().replace(/\s+/g,' ');
+  return brandMap()[k] || t;
+}
+/* แยกข้อความยี่ห้อที่อาจมีหลายยี่ห้อคั่นด้วย / แล้วยุบชื่อให้เป็นมาตรฐาน */
+const brandsIn = v => String(v || '').split('/').map(x=>normBrand(x)).filter(Boolean);
+
+/* ของพรีเมียมจริง ๆ ตัวเลือก "ไม่ได้รับ" ของเก่าไม่ใช่ของที่แจก ไม่ต้องเอามานับ */
+const realPremium = t => listOf(t, 'premium').filter(v => !/^ไม่ได้/.test(String(v).trim()));
+
 function listOf(t, key){
   const arr = t[key + 'List'];
   if(Array.isArray(arr) && arr.length) return arr.filter(Boolean);
@@ -2996,7 +3025,7 @@ async function saveNewLead(){
       premiumList: multiVal('nw-premium'),
       /* เก็บช่องเดี่ยวไว้ด้วย รายงานเก่าหรือคนเปิดชีตดูยังอ่านรู้เรื่อง */
       brought:  multiVal('nw-brought')[0] || '',
-      brand:    $('nw-brand').value.trim(),
+      brand:    brandsIn($('nw-brand').value).join(' / '),
       given:    multiVal('nw-given')[0]   || '',
       premium:  multiVal('nw-premium')[0] || '',
       day:       lead.day,
@@ -3066,7 +3095,7 @@ async function saveTrade(){
     givenList:   multiVal('tr-given'),
     premiumList: multiVal('tr-premium'),
     brought:  multiVal('tr-brought')[0] || '',
-    brand:    $('tr-brand').value.trim(),
+    brand:    brandsIn($('tr-brand').value).join(' / '),
     given:    multiVal('tr-given')[0]   || '',
     premium:  multiVal('tr-premium')[0] || '',
     day:       localDay(),
@@ -3198,7 +3227,7 @@ function crossCheck(){
   const d = $('d-date').value;
   if(!d){ el.textContent = ''; return; }
   const typed = num($('d-m-premium').value) + num($('d-e-premium').value);
-  const logged = dayTrades(d).reduce((n,t)=> n + listOf(t,'premium').length, 0);
+  const logged = dayTrades(d).reduce((n,t)=> n + realPremium(t).length, 0);
   const regs   = dayLeads(d).length;
   const trs    = dayTrades(d).length;
   const pz = prizeSum(prizeTally);
