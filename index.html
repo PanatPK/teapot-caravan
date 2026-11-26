@@ -858,6 +858,18 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
     </div>
 
     <div class="card">
+      <h2>ของรางวัลจากเกม</h2>
+      <p class="sub">นับเป็นจำนวนชิ้นต่อรอบ ไม่ต้องผูกกับชื่อคน
+        ของที่ให้ตอนลงทะเบียนหรือตอนแลกของ ให้ไปติ๊กรายคนในหน้าโต๊ะแลกของแทน จะได้ไม่นับซ้ำกัน</p>
+      <div class="iglg" style="grid-template-columns:1fr 70px 70px">
+        <span>รายการ</span><span>เช้า</span><span>เย็น</span>
+      </div>
+      <div id="d-prizes"></div>
+      <div class="sumline big" style="margin-top:12px">
+        <span><span class="dot auto"></span>รวมของรางวัลทั้งวัน</span><b id="d-prize-total">0</b></div>
+    </div>
+
+    <div class="card">
       <h2>รวมของที่แจกทั้งวัน</h2>
       <p class="sub">บวกจากรอบเช้ากับรอบเย็นให้เอง ตัวเลขชุดนี้คือที่ส่งเข้าชีต</p>
       <div class="sumline"><span><span class="dot auto"></span>แก้วใหญ่</span><b id="d-sum-cup-big">0</b></div>
@@ -891,9 +903,11 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
       <div class="stats" style="margin-top:0">
         <div class="stat"><small>ร้านค้ารวม</small><b id="r-shops">0</b></div>
         <div class="stat"><small>วันที่บันทึกแล้ว</small><b id="r-days">0</b></div>
-        <div class="stat"><small>คูปองที่แจก</small><b id="r-coupon">0</b></div>
+        <div class="stat coupon-box"><small>คูปองที่แจก</small><b id="r-coupon">0</b></div>
         <div class="stat"><small>พรีเมียมที่แจก</small><b id="r-premium">0</b></div>
+        <div class="stat"><small>ของรางวัลเกม</small><b id="r-prize">0</b></div>
       </div>
+      <div class="scroll" style="margin-top:14px"><table class="tbl" id="d-prize-sum"></table></div>
       <div class="scroll" style="margin-top:14px"><table class="tbl" id="d-report"></table></div>
       <button class="btn ghost sm" id="d-refresh">โหลดใหม่</button>
     </div>
@@ -1019,7 +1033,7 @@ const FILE_CFG = (typeof TEAPOT_CONFIG !== 'undefined' && TEAPOT_CONFIG)
 const EDITABLE = ['brand','schedule','venues','statusOptions','shopTypeOptions',
                   'dailyCupsOptions','tradeBrands','tradeRule','pdpaText','packaging',
                   'recipes','lineUrl','lineLabel','fbUrl','fbLabel','driveFolders',
-                  'brandOptions','entryPoints','tradeIn','tradeOut','premiumItems','kpi'];
+                  'brandOptions','entryPoints','tradeIn','tradeOut','premiumItems','gamePrizes','kpi'];
 /* ค่าจากไฟล์ระบบทับไฟล์เนื้อหาเสมอ อัปไฟล์เนื้อหาใหม่จึงลบ firebase ทิ้งไม่ได้ */
 const SYS_KEYS = ['firebase','collections','adminPin','sheetUrl','sheetToken','sheetDocUrl'];
 let CFG = Object.assign({}, FILE_CFG);
@@ -3054,10 +3068,54 @@ function parseFolders(txt){
 
 function todayISO(){ return localDay(); }
 
+/* ---------- ของรางวัลจากเกม ----------
+   เก็บเป็น { 'ชื่อของ': {m: จำนวนรอบเช้า, e: จำนวนรอบเย็น} } ในบันทึกของวันนั้น
+   ไม่ผูกกับชื่อคน เพราะหน้างานตอนเล่นเกมคิวไว คนชนะบางคนก็ไม่ได้ลงทะเบียน
+   ของที่ให้ตอนลงทะเบียนหรือตอนแลกของยังติ๊กรายคนเหมือนเดิม สองชุดนี้จึงไม่ซ้ำกัน */
+let prizeTally = {};
+
+const prizeList = () => (CFG.gamePrizes && CFG.gamePrizes.length) ? CFG.gamePrizes : [];
+
+function prizeSum(tally){
+  let n = 0;
+  Object.keys(tally || {}).forEach(k=>{
+    n += num((tally[k]||{}).m) + num((tally[k]||{}).e);
+  });
+  return n;
+}
+
+function renderPrizes(){
+  const box = $('d-prizes'); if(!box) return;
+  const list = prizeList();
+  box.innerHTML = list.length
+    ? list.map((v,i)=>{
+        const t = prizeTally[v] || {};
+        return `<div class="ing adm" style="margin-bottom:6px">
+          <div class="r2" style="grid-template-columns:1fr 70px 70px">
+            <span style="align-self:center;font-size:14.5px">${esc(v)}</span>
+            <input type="number" inputmode="numeric" min="0" value="${num(t.m)}" data-pz="${i}" data-r="m">
+            <input type="number" inputmode="numeric" min="0" value="${num(t.e)}" data-pz="${i}" data-r="e">
+          </div></div>`;
+      }).join('')
+    : '<p class="sub" style="margin:0">ยังไม่ได้ตั้งรายการของรางวัลในหน้าแก้ไขเนื้อหา</p>';
+
+  box.oninput = e=>{
+    const i = e.target.dataset.pz, r = e.target.dataset.r;
+    if(i == null || !r) return;
+    const name = list[+i]; if(!name) return;
+    prizeTally[name] = prizeTally[name] || {};
+    prizeTally[name][r] = num(e.target.value);
+    $('d-prize-total').textContent = prizeSum(prizeTally);
+    crossCheck();
+  };
+  $('d-prize-total').textContent = prizeSum(prizeTally);
+}
+
 /* เติมค่าลงฟอร์ม พร้อมย้ายของเก่าที่เคยเก็บเป็นช่องเดียวมาไว้ที่รอบเช้า
    ยอดรวมทั้งวันจะได้เท่าเดิม ไม่ต้องไปนั่งกรอกใหม่ */
 function fillDayFields(v){
   DAYF.forEach(id=>{ const el = $(id); if(el && v[id] !== undefined) el.value = v[id]; });
+  if(v.prizes && typeof v.prizes === 'object') prizeTally = JSON.parse(JSON.stringify(v.prizes));
   ROUNDF.forEach(k=>{
     if(k === 'shops') return;
     if(v['d-m-'+k] === undefined && v['d-e-'+k] === undefined && v['d-'+k] !== undefined){
@@ -3088,10 +3146,13 @@ function crossCheck(){
   const logged = dayTrades(d).reduce((n,t)=> n + listOf(t,'premium').length, 0);
   const regs   = dayLeads(d).length;
   const trs    = dayTrades(d).length;
-  el.textContent = 'ระบบนับจากโต๊ะแลกของได้ ' + logged + ' ชิ้น จากทั้งหมด ' + trs
-    + ' รายการแลก และวันนี้มีคนในระบบ ' + regs + ' คน'
+  const pz = prizeSum(prizeTally);
+  el.textContent = 'โต๊ะแลกของบันทึกไว้ ' + logged + ' ชิ้น จาก ' + trs
+    + ' รายการแลก และของรางวัลเกมอีก ' + pz + ' ชิ้น รวมที่ระบบนับได้ ' + (logged + pz)
+    + ' ชิ้น วันนี้มีคนในระบบ ' + regs + ' คน'
     + (typed > logged + 3
-        ? ' · ที่พิมพ์ไว้มากกว่าที่บันทึก ' + (typed - logged) + ' ชิ้น เช็กว่ามีใครรับของแล้วยังไม่ได้ลงในโต๊ะแลกของหรือเปล่า'
+        ? ' · ช่องพรีเมียมที่พิมพ์ไว้มากกว่าที่โต๊ะแลกของบันทึก ' + (typed - logged)
+          + ' ชิ้น ถ้าเป็นของรางวัลเกมให้ย้ายไปกรอกในการ์ดของรางวัลแทน จะได้ไม่นับซ้ำ'
         : '');
 }
 
@@ -3162,6 +3223,7 @@ async function openDay(date){
   const d = date || todayISO();
   $('d-date').value = d;
   DAYF.forEach(id=>{ const el = $(id); if(el) el.value = NUMF.has(id) ? 0 : ''; });
+  prizeTally = {};
   if(db){
     try{
       const snap = await FS.getDoc(FS.doc(db, COL.days, d));
@@ -3205,6 +3267,8 @@ async function openDay(date){
       if(am.length) $('d-amphoe').value = am.join(' / ');
     }
   }
+  renderPrizes();
+
   const inDay = dayLeads(d).length, trDay = dayTrades(d).length;
   $('d-hint').textContent = 'ลงทะเบียนผ่านเว็บวันนี้ ' + inDay + ' คน · บันทึกแลกของแล้ว '
     + trDay + ' ราย (ตัวเลขร้านค้าให้นับจากหน้างานจริง)';
@@ -3233,6 +3297,7 @@ async function saveDay(){
     rec[id] = NUMF.has(id) ? num(el.value) : el.value.trim();
   });
   rec.totalShops = rec['d-m-shops'] + rec['d-e-shops'];
+  rec.prizes     = prizeTally;
   LS.set('day_'+d, rec);
   const btn = $('d-save'); btn.disabled = true; btn.textContent = 'กำลังบันทึก…';
   try{
@@ -3547,6 +3612,21 @@ async function renderTripReport(){
   $('r-shops').textContent   = shops;
   $('r-coupon').textContent  = sumD('coupon');
   $('r-premium').textContent = sumD('premium');
+
+  /* ของรางวัลเกม รวมทุกวัน แยกตามรายการ เอาไปกรอกรายงานลูกค้าได้ตรง ๆ */
+  const pz = {};
+  days.forEach(v=>{
+    const t = v.prizes || {};
+    Object.keys(t).forEach(k=>{ pz[k] = (pz[k]||0) + num(t[k].m) + num(t[k].e); });
+  });
+  const pe = Object.entries(pz).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  const pt = pe.reduce((n,e)=>n+e[1],0);
+  $('r-prize').textContent = pt;
+  $('d-prize-sum').innerHTML = pe.length
+    ? `<thead><tr><th>ของรางวัลจากเกม</th><th>จำนวน (ชิ้น)</th></tr></thead><tbody>`
+      + pe.map(([k,v])=>`<tr><td>${esc(k)}</td><td><b>${v}</b></td></tr>`).join('')
+      + `<tr><td><b>รวม</b></td><td><b>${pt}</b></td></tr></tbody>`
+    : '';
 
   $('d-report').innerHTML =
     `<thead><tr><th>วันที่</th><th>จังหวัด</th><th>ตลาดเช้า</th><th>เช้า</th>
