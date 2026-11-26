@@ -86,6 +86,8 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
   padding:15px;font:inherit;font-size:17px;font-weight:600;cursor:pointer;margin-top:18px;transition:.15s}
 .btn:active{transform:scale(.99)}
 a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
+/* ชื่อที่ทีมเดินเก็บมาเอง ไม่ได้มาจากการสแกน แยกด้วยสีน้ำเงิน */
+.manual{color:#3A46C8}
 /* ชิปแบบติ๊กได้หลายอัน ใช้กับของที่นำมาแลกและของที่ให้ไป */
 .chips.multi{gap:7px;margin-top:7px}
 .chips.multi .chip{padding:9px 13px;font-size:14.5px;position:relative;padding-left:30px}
@@ -622,6 +624,7 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
           <input id="a-f-to" type="date">
         </div>
         <div class="scroll"><table class="tbl" id="a-table"></table></div>
+        <p class="tot" id="a-manual-note"></p>
         <p class="tot" id="a-more"></p>
         <div class="brow">
           <button class="btn" id="btn-csv">ดาวน์โหลด CSV</button>
@@ -703,6 +706,18 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
         <span class="gl"><span class="dot opt"></span><b>เทา</b> ไม่มีก็ข้ามได้</span>
         <span class="gl"><span class="dot auto"></span><b>น้ำเงิน</b> ระบบคิดให้จากยี่ห้อที่เขาใช้</span>
       </div>
+
+      <div class="row">
+        <div class="f"><label style="margin-top:0"><span class="dot auto"></span>วันที่</label>
+          <input id="nw-date" type="date"></div>
+        <div class="f"><label style="margin-top:0"><span class="dot auto"></span>รอบ</label>
+          <select id="nw-round">
+            <option value="เช้า">เช้า</option><option value="เย็น">เย็น</option>
+          </select></div>
+      </div>
+
+      <label><span class="dot auto"></span>จุด <span class="opt">(เปลี่ยนวันที่แล้วระบบเลือกจุดของวันนั้นให้)</span></label>
+      <select id="nw-venue"></select>
 
       <label><span class="dot need"></span>ชื่อ - นามสกุล / ชื่อร้าน</label>
       <input id="nw-name" type="text" placeholder="เช่น พี่แดง หรือ ชาไข่มุกพี่แดง">
@@ -2188,7 +2203,7 @@ function renderAdmin(){
           <button class="rowedit" data-edit="${esc(l._id || l.localId || '')}" title="แก้ชื่อหรือเบอร์">✎</button>
           <button class="rowdel" data-row="${esc(l._id || l.localId || '')}" title="ลบแถวนี้">×</button></td>
         <td>${esc(dayOf(l))}</td>
-        <td>${esc(l.name)}</td>
+        <td${l.source === 'manual' ? ' class="manual"' : ''}>${esc(l.name)}</td>
         <td>${esc(l.phone)}</td>
         <td>${l.venue?`<span class="tag">${esc(l.venue)}</span>`:''}</td>
         <td>${esc(l.status||'')}</td>
@@ -2201,6 +2216,10 @@ function renderAdmin(){
       </tr>`).join('')
       : `<tr><td colspan="12" style="color:var(--muted);padding:18px 8px">ยังไม่มีข้อมูล</td></tr>`) +
     `</tbody>`;
+  const mN = shown.filter(l=>l.source === 'manual').length;
+  $('a-manual-note').innerHTML = mN
+    ? '<b class="manual">ชื่อสีน้ำเงิน</b> คือรายชื่อที่ทีมเดินเก็บมาเอง ไม่ได้มาจากการสแกน ' + mN + ' คนในหน้านี้'
+    : '';
   $('a-more').textContent = rows.length > 50
     ? `แสดง 50 รายการล่าสุดจากทั้งหมด ${rows.length} รายการ ดาวน์โหลด CSV เพื่อดูครบ` : '';
 }
@@ -2706,19 +2725,22 @@ function drawTradeList(){
   const list  = pool.filter(match).slice(0, 400);
   const todayN = leads.filter(l => dayOf(l) === today).length;
 
-  $('tr-count').textContent = q
+  const manualN = list.filter(l => l.source === 'manual').length;
+  $('tr-count').innerHTML = (q
     ? 'ค้นเจอ ' + list.length + ' คน จากทุกวัน'
     : 'ลงทะเบียนวันนี้ ' + todayN + ' คน แลกแล้ว '
       + leads.filter(l => dayOf(l) === today && done.has(l._id || l.localId)).length + ' คน'
-      + (list.length < todayN ? ' · แสดง ' + list.length + ' คนแรก' : '');
+      + (list.length < todayN ? ' · แสดง ' + list.length + ' คนแรก' : ''))
+    + (manualN ? ' · <b class="manual">ชื่อสีน้ำเงิน</b> คือรายชื่อที่ทีมเก็บมาเอง ' + manualN + ' คน' : '');
 
   $('tr-list').innerHTML = list.length
     ? list.map(l=>{
         const id = l._id || l.localId;
         const ep = ((CFG.entryPoints||{})[l.entry]||{}).name || '';
         const dy = dayOf(l);
+        const mn = l.source === 'manual' ? ' class="manual"' : '';
         return `<div class="rcard" data-lead="${esc(id)}" style="margin-bottom:8px">
-          <div class="body"><b>${esc(l.name||'')}</b>
+          <div class="body"><b${mn}>${esc(l.name||'')}</b>
             <small>${esc(l.phone||'')} · ${esc(ep)}${dy !== today ? ' · ' + esc(thaiDate(dy)) : ''}${done.has(id) ? ' · แลกแล้ว' : ''}</small></div>
           <div class="go">${done.has(id) ? '✓' : '›'}</div></div>`;
       }).join('')
@@ -2803,6 +2825,22 @@ function nwNeedsTradeIn(){
   return vendor && (k === 'nonuser' || k === 'switcherA' || k === 'switcherB');
 }
 
+/* จุดของวันที่เลือก เอาจากตารางเดินทางก่อน ไม่มีค่อยใช้รายชื่อจุดทั้งหมด
+   ลงย้อนหลังได้ เปลี่ยนวันที่แล้วลิสต์จุดเปลี่ยนตาม จะได้ไม่ลงผิดจุด */
+function nwFillVenues(){
+  const d  = $('nw-date').value || localDay();
+  const sc = (CFG.schedule||[]).filter(x=>x.date === d).map(x=>x.venue).filter(Boolean);
+  const all = [...new Set([].concat(sc, VENUES, leads.map(l=>l.venue)).filter(Boolean))];
+  const keep = $('nw-venue').value;
+  $('nw-venue').innerHTML = '<option value="">— เลือกจุด —</option>'
+    + all.map(v=>`<option${v === keep ? ' selected' : ''}>${esc(v)}</option>`).join('');
+  /* วันนั้นมีจุดเดียวในตาราง เลือกให้เลย สองจุดค่อยให้เลือกตามรอบ */
+  if(!$('nw-venue').value){
+    if(sc.length === 1) $('nw-venue').value = sc[0];
+    else if(sc.length > 1) $('nw-venue').value = $('nw-round').value === 'เช้า' ? sc[0] : sc[1];
+  }
+}
+
 function nwEntry(){
   return entryOf($('nw-sweet').value, $('nw-plain').value);
 }
@@ -2860,6 +2898,10 @@ function openNewLead(){
   fillMulti('nw-given',   CFG.tradeOut || []);
   fillMulti('nw-premium', CFG.premiumItems || []);
 
+  $('nw-date').value  = localDay();
+  $('nw-round').value = (new Date().getHours() < 14) ? 'เช้า' : 'เย็น';
+  nwFillVenues();
+
   ['nw-name','nw-phone','nw-brand'].forEach(id=> $(id).value = '');
   $('nw-brand').dataset.touched = '0';
   $('nw-consent').checked = false;
@@ -2887,6 +2929,7 @@ async function saveNewLead(){
   if(!nwStatus)              return fail('เลือกว่าเขาคือใคร');
   if(!sweet || !plain)       return fail('เลือกยี่ห้อข้นหวานและข้นจืดที่เขาใช้');
   if(!$('nw-consent').checked) return fail('ติ๊กยืนยันว่าลูกค้ายินยอมให้เก็บข้อมูลก่อน');
+  if(!$('nw-venue').value)         return fail('เลือกจุดก่อน');
   if(!multiVal('nw-given').length) return fail('ติ๊กของที่ให้ไปก่อน');
   if(nwNeedsTradeIn() && !multiVal('nw-brought').length) return fail('ติ๊กของที่เขานำมาแลกก่อน');
 
@@ -2896,11 +2939,12 @@ async function saveNewLead(){
   /* คนเดียวกันอาจสแกนเองไปแล้ว หรือสตาฟอีกคนเพิ่งกรอกให้
      เช็คจากเบอร์ก่อน ไม่มีเบอร์ค่อยเทียบชื่อ เจอแล้วถามก่อน ไม่ห้ามขาด
      ถ้าไม่เช็ค ยอดลงทะเบียนจะเกินจริงแบบเงียบ ๆ                          */
+  const day = $('nw-date').value || localDay();
   const digits = phone.replace(/\D/g,'');
-  const dupe = leads.find(l => dayOf(l) === localDay() && (
+  const dupe = leads.find(l => dayOf(l) === day && (
         (digits && String(l.phone||'').replace(/\D/g,'') === digits)
      || (!digits && (l.name||'').trim() === name)));
-  if(dupe && !confirm('วันนี้มี "' + (dupe.name||'-') + '" อยู่ในระบบแล้ว'
+  if(dupe && !confirm('วันที่ ' + thaiDate(day) + ' มี "' + (dupe.name||'-') + '" อยู่ในระบบแล้ว'
       + (digits ? ' เบอร์ตรงกัน' : ' ชื่อตรงกัน')
       + '\n\nกด ตกลง ถ้าเป็นคนละคนจริง ๆ และต้องการเพิ่ม'
       + '\nกด ยกเลิก ถ้าเป็นคนเดียวกัน แล้วไปกดชื่อเดิมในรายการแทน')){
@@ -2913,14 +2957,17 @@ async function saveNewLead(){
   const btn = $('nw-save'); btn.disabled = true; btn.textContent = 'กำลังบันทึก…';
   const lead = {
     name, phone,
-    venue:      autoVenue || venueToday() || '',
+    venue:      $('nw-venue').value,
     status:     nwStatus,
     brandSweet: sweet,
     brandPlain: plain,
     entry:      nwEntry(),
-    round: (new Date().getHours() < 14) ? 'เช้า' : 'เย็น',
-    day:       localDay(),
+    round:      $('nw-round').value,
+    day,
     consent:   true,
+    /* ธงบอกว่ารายชื่อนี้ทีมเดินเก็บมาเอง ไม่ได้มาจากการสแกน
+       ใช้โชว์เป็นตัวหนังสือสีน้ำเงินในรายชื่อ ยอดยังนับรวมเป็นก้อนเดียวเหมือนเดิม */
+    source:    'manual',
     createdAt: new Date().toISOString()
   };
   try{
@@ -4210,6 +4257,8 @@ $('nw-save').onclick   = saveNewLead;
 $('nw-phone').oninput  = e=>{ e.target.value = fmtPhone(e.target.value); };
 ['nw-sweet','nw-plain'].forEach(id=> $(id).onchange = nwShowEntry);
 $('nw-brought').addEventListener('pick', nwFillBrand);
+$('nw-date').onchange  = ()=>{ $('nw-venue').value = ''; nwFillVenues(); };
+$('nw-round').onchange = ()=>{ $('nw-venue').value = ''; nwFillVenues(); nwShowEntry(); };
 $('nw-brand').oninput    = e=>{ e.target.dataset.touched = '1'; };
 
 $('tr-reload').onclick = async ()=>{
