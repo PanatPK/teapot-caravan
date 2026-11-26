@@ -1019,6 +1019,10 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
     <select id="le-round">
       <option value="">ไม่ระบุ</option><option>เช้า</option><option>เย็น</option>
     </select>
+    <label class="consent" for="le-manual" style="font-weight:400;margin-top:16px">
+      <input id="le-manual" type="checkbox">
+      <span>รายชื่อนี้ทีมเดินเก็บมาเอง ไม่ได้มาจากการสแกน ติ๊กแล้วชื่อจะขึ้นเป็นสีน้ำเงินในรายการ</span>
+    </label>
     <p class="foot" style="margin:10px 0 0;text-align:left">แก้จุดเผื่อคนลงทะเบียนตอนกำลังย้ายจุด
       แล้วระบบจับไปลงจุดเดิม รายการแลกของของคนนี้จะย้ายตามให้เอง</p>
     <div class="err-msg" id="le-err"></div>
@@ -2242,6 +2246,7 @@ function openLeadEdit(id){
   $('le-venue').innerHTML = '<option value="">ไม่ระบุ</option>'
     + vs.map(v=>`<option${v === l.venue ? ' selected' : ''}>${esc(v)}</option>`).join('');
   $('le-round').value = l.round || '';
+  $('le-manual').checked = l.source === 'manual';
   $('le-err').classList.remove('on');
   openSheet('leadsheet');
 }
@@ -2255,6 +2260,9 @@ async function saveLeadEdit(){
   const phone = $('le-phone').value.trim();
   const venue = $('le-venue').value;
   const round = $('le-round').value;
+  /* ติ๊กไว้ = ทีมเก็บมาเอง ไม่ติ๊ก = มาจากการสแกน
+     ใช้ย้อนไปติดธงให้รายชื่อที่คีย์ไว้ก่อนมีฟีเจอร์นี้ได้ด้วย */
+  const source = $('le-manual').checked ? 'manual' : '';
   const digits = phone.replace(/\D/g,'');
   err.classList.remove('on');
   if(name.length < 2){ err.textContent='ใส่ชื่อก่อน'; err.classList.add('on'); return; }
@@ -2262,7 +2270,7 @@ async function saveLeadEdit(){
 
   const btn = $('le-save'); btn.disabled = true; btn.textContent = 'กำลังบันทึก…';
   try{
-    const patch = { name, phone, venue, round };
+    const patch = { name, phone, venue, round, source };
     if(db && editLead._id){
       await FS.updateDoc(FS.doc(db, COL.leads, editLead._id), patch);
     }
