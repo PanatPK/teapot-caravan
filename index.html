@@ -86,6 +86,14 @@ select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns=
   padding:15px;font:inherit;font-size:17px;font-weight:600;cursor:pointer;margin-top:18px;transition:.15s}
 .btn:active{transform:scale(.99)}
 a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
+/* ชิปแบบติ๊กได้หลายอัน ใช้กับของที่นำมาแลกและของที่ให้ไป */
+.chips.multi{gap:7px;margin-top:7px}
+.chips.multi .chip{padding:9px 13px;font-size:14.5px;position:relative;padding-left:30px}
+.chips.multi .chip::before{content:'';position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  width:14px;height:14px;border:1.5px solid var(--line);border-radius:4px;background:#fff}
+.chips.multi .chip.sel::before{background:#fff;border-color:#fff}
+.chips.multi .chip.sel::after{content:'✓';position:absolute;left:13px;top:50%;
+  transform:translateY(-50%);font-size:12px;font-weight:700;color:var(--navy)}
 /* ตัวเลือกภาษา หน้าลูกค้าเท่านั้น หลังบ้านใช้ไทยอย่างเดียว */
 .langsel{display:inline-flex;gap:4px;background:rgba(255,255,255,.14);border-radius:999px;padding:3px}
 .langsel button{border:0;background:transparent;color:#fff;font:inherit;font-size:13px;font-weight:600;
@@ -687,7 +695,7 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
     <!-- กรอกรายชื่อที่ทีมเดินเก็บมาเอง ลูกค้าไม่ได้สแกน QR -->
     <div class="card" id="nw-form" style="display:none">
       <h2>เพิ่มคนที่ไม่ได้สแกน</h2>
-      <p class="sub">ใช้กับรายชื่อที่ทีมเดินเก็บมาเอง กรอกทีละคน พอบันทึกแล้วระบบจะพาไปหน้าแลกของต่อให้เลย
+      <p class="sub">ใช้กับรายชื่อที่ทีมเดินเก็บมาเอง กรอกจบในหน้าเดียว ทั้งข้อมูลคนและของที่แลก
         เงื่อนไขของแจกใช้ชุดเดียวกับคนที่สแกน ไม่ต้องตั้งค่าอะไรเพิ่ม</p>
 
       <div class="guide">
@@ -713,13 +721,27 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
 
       <div id="nw-ep" class="ep" style="display:none;margin-top:14px"></div>
 
+      <div id="nw-trade" style="display:none">
+        <label><span class="dot need"></span>นำมาแลก <span class="opt">(ติ๊กได้หลายอย่าง)</span></label>
+        <div class="chips multi" id="nw-brought"></div>
+
+        <label><span class="dot auto"></span>ยี่ห้อที่นำมา <span class="opt">(ระบบเติมจากยี่ห้อที่เขาใช้ แก้ได้)</span></label>
+        <input id="nw-brand" type="text" placeholder="เช่น Falcon">
+
+        <label><span class="dot auto"></span>ของที่ให้ไป <span class="opt">(ระบบติ๊กตามกลุ่มให้ เพิ่มหรือเอาออกได้)</span></label>
+        <div class="chips multi" id="nw-given"></div>
+
+        <label><span class="dot opt"></span>ของพรีเมียม <span class="opt">(ติ๊กได้หลายอย่าง)</span></label>
+        <div class="chips multi" id="nw-premium"></div>
+      </div>
+
       <label class="consent" for="nw-consent" style="font-weight:400;margin-top:16px">
         <input id="nw-consent" type="checkbox">
         <span>ลูกค้ารับทราบและยินยอมให้เก็บชื่อกับเบอร์โทรไว้ติดต่อ ตามข้อความ PDPA ที่แจ้งหน้าบูธ</span>
       </label>
 
       <div class="err-msg" id="nw-err"></div>
-      <button class="btn" id="nw-save">บันทึกแล้วไปหน้าแลกของ</button>
+      <button class="btn" id="nw-save">บันทึกคนนี้</button>
       <button class="btn ghost sm" id="nw-cancel">ยกเลิก</button>
     </div>
 
@@ -732,14 +754,14 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
         <span class="gl"><span class="dot opt"></span><b>เทา</b> มีก็ใส่ ไม่มีก็ข้ามได้</span>
         <span class="gl"><span class="dot auto"></span><b>น้ำเงิน</b> ระบบรู้อยู่แล้วจากตอนลงทะเบียน</span>
       </div>
-      <label><span class="dot need"></span>นำมาแลก</label>
-      <select id="tr-brought"></select>
+      <label><span class="dot need"></span>นำมาแลก <span class="opt">(ติ๊กได้หลายอย่าง)</span></label>
+      <div class="chips multi" id="tr-brought"></div>
       <label><span class="dot opt"></span>ยี่ห้อที่นำมา</label>
       <input id="tr-brand" type="text" placeholder="เช่น Falcon">
-      <label><span class="dot need"></span>ของที่ให้ไป</label>
-      <select id="tr-given"></select>
-      <label><span class="dot opt"></span>ของพรีเมียม</label>
-      <select id="tr-premium"></select>
+      <label><span class="dot need"></span>ของที่ให้ไป <span class="opt">(ติ๊กได้หลายอย่าง)</span></label>
+      <div class="chips multi" id="tr-given"></div>
+      <label><span class="dot opt"></span>ของพรีเมียม <span class="opt">(ติ๊กได้หลายอย่าง)</span></label>
+      <div class="chips multi" id="tr-premium"></div>
       <button class="btn" id="tr-save">บันทึกการแลก</button>
       <button class="btn ghost sm" id="tr-cancel">ยกเลิก</button>
     </div>
@@ -2109,10 +2131,12 @@ function renderAdmin(){
   /* ของที่แลกไป มาจากหน้าสตาฟที่โต๊ะแลก */
   const tOut = {}, pmc = {}, tIn = {}, inBrand = {};
   trades.forEach(t=>{
-    if(t.given)   tOut[t.given]   = (tOut[t.given]||0)+1;
-    if(t.premium) pmc[t.premium]  = (pmc[t.premium]||0)+1;
-    if(t.brought) tIn[t.brought]  = (tIn[t.brought]||0)+1;
-    if(t.brand)   inBrand[t.brand.trim()] = (inBrand[t.brand.trim()]||0)+1;
+    listOf(t,'given')  .forEach(v=> tOut[v] = (tOut[v]||0)+1);
+    listOf(t,'premium').forEach(v=> pmc[v]  = (pmc[v]||0)+1);
+    listOf(t,'brought').forEach(v=> tIn[v]  = (tIn[v]||0)+1);
+    /* ยี่ห้อที่นำมาอาจมีสองยี่ห้อคั่นด้วย / แยกนับทีละยี่ห้อ */
+    String(t.brand||'').split('/').map(x=>x.trim()).filter(Boolean)
+      .forEach(v=> inBrand[v] = (inBrand[v]||0)+1);
   });
   const te = Object.entries(tOut).sort((a,b)=>b[1]-a[1]);
   const tt = te.reduce((s,e)=>s+e[1],0);
@@ -2364,7 +2388,8 @@ async function drawReport(){
 
   /* ยี่ห้อเดิมของคนที่มาแลก = ยี่ห้อที่เราชิงมาได้ */
   const fc = {};
-  T.forEach(t => { const b = (t.brand||'').trim(); if(b) fc[b] = (fc[b]||0) + 1; });
+  T.forEach(t => String(t.brand||'').split('/').map(x=>x.trim()).filter(Boolean)
+      .forEach(b=> fc[b] = (fc[b]||0) + 1));
   bars($('rp-from'), fc);
 
   /* ทั้งทริป */
@@ -2644,11 +2669,9 @@ function downloadCSV(){
 let trades = [], trLead = null;
 
 function openTrade(){
-  const fillSel = (id, arr)=>{ $(id).innerHTML = '<option value="">— เลือก —</option>'
-    + (arr||[]).map(v=>`<option>${esc(v)}</option>`).join(''); };
-  fillSel('tr-brought', CFG.tradeIn  || []);
-  fillSel('tr-given',   CFG.tradeOut || []);
-  fillSel('tr-premium', CFG.premiumItems || []);
+  fillMulti('tr-brought', CFG.tradeIn  || []);
+  fillMulti('tr-given',   CFG.tradeOut || []);
+  fillMulti('tr-premium', CFG.premiumItems || []);
   $('tr-form').style.display = 'none';
   $('nw-form').style.display = 'none';
   $('tr-search').value = '';
@@ -2699,7 +2722,72 @@ function drawTradeList(){
    กลุ่มกับของที่ได้ใช้กติกาเดิมจากไฟล์เนื้อหา ไม่มีการตั้งค่าแยก
    บันทึกเสร็จเด้งไปหน้าแลกของของคนนั้นต่อทันที จะได้ลงของที่แลกในจังหวะเดียว
    =================================================================== */
+/* ---------- ชิปติ๊กได้หลายอัน ----------
+   ใช้กับของที่นำมาแลก ของที่ให้ไป และของพรีเมียม
+   หน้างานมีคนเอามาแลกทั้งข้นหวานและข้นจืดในครั้งเดียว ต้องติ๊กได้มากกว่าหนึ่ง */
+function fillMulti(boxId, arr, picked){
+  const box = $(boxId); if(!box) return;
+  const want = new Set(picked || []);
+  box.innerHTML = '';
+  (arr || []).forEach(v=>{
+    const el = document.createElement('div');
+    el.className = 'chip' + (want.has(v) ? ' sel' : '');
+    el.dataset.v = v; el.textContent = T(v);
+    el.onclick = ()=>{
+      el.classList.toggle('sel');
+      box.dispatchEvent(new CustomEvent('pick', {bubbles:true}));
+    };
+    box.appendChild(el);
+  });
+}
+const multiVal = boxId =>
+  [...$(boxId).querySelectorAll('.chip.sel')].map(c=>c.dataset.v);
+function setMulti(boxId, picked){
+  const want = new Set(picked || []);
+  $(boxId).querySelectorAll('.chip').forEach(c=> c.classList.toggle('sel', want.has(c.dataset.v)));
+}
+
+/* รายการแลกเก่าเก็บเป็นข้อความเดี่ยว ตัวใหม่เก็บเป็นลิสต์
+   อ่านผ่านตัวนี้ทุกที่ รายงานเก่ากับใหม่จึงนับรวมกันได้ ไม่ต้องล้างข้อมูล */
+function listOf(t, key){
+  const arr = t[key + 'List'];
+  if(Array.isArray(arr) && arr.length) return arr.filter(Boolean);
+  return t[key] ? [t[key]] : [];
+}
+
 let nwStatus = '';
+
+/* ของที่ให้ไป เดาจากข้อความเงื่อนไขของกลุ่มนั้น หาคำที่ตรงกับรายการใน tradeOut
+   แก้ข้อความในไฟล์เนื้อหาเมื่อไหร่ ตรงนี้ตามไปเอง ไม่ต้องมาแก้โค้ด */
+function suggestGiven(key, status){
+  const ep = (CFG.entryPoints || {})[key]; if(!ep) return '';
+  const vendor = /ขาย|ร้าน/.test(status || '');
+  const offer  = String(vendor ? (ep.vendor||'') : (ep.home||''));
+  const hit = (CFG.tradeOut || []).filter(v => offer.indexOf(v) >= 0);
+  /* เจอหลายอัน เอาอันที่ยาวสุด กันกรณีชื่อสั้นเป็นส่วนหนึ่งของชื่อยาว */
+  return hit.sort((a,b)=>b.length-a.length)[0] || '';
+}
+
+/* ยี่ห้อที่เขาถือมา ดูจากว่าของที่เอามาแลกเป็นข้นหวานหรือข้นจืด
+   แล้วหยิบยี่ห้อที่เขากรอกไว้ของฝั่งนั้นมาใส่ให้ ไม่ต้องพิมพ์ซ้ำ */
+function brandForBrought(brought, sweet, plain){
+  const list = Array.isArray(brought) ? brought : (brought ? [brought] : []);
+  const out = [];
+  list.forEach(v=>{
+    const t = String(v || '');
+    if(/ข้นหวาน/.test(t) && sweet && out.indexOf(sweet) < 0) out.push(sweet);
+    if(/ข้นจืด/.test(t)  && plain && out.indexOf(plain) < 0) out.push(plain);
+  });
+  return out.join(' / ');
+}
+
+/* กลุ่มที่ต้องเอาของมาแลกจริง ๆ คือคนชงขายที่ยังไม่ได้ใช้ครบคู่
+   ผู้บริโภคทั่วไปกับ Teapot Lover รับของได้เลย ไม่ต้องมีของมาแลก */
+function nwNeedsTradeIn(){
+  const vendor = /ขาย|ร้าน/.test(nwStatus || '');
+  const k = nwEntry();
+  return vendor && (k === 'nonuser' || k === 'switcherA' || k === 'switcherB');
+}
 
 function nwEntry(){
   return entryOf($('nw-sweet').value, $('nw-plain').value);
@@ -2707,10 +2795,30 @@ function nwEntry(){
 
 function nwShowEntry(){
   const k = nwEntry(), box = $('nw-ep');
-  if(!k){ box.style.display = 'none'; return; }
+  if(!k){ box.style.display = 'none'; $('nw-trade').style.display = 'none'; return; }
   box.className = 'ep' + (k === 'loyal' ? ' loyal' : '');
   box.style.display = 'block';
   box.innerHTML = offerHTML(k, nwStatus);
+
+  /* รู้กลุ่มแล้วค่อยเปิดบล็อกของที่แลก พร้อมเดาของที่ให้ไปไว้ให้ */
+  $('nw-trade').style.display = nwStatus ? 'block' : 'none';
+  const need = nwNeedsTradeIn();
+  ['nw-brought','nw-brand'].forEach(id=>{
+    const row = $(id); if(!row) return;
+    row.style.display = need ? '' : 'none';
+    row.previousElementSibling.style.display = need ? '' : 'none';
+  });
+  if(!need){ setMulti('nw-brought', []); $('nw-brand').value = ''; }
+  const g = suggestGiven(k, nwStatus);
+  if(g && !multiVal('nw-given').length) setMulti('nw-given', [g]);
+  nwFillBrand();
+}
+
+/* เติมยี่ห้อที่นำมาให้ตามของที่เลือก ถ้าสตาฟพิมพ์เองไว้แล้วไม่ไปทับ */
+function nwFillBrand(){
+  const el = $('nw-brand');
+  if(el.dataset.touched === '1') return;
+  el.value = brandForBrought(multiVal('nw-brought'), $('nw-sweet').value, $('nw-plain').value);
 }
 
 function openNewLead(){
@@ -2734,9 +2842,15 @@ function openNewLead(){
     wrap.appendChild(el);
   });
 
-  ['nw-name','nw-phone'].forEach(id=> $(id).value = '');
+  fillMulti('nw-brought', CFG.tradeIn  || []);
+  fillMulti('nw-given',   CFG.tradeOut || []);
+  fillMulti('nw-premium', CFG.premiumItems || []);
+
+  ['nw-name','nw-phone','nw-brand'].forEach(id=> $(id).value = '');
+  $('nw-brand').dataset.touched = '0';
   $('nw-consent').checked = false;
   $('nw-ep').style.display = 'none';
+  $('nw-trade').style.display = 'none';
   $('nw-err').classList.remove('on');
   $('tr-form').style.display = 'none';
   $('nw-form').style.display = 'block';
@@ -2759,6 +2873,8 @@ async function saveNewLead(){
   if(!nwStatus)              return fail('เลือกว่าเขาคือใคร');
   if(!sweet || !plain)       return fail('เลือกยี่ห้อข้นหวานและข้นจืดที่เขาใช้');
   if(!$('nw-consent').checked) return fail('ติ๊กยืนยันว่าลูกค้ายินยอมให้เก็บข้อมูลก่อน');
+  if(!multiVal('nw-given').length) return fail('ติ๊กของที่ให้ไปก่อน');
+  if(nwNeedsTradeIn() && !multiVal('nw-brought').length) return fail('ติ๊กของที่เขานำมาแลกก่อน');
 
   /* เบอร์ว่างได้ แต่ถ้าใส่มาต้องครบ กันพิมพ์ตกหล่น */
   if(phone && !validPhone(phone)) return fail('เบอร์โทรไม่ครบ ถ้าไม่มีเบอร์ให้ลบออกให้ว่าง');
@@ -2798,16 +2914,44 @@ async function saveNewLead(){
     const rec = Object.assign({ localId: 'M' + Date.now() }, lead, id ? { _id: id } : {});
     leads.unshift(rec);
     const mine = LS.get('local_leads',[]); mine.push(rec); LS.set('local_leads', mine);
+
+    /* บันทึกรายการแลกต่อให้เลยในครั้งเดียว ไม่ต้องเด้งไปอีกหน้า */
+    const tr = {
+      leadId:   rec._id || rec.localId,
+      leadName: name,
+      entry:    lead.entry,
+      venue:    lead.venue,
+      round:    lead.round,
+      broughtList: multiVal('nw-brought'),
+      givenList:   multiVal('nw-given'),
+      premiumList: multiVal('nw-premium'),
+      /* เก็บช่องเดี่ยวไว้ด้วย รายงานเก่าหรือคนเปิดชีตดูยังอ่านรู้เรื่อง */
+      brought:  multiVal('nw-brought')[0] || '',
+      brand:    $('nw-brand').value.trim(),
+      given:    multiVal('nw-given')[0]   || '',
+      premium:  multiVal('nw-premium')[0] || '',
+      day:       lead.day,
+      createdAt: new Date().toISOString()
+    };
+    if(db) await FS.addDoc(FS.collection(db, COL.trades), tr);
+    trades.push(tr);
+    LS.set('local_trades', trades);
+
     closeNewLead();
     drawTradeList();
-    pickLead(rec._id || rec.localId);
-    toast(id ? 'เพิ่ม ' + name + ' แล้ว ลงของที่แลกต่อได้เลย'
+    toast(id ? 'บันทึก ' + name + ' พร้อมของที่แลกแล้ว'
              : 'บันทึกไว้ในเครื่องแล้ว จะส่งขึ้นเซิร์ฟเวอร์เมื่อมีสัญญาณ');
     pushAuto(lead.day);
   }catch(e){
     fail('บันทึกไม่สำเร็จ ' + (e.code || e.message || ''));
   }
-  btn.disabled = false; btn.textContent = 'บันทึกแล้วไปหน้าแลกของ';
+  btn.disabled = false; btn.textContent = 'บันทึกคนนี้';
+}
+
+function trFillBrand(){
+  const el = $('tr-brand');
+  if(!trLead || el.dataset.touched === '1') return;
+  el.value = brandForBrought(multiVal('tr-brought'), trLead.brandSweet, trLead.brandPlain);
 }
 
 function pickLead(id){
@@ -2825,9 +2969,17 @@ function pickLead(id){
   if(mine.length){
     w.style.display = 'block';
     w.textContent = 'คนนี้บันทึกแลกไปแล้ว ' + mine.length + ' ครั้ง '
-      + mine.map(t=>t.given || '-').join(' · ')
+      + mine.map(t=> listOf(t,'given').join(' + ') || '-').join(' · ')
       + ' ถ้าไม่ได้ให้ของเพิ่มจริง ไม่ต้องบันทึกซ้ำ';
   }else w.style.display = 'none';
+
+  /* เติมของที่ให้ไปตามกลุ่ม และยี่ห้อที่นำมาจากยี่ห้อที่เขากรอกไว้ตอนลงทะเบียน
+     สตาฟแค่เช็กว่าตรงมั้ย ไม่ต้องพิมพ์ซ้ำสิ่งที่ระบบรู้อยู่แล้ว */
+  setMulti('tr-brought', []); setMulti('tr-premium', []);
+  const g = suggestGiven(trLead.entry, trLead.status);
+  setMulti('tr-given', g ? [g] : []);
+  $('tr-brand').dataset.touched = '0';
+  trFillBrand();
 
   $('tr-form').style.display = 'block';
   $('tr-form').scrollIntoView({behavior:'smooth', block:'start'});
@@ -2841,14 +2993,17 @@ async function saveTrade(){
     entry:    trLead.entry || '',
     venue:    trLead.venue || '',
     round:    trLead.round || '',
-    brought:  $('tr-brought').value,
+    broughtList: multiVal('tr-brought'),
+    givenList:   multiVal('tr-given'),
+    premiumList: multiVal('tr-premium'),
+    brought:  multiVal('tr-brought')[0] || '',
     brand:    $('tr-brand').value.trim(),
-    given:    $('tr-given').value,
-    premium:  $('tr-premium').value,
+    given:    multiVal('tr-given')[0]   || '',
+    premium:  multiVal('tr-premium')[0] || '',
     day:       localDay(),
     createdAt: new Date().toISOString()
   };
-  if(!rec.given){ toast('เลือกของที่ให้ไปก่อน'); return; }
+  if(!rec.givenList.length){ toast('ติ๊กของที่ให้ไปก่อน'); return; }
   if(trades.some(t => t.leadId === rec.leadId)
      && !confirm('คนนี้มีรายการแลกอยู่แล้ว บันทึกเพิ่มอีกรายการ?\n\n'
         + 'กด ตกลง เฉพาะตอนที่ให้ของเพิ่มจริง ๆ')) return;
@@ -2860,6 +3015,7 @@ async function saveTrade(){
     toast('บันทึกการแลกของ ' + rec.leadName + ' แล้ว');
     $('tr-form').style.display = 'none';
     $('tr-brand').value = ''; trLead = null;
+    ['tr-brought','tr-given','tr-premium'].forEach(id=> setMulti(id, []));
     drawTradeList(); renderAdmin(); pushAuto(rec.day);
   }catch(e){
     toast(e.code === 'permission-denied'
@@ -2929,7 +3085,7 @@ function crossCheck(){
   const d = $('d-date').value;
   if(!d){ el.textContent = ''; return; }
   const typed = num($('d-m-premium').value) + num($('d-e-premium').value);
-  const logged = dayTrades(d).filter(t=>t.premium).length;
+  const logged = dayTrades(d).reduce((n,t)=> n + listOf(t,'premium').length, 0);
   const regs   = dayLeads(d).length;
   const trs    = dayTrades(d).length;
   el.textContent = 'ระบบนับจากโต๊ะแลกของได้ ' + logged + ' ชิ้น จากทั้งหมด ' + trs
@@ -3479,7 +3635,7 @@ function tradeOf(l){ return trades.find(t => t.leadId === (l._id || l.localId)) 
 
 function tradeLine(l){
   const t = tradeOf(l);
-  if(t) return (t.brought || '-') + ' → ' + (t.given || '-');
+  if(t) return (listOf(t,'brought').join(' + ') || '-') + ' → ' + (listOf(t,'given').join(' + ') || '-');
   return 'ไม่ได้แลก (ใช้ ' + (l.brandSweet||'-') + ' / ' + (l.brandPlain||'-') + ')';
 }
 
@@ -3966,11 +4122,15 @@ $('rp-date').onchange   = drawReport;
 $('rp-img').onclick     = ()=> dailyImage($('rp-date').value || todayISO());
 $('btn-csv').onclick   = downloadCSV;
 $('btn-sheet').onclick = repairSheet;
-$('tr-add').onclick    = openNewLead;
+$('tr-brought').addEventListener('pick', trFillBrand);
+$('tr-brand').oninput    = e=>{ e.target.dataset.touched = '1'; };
+$('tr-add').onclick      = openNewLead;
 $('nw-cancel').onclick = closeNewLead;
 $('nw-save').onclick   = saveNewLead;
 $('nw-phone').oninput  = e=>{ e.target.value = fmtPhone(e.target.value); };
 ['nw-sweet','nw-plain'].forEach(id=> $(id).onchange = nwShowEntry);
+$('nw-brought').addEventListener('pick', nwFillBrand);
+$('nw-brand').oninput    = e=>{ e.target.dataset.touched = '1'; };
 
 $('tr-reload').onclick = async ()=>{
   const b3 = $('tr-reload');
