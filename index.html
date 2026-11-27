@@ -977,6 +977,24 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
       <textarea id="set-bplain" rows="7"></textarea>
     </div>
 
+    <div class="card fold" data-fold="s-items">
+      <h2>ของที่แลกและของแจก</h2>
+      <p class="sub">บรรทัดละหนึ่งรายการ แก้แล้วกดบันทึกขึ้นเซิร์ฟเวอร์ท้ายหน้า
+        ทุกเครื่องเห็นทันที ไม่ต้องอัปไฟล์</p>
+
+      <label>นำมาแลก <span class="opt">(ของที่ลูกค้าถือมาที่บูธ)</span></label>
+      <textarea id="set-tin" rows="5"></textarea>
+
+      <label>ของที่ให้ไป <span class="opt">(ของที่แลกกลับไปตามเงื่อนไขกลุ่ม)</span></label>
+      <textarea id="set-tout" rows="5"></textarea>
+
+      <label>ของพรีเมียมรายคน <span class="opt">(ติ๊กรายคนในโต๊ะแลกของ ไม่ติ๊ก = ไม่ได้รับ)</span></label>
+      <textarea id="set-prem" rows="4"></textarea>
+
+      <label>ของรางวัลจากเกม <span class="opt">(กรอกเป็นจำนวนต่อรอบในหน้าบันทึกประจำวัน)</span></label>
+      <textarea id="set-prize" rows="5"></textarea>
+    </div>
+
     <div class="card fold" data-fold="s-pack">
       <h2>บรรจุภัณฑ์</h2>
       <div id="set-pack"></div>
@@ -3916,8 +3934,16 @@ function openSettings(fromFile){
     schedule:     clone(src.schedule || []),
     brandOptions: clone(src.brandOptions || {sweet:[],plain:[]}),
     packaging:    clone(src.packaging || []),
-    recipes:      clone(src.recipes || [])
+    recipes:      clone(src.recipes || []),
+    tradeIn:      clone(src.tradeIn || []),
+    tradeOut:     clone(src.tradeOut || []),
+    premiumItems: clone(src.premiumItems || []),
+    gamePrizes:   clone(src.gamePrizes || [])
   };
+  $('set-tin').value   = (ed.tradeIn      || []).join('\n');
+  $('set-tout').value  = (ed.tradeOut     || []).join('\n');
+  $('set-prem').value  = (ed.premiumItems || []).join('\n');
+  $('set-prize').value = (ed.gamePrizes   || []).join('\n');
   $('set-warn').style.display = db ? 'none' : 'block';
   $('set-warn').textContent   = 'ยังไม่ได้ต่อ Firebase หน้านี้แก้ได้แต่บันทึกไม่ได้';
   $('set-src').textContent    = srcLine();
@@ -4109,10 +4135,16 @@ function collectSettings(){
   ed.brand.subtitle  = $('set-sub').value.trim();
   ed.pdpaText        = $('set-pdpa').value.trim();
   ed.brandOptions    = { sweet: lines($('set-bsweet').value), plain: lines($('set-bplain').value) };
+  ed.tradeIn      = lines($('set-tin').value);
+  ed.tradeOut     = lines($('set-tout').value);
+  ed.premiumItems = lines($('set-prem').value);
+  ed.gamePrizes   = lines($('set-prize').value);
   ed.recipes.forEach((r,i)=>{ if(!r.id) r.id = 'r' + Date.now() + i; });
   return {
     brand: ed.brand, pdpaText: ed.pdpaText, schedule: ed.schedule,
     brandOptions: ed.brandOptions, packaging: ed.packaging, recipes: ed.recipes,
+    tradeIn: ed.tradeIn, tradeOut: ed.tradeOut,
+    premiumItems: ed.premiumItems, gamePrizes: ed.gamePrizes,
     lineUrl: $('set-line').value.trim(), lineLabel: $('set-linelb').value.trim(),
     fbUrl: $('set-fb').value.trim(), fbLabel: $('set-fblb').value.trim(),
     driveFolders: parseFolders($('set-folders').value)
