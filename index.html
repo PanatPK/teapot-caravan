@@ -596,14 +596,12 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
       </div>
 
       <div class="card fold" data-fold="trade">
-        <h2>ของที่แลกไป</h2>
+        <h2>ของที่แจกไป</h2>
         <div class="scroll"><table class="tbl" id="a-trade"></table></div>
         <p class="sub" style="margin:18px 0 10px">ของที่รับมาแลก นับจากช่องนำมาแลก</p>
         <div class="scroll"><table class="tbl" id="a-tradein"></table></div>
         <p class="sub" style="margin:18px 0 10px">ยี่ห้อที่เขาเอามาแลก</p>
         <div class="bars" id="a-inbrand"></div>
-        <p class="sub" style="margin:18px 0 10px">ของพรีเมียมที่แจกไป</p>
-        <div class="bars" id="a-premium"></div>
       </div>
 
       <div class="card fold" data-fold="recipe">
@@ -743,11 +741,8 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
         <label><span class="dot auto"></span>ยี่ห้อที่นำมา <span class="opt">(ระบบเติมจากยี่ห้อที่เขาใช้ แก้ได้)</span></label>
         <input id="nw-brand" type="text" placeholder="เช่น Falcon">
 
-        <label><span class="dot auto"></span>ของที่ให้ไป <span class="opt">(ระบบติ๊กตามกลุ่มให้ เพิ่มหรือเอาออกได้)</span></label>
+        <label><span class="dot auto"></span>ของที่แจกไป <span class="opt">(ระบบติ๊กตามกลุ่มให้ เพิ่มหรือเอาออกได้)</span></label>
         <div class="chips multi" id="nw-given"></div>
-
-        <label><span class="dot opt"></span>ของพรีเมียม <span class="opt">(ติ๊กได้หลายอย่าง)</span></label>
-        <div class="chips multi" id="nw-premium"></div>
       </div>
 
       <label class="consent" for="nw-consent" style="font-weight:400;margin-top:16px">
@@ -773,10 +768,8 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
       <div class="chips multi" id="tr-brought"></div>
       <label><span class="dot opt"></span>ยี่ห้อที่นำมา</label>
       <input id="tr-brand" type="text" placeholder="เช่น Falcon">
-      <label><span class="dot need"></span>ของที่ให้ไป <span class="opt">(ติ๊กได้หลายอย่าง)</span></label>
+      <label><span class="dot need"></span>ของที่แจกไป <span class="opt">(ติ๊กได้หลายอย่าง)</span></label>
       <div class="chips multi" id="tr-given"></div>
-      <label><span class="dot opt"></span>ของพรีเมียม <span class="opt">(ติ๊กได้หลายอย่าง)</span></label>
-      <div class="chips multi" id="tr-premium"></div>
       <button class="btn" id="tr-save">บันทึกการแลก</button>
       <button class="btn ghost sm" id="tr-cancel">ยกเลิก</button>
     </div>
@@ -985,11 +978,8 @@ a.btn{text-decoration:none;text-align:center;box-sizing:border-box}
       <label>นำมาแลก <span class="opt">(ของที่ลูกค้าถือมาที่บูธ)</span></label>
       <textarea id="set-tin" rows="5"></textarea>
 
-      <label>ของที่ให้ไป <span class="opt">(ของที่แลกกลับไปตามเงื่อนไขกลุ่ม)</span></label>
-      <textarea id="set-tout" rows="5"></textarea>
-
-      <label>ของพรีเมียมรายคน <span class="opt">(ติ๊กรายคนในโต๊ะแลกของ ไม่ติ๊ก = ไม่ได้รับ)</span></label>
-      <textarea id="set-prem" rows="4"></textarea>
+      <label>ของที่แจกไป <span class="opt">(ติ๊กรายคนในโต๊ะแลกของ รวมของแลกตามกลุ่มกับของพรีเมียมไว้ที่เดียว)</span></label>
+      <textarea id="set-tout" rows="7"></textarea>
 
       <label>ของรางวัลจากเกม <span class="opt">(กรอกเป็นจำนวนต่อรอบในหน้าบันทึกประจำวัน)</span></label>
       <textarea id="set-prize" rows="5"></textarea>
@@ -2180,17 +2170,16 @@ function renderAdmin(){
   bars($('a-brand-use'),   bp, {highlight:/TEAPOT/i});
 
   /* ของที่แลกไป มาจากหน้าสตาฟที่โต๊ะแลก */
-  const tOut = {}, pmc = {}, tIn = {}, inBrand = {};
+  const tOut = {}, tIn = {}, inBrand = {};
   trades.forEach(t=>{
-    listOf(t,'given')  .forEach(v=> tOut[v] = (tOut[v]||0)+1);
-    realPremium(t)     .forEach(v=> pmc[v]  = (pmc[v]||0)+1);
+    givenAll(t)        .forEach(v=> tOut[v] = (tOut[v]||0)+1);
     listOf(t,'brought').forEach(v=> tIn[v]  = (tIn[v]||0)+1);
     brandsIn(t.brand).forEach(v=> inBrand[v] = (inBrand[v]||0)+1);
   });
   const te = Object.entries(tOut).sort((a,b)=>b[1]-a[1]);
   const tt = te.reduce((s,e)=>s+e[1],0);
   $('a-trade').innerHTML =
-    `<thead><tr><th>ของที่ให้ไป</th><th>จำนวน</th><th>%</th></tr></thead><tbody>` +
+    `<thead><tr><th>ของที่แจกไป</th><th>จำนวน</th><th>%</th></tr></thead><tbody>` +
     (te.length ? te.map(([k,v])=>`<tr><td>${esc(k)}</td><td><b>${v}</b></td>
         <td>${tt?(v/tt*100).toFixed(1):'0.0'}%</td></tr>`).join('')
         + `<tr><td><b>รวม</b></td><td><b>${tt}</b></td><td><b>100%</b></td></tr>`
@@ -2208,7 +2197,6 @@ function renderAdmin(){
       : `<tr><td colspan="3" style="color:var(--muted);padding:16px 8px">ยังไม่มีของที่รับมาแลก</td></tr>`) +
     `</tbody>`;
   bars($('a-inbrand'), inBrand);
-  bars($('a-premium'), pmc);
 
   const cs = calcs.filter(c=>c.costPerCup>0);
   $('a-avgcost').textContent  = cs.length ? baht(cs.reduce((s,c)=>s+c.costPerCup,0)/cs.length) : '—';
@@ -2726,8 +2714,7 @@ let trades = [], trLead = null;
 
 function openTrade(){
   fillMulti('tr-brought', CFG.tradeIn  || []);
-  fillMulti('tr-given',   CFG.tradeOut || []);
-  fillMulti('tr-premium', CFG.premiumItems || []);
+  fillMulti('tr-given',   giveList());
   $('tr-form').style.display = 'none';
   $('nw-form').style.display = 'none';
   $('tr-search').value = '';
@@ -2840,6 +2827,21 @@ const brandsIn = v => String(v || '').split('/').map(x=>normBrand(x)).filter(Boo
 /* ของพรีเมียมจริง ๆ ตัวเลือก "ไม่ได้รับ" ของเก่าไม่ใช่ของที่แจก ไม่ต้องเอามานับ */
 const realPremium = t => listOf(t, 'premium').filter(v => !/^ไม่ได้/.test(String(v).trim()));
 
+/* ของที่แจกไปทั้งหมดของคนนั้น รวมเป็นรายการเดียว
+   ของใหม่เก็บไว้ใน givenList หมดแล้ว ส่วน premiumList เป็นของแถวเก่า
+   ที่บันทึกตอนยังแยกสองช่อง รวมแล้วตัดตัวซ้ำออก กันนับเบิ้ล              */
+const givenAll = t => [...new Set(listOf(t,'given').concat(realPremium(t)))];
+
+/* รายการของที่แจกทั้งหมดที่ให้ติ๊ก รวมของแลกตามกลุ่มกับของพรีเมียมไว้แถวเดียว
+   ตัดชื่อซ้ำออก แล้วดัน "อื่น ๆ" ไปไว้ท้ายสุดเสมอ                        */
+function giveList(){
+  const all = (CFG.tradeOut || []).concat(CFG.premiumItems || []);
+  const out = [...new Set(all.map(v=>String(v).trim()).filter(Boolean))];
+  const i = out.findIndex(v => /^อื่น/.test(v));
+  if(i >= 0) out.push(out.splice(i,1)[0]);
+  return out;
+}
+
 function listOf(t, key){
   const arr = t[key + 'List'];
   if(Array.isArray(arr) && arr.length) return arr.filter(Boolean);
@@ -2950,8 +2952,7 @@ function openNewLead(){
   });
 
   fillMulti('nw-brought', CFG.tradeIn  || []);
-  fillMulti('nw-given',   CFG.tradeOut || []);
-  fillMulti('nw-premium', CFG.premiumItems || []);
+  fillMulti('nw-given',   giveList());
 
   $('nw-date').value  = localDay();
   $('nw-round').value = (new Date().getHours() < 14) ? 'เช้า' : 'เย็น';
@@ -2985,7 +2986,7 @@ async function saveNewLead(){
   if(!sweet || !plain)       return fail('เลือกยี่ห้อข้นหวานและข้นจืดที่เขาใช้');
   if(!$('nw-consent').checked) return fail('ติ๊กยืนยันว่าลูกค้ายินยอมให้เก็บข้อมูลก่อน');
   if(!$('nw-venue').value)         return fail('เลือกจุดก่อน');
-  if(!multiVal('nw-given').length) return fail('ติ๊กของที่ให้ไปก่อน');
+  if(!multiVal('nw-given').length) return fail('ติ๊กของที่แจกไปก่อน');
   if(nwNeedsTradeIn() && !multiVal('nw-brought').length) return fail('ติ๊กของที่เขานำมาแลกก่อน');
 
   /* เบอร์ว่างได้ แต่ถ้าใส่มาต้องครบ กันพิมพ์ตกหล่น */
@@ -3040,12 +3041,12 @@ async function saveNewLead(){
       round:    lead.round,
       broughtList: multiVal('nw-brought'),
       givenList:   multiVal('nw-given'),
-      premiumList: multiVal('nw-premium'),
+      premiumList: [],
       /* เก็บช่องเดี่ยวไว้ด้วย รายงานเก่าหรือคนเปิดชีตดูยังอ่านรู้เรื่อง */
       brought:  multiVal('nw-brought')[0] || '',
       brand:    brandsIn($('nw-brand').value).join(' / '),
       given:    multiVal('nw-given')[0]   || '',
-      premium:  multiVal('nw-premium')[0] || '',
+      premium:  '',
       day:       lead.day,
       createdAt: new Date().toISOString()
     };
@@ -3091,7 +3092,7 @@ function pickLead(id){
 
   /* เติมของที่ให้ไปตามกลุ่ม และยี่ห้อที่นำมาจากยี่ห้อที่เขากรอกไว้ตอนลงทะเบียน
      สตาฟแค่เช็กว่าตรงมั้ย ไม่ต้องพิมพ์ซ้ำสิ่งที่ระบบรู้อยู่แล้ว */
-  setMulti('tr-brought', []); setMulti('tr-premium', []);
+  setMulti('tr-brought', []);
   const g = suggestGiven(trLead.entry, trLead.status);
   setMulti('tr-given', g ? [g] : []);
   $('tr-brand').dataset.touched = '0';
@@ -3111,15 +3112,15 @@ async function saveTrade(){
     round:    trLead.round || '',
     broughtList: multiVal('tr-brought'),
     givenList:   multiVal('tr-given'),
-    premiumList: multiVal('tr-premium'),
+    premiumList: [],
     brought:  multiVal('tr-brought')[0] || '',
     brand:    brandsIn($('tr-brand').value).join(' / '),
     given:    multiVal('tr-given')[0]   || '',
-    premium:  multiVal('tr-premium')[0] || '',
+    premium:  '',
     day:       localDay(),
     createdAt: new Date().toISOString()
   };
-  if(!rec.givenList.length){ toast('ติ๊กของที่ให้ไปก่อน'); return; }
+  if(!rec.givenList.length){ toast('ติ๊กของที่แจกไปก่อน'); return; }
   if(trades.some(t => t.leadId === rec.leadId)
      && !confirm('คนนี้มีรายการแลกอยู่แล้ว บันทึกเพิ่มอีกรายการ?\n\n'
         + 'กด ตกลง เฉพาะตอนที่ให้ของเพิ่มจริง ๆ')) return;
@@ -3131,7 +3132,7 @@ async function saveTrade(){
     toast('บันทึกการแลกของ ' + rec.leadName + ' แล้ว');
     $('tr-form').style.display = 'none';
     $('tr-brand').value = ''; trLead = null;
-    ['tr-brought','tr-given','tr-premium'].forEach(id=> setMulti(id, []));
+    ['tr-brought','tr-given'].forEach(id=> setMulti(id, []));
     drawTradeList(); renderAdmin(); pushAuto(rec.day);
   }catch(e){
     toast(e.code === 'permission-denied'
@@ -3245,7 +3246,7 @@ function crossCheck(){
   const d = $('d-date').value;
   if(!d){ el.textContent = ''; return; }
   const typed = num($('d-m-premium').value) + num($('d-e-premium').value);
-  const logged = dayTrades(d).reduce((n,t)=> n + realPremium(t).length, 0);
+  const logged = dayTrades(d).reduce((n,t)=> n + givenAll(t).length, 0);
   const regs   = dayLeads(d).length;
   const trs    = dayTrades(d).length;
   const pz = prizeSum(prizeTally);
@@ -3941,8 +3942,7 @@ function openSettings(fromFile){
     gamePrizes:   clone(src.gamePrizes || [])
   };
   $('set-tin').value   = (ed.tradeIn      || []).join('\n');
-  $('set-tout').value  = (ed.tradeOut     || []).join('\n');
-  $('set-prem').value  = (ed.premiumItems || []).join('\n');
+  $('set-tout').value  = giveList().join('\n');
   $('set-prize').value = (ed.gamePrizes   || []).join('\n');
   $('set-warn').style.display = db ? 'none' : 'block';
   $('set-warn').textContent   = 'ยังไม่ได้ต่อ Firebase หน้านี้แก้ได้แต่บันทึกไม่ได้';
@@ -4137,7 +4137,7 @@ function collectSettings(){
   ed.brandOptions    = { sweet: lines($('set-bsweet').value), plain: lines($('set-bplain').value) };
   ed.tradeIn      = lines($('set-tin').value);
   ed.tradeOut     = lines($('set-tout').value);
-  ed.premiumItems = lines($('set-prem').value);
+  ed.premiumItems = [];   /* รวมมาไว้ใน tradeOut หมดแล้ว */
   ed.gamePrizes   = lines($('set-prize').value);
   ed.recipes.forEach((r,i)=>{ if(!r.id) r.id = 'r' + Date.now() + i; });
   return {
